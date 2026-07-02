@@ -1,0 +1,172 @@
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.header {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.headerInfo h1 {
+  font-size: 1.4rem;
+}
+
+.headerInfo p {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.uploadBtn {
+  background: #00488b;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.section h2 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #00488b;
+}
+
+.section input,
+.section textarea {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.7rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.section input:focus,
+.section textarea:focus {
+  border-color: #00488b;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.grid input:last-child {
+  grid-column: 1 / -1;
+}
+
+.entryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 0.6fr;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.addBtn {
+  background: none;
+  border: 1px dashed #00488b;
+  color: #00488b;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.saveBtn {
+  background: #00488b;
+  color: white;
+  border: none;
+  padding: 0.7rem 2rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.downloadBtn {
+  background: white;
+  color: #00488b;
+  border: 1px solid #00488b;
+  padding: 0.7rem 1.5rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.fieldWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.fieldError {
+  color: #e53935;
+  font-size: 0.8rem;
+}
+
+.inputError {
+  border-color: #e53935 !important;
+}
+
+@media (max-width: 600px) {
+  .grid,
+  .entryRow {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}

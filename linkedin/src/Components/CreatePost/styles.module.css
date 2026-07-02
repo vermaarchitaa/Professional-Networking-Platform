@@ -1,0 +1,76 @@
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.textarea {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.8rem;
+  font-size: 0.95rem;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  border-color: #00488b;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.8rem;
+}
+
+.fileLabel {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #00488b;
+}
+
+.fileName {
+  font-size: 0.8rem;
+  color: #666;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.postBtn {
+  margin-left: auto;
+  background: #00488b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.4rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.postBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.inputError {
+  border-color: #e53935;
+}
+
+.fieldError {
+  color: #e53935;
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+}
+
+.charCount {
+  font-size: 0.75rem;
+  color: #999;
+}

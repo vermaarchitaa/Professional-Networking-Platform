@@ -1,0 +1,113 @@
+.container {
+  padding: 1rem 1.5rem;
+  background: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 1rem;
+}
+
+.logo {
+  cursor: pointer;
+  color: #00488b;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.buttonJoin {
+  background: #CD8987;
+  border-radius: 10px;
+  padding-block: 0.6rem;
+  padding-inline: 1.2rem;
+  color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: bold;
+  border: none;
+  white-space: nowrap;
+}
+
+.navbarOptionContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  background: #f0f0f0;
+}
+
+.menuToggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  color: #333;
+}
+
+.bellWrap {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+@media (max-width: 768px) {
+  .menuToggle {
+    display: block;
+  }
+
+  .bellWrap {
+    margin-right: 0.3rem;
+  }
+
+  .navbarOptionContainer {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    gap: 0.3rem;
+  }
+
+  .navbarOptionContainer.menuOpen {
+    display: flex;
+  }
+
+  .navLink,
+  .buttonJoin {
+    width: 100%;
+    text-align: center;
+    padding: 0.8rem;
+  }
+
+  .container {
+    position: relative;
+  }
+}

@@ -1,0 +1,40 @@
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.sidebar {
+  position: sticky;
+  top: 80px;
+}
+
+.feed {
+  min-width: 0;
+}
+
+.loading {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+}
+
+.empty {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+}

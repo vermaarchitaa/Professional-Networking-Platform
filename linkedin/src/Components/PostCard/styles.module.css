@@ -1,0 +1,167 @@
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.headerInfo {
+  flex: 1;
+}
+
+.authorName {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.3rem;
+}
+
+.deleteBtn:hover {
+  color: #e53935;
+}
+
+.body {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0.8rem;
+  white-space: pre-wrap;
+}
+
+.media {
+  margin-bottom: 0.8rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mediaFile {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 0.8rem;
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #555;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+}
+
+.actionBtn:hover {
+  background: #f5f5f5;
+}
+
+.liked {
+  color: #e53935;
+  font-weight: 600;
+}
+
+.fieldError {
+  color: #e53935;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.commentSection {
+  margin-top: 0.8rem;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 0.8rem;
+}
+
+.commentInput {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.commentInput input {
+  flex: 1;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  outline: none;
+  font-size: 0.85rem;
+}
+
+.commentInput button {
+  background: #00488b;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.commentInput button:disabled {
+  opacity: 0.5;
+}
+
+.comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.commentBody {
+  flex: 1;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+}
+
+.commentAuthor {
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.2rem;
+}
+
+.commentBody p:last-child {
+  font-size: 0.85rem;
+}
+
+.commentDelete {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.noComments {
+  font-size: 0.85rem;
+  color: #999;
+  text-align: center;
+  padding: 0.5rem;
+}
