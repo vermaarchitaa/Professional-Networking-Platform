@@ -57,7 +57,7 @@ export const downloadResume = createAsyncThunk("profile/downloadResume", async (
   try {
     const response = await clientServer.get("/user/download_resume", { params: { id: userId } });
     const filename = response.data.message;
-    window.open(`http://localhost:9090/${filename}`, "_blank");
+    window.open(`https://professional-networking-platform-pdlm.onrender.com/${filename}`, "_blank");
     return filename;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to download resume" });

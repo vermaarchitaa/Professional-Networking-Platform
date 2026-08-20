@@ -5,7 +5,7 @@ export const getToken = () => {
 
 export const getMediaUrl = (filename) => {
   if (!filename || filename === "default.jpg") return "/images/default-avatar.png";
-  return `http://localhost:9090/${filename}`;
+  return `https://professional-networking-platform-pdlm.onrender.com/${filename}`;
 };
 
 export const formatDate = (dateString) => {
