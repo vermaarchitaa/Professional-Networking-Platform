@@ -39,7 +39,6 @@ const convertUserDataToPDF = async (userData) => {
 
 export const register = async (req, res) => {
 
-    console.log(req.body);
     try{
         const { name, email, password, username } = req.body;
 
@@ -122,15 +121,13 @@ export const uploadProfilePicture = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
     try{
 
-        const {token, ...newUserUpdate} = req.body;          //spread operator
+        const { token, name, username, email } = req.body;
 
         const user = await User.findOne({ token: token });
 
         if(!user){
             return res.status(404).json({ message: "User not found"})
         }
-
-        const { username, email } = newUserUpdate;
 
         const existingUser = await User.findOne({ $or: [{ username }, { email }] });
 
@@ -140,7 +137,9 @@ export const updateUserProfile = async (req, res) => {
             }
         }
 
-        Object.assign(user, newUserUpdate);
+        if (name !== undefined) user.name = name;
+        if (username !== undefined) user.username = username;
+        if (email !== undefined) user.email = email;
 
         await user.save();
 
@@ -202,6 +201,13 @@ export const updateProfileData = async (req, res) => {
 export const getAllUserProfile = async (req, res) => {
 
     try {
+        const token = req.body.token || req.query.token;
+
+        const user = await User.findOne({ token });
+
+        if(!user){
+            return res.status(404).json({ message: "User not found"})
+        }
 
         const profiles = await Profile.find().populate('userId', 'name username email profilePicture');
 
@@ -213,14 +219,33 @@ export const getAllUserProfile = async (req, res) => {
 
 export const downloadProfile = async (req, res) => {
 
-    const user_id = req.query.id;
+    try {
+        const token = req.body.token || req.query.token;
+        const user_id = req.query.id;
 
-    const userProfile = await Profile.findOne({ userId: user_id })
-    .populate('userId', 'name username email profilePicture');
+        const user = await User.findOne({ token });
 
-    let outputPath = await convertUserDataToPDF(userProfile);
+        if(!user){
+            return res.status(404).json({ message: "User not found"})
+        }
 
-    return res.json({ "message": outputPath});
+        if(!user_id || String(user._id) !== String(user_id)){
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const userProfile = await Profile.findOne({ userId: user._id })
+        .populate('userId', 'name username email profilePicture');
+
+        if(!userProfile){
+            return res.status(404).json({ message: "Profile not found" });
+        }
+
+        let outputPath = await convertUserDataToPDF(userProfile);
+
+        return res.json({ "message": outputPath});
+    } catch(error){
+        return res.status(500).json({ message: error.message });
+    }
 
 }
 
@@ -242,23 +267,41 @@ export const sendConnectionRequest = async (req, res) => {
             return res.status(404).json({ message: "Connection user not found" });
         }
 
-        const existingRequest = await ConnectionRequest.findOne(
-            {
-                userId: user._id,
-                connectionId: connectionUser._id
-            }
-        )
+        if(String(user._id) === String(connectionUser._id)){
+            return res.status(400).json({ message: "Cannot send a connection request to yourself" });
+        }
 
-        if(existingRequest){
+        const existingPair = await ConnectionRequest.find({
+            $or: [
+                { userId: user._id, connectionId: connectionUser._id },
+                { userId: connectionUser._id, connectionId: user._id },
+            ]
+        });
+
+        const blockingRequest = existingPair.find((r) => r.status_accepted === true || r.status_accepted == null);
+
+        if(blockingRequest){
             return res.status(400).json({ message: "Request already sent "});
         }
 
-        const request = new ConnectionRequest({
-            userId: user._id,
-            connectionId: connectionUser._id
-        });
+        const sameDirectionDeclined = existingPair.find((r) =>
+            String(r.userId) === String(user._id) &&
+            String(r.connectionId) === String(connectionUser._id) &&
+            r.status_accepted === false
+        );
 
-        await request.save();
+        let request = sameDirectionDeclined;
+
+        if(request){
+            request.status_accepted = null;
+            await request.save();
+        } else {
+            request = new ConnectionRequest({
+                userId: user._id,
+                connectionId: connectionUser._id
+            });
+            await request.save();
+        }
 
         await createNotification({
             recipientId: connectionUser._id,
@@ -313,7 +356,7 @@ export const whatAreMyConnections = async (req, res) => {
 
         const connections = await ConnectionRequest.find({
             connectionId: user._id,
-            status_accepted: null
+            status_accepted: { $in: [null, true] }
         })
           .populate('userId', 'name username email profilePicture');
         return res.json(connections);
@@ -339,6 +382,10 @@ export const acceptConnectionRequest = async (req, res) => {
 
         if(!connection){
             return res.status(404).json({ message: "Connection not found" });
+        }
+
+        if(String(connection.connectionId) !== String(user._id)){
+            return res.status(401).json({ message: "Unauthorized" });
         }
 
         if(action_type === "accept") {

@@ -1,5 +1,5 @@
 import axios from "axios";
 
 export const clientServer = axios.create({
-  baseURL: "https://professional-networking-platform-pdlm.onrender.com",
+  baseURL: "http://localhost:9090",
 });

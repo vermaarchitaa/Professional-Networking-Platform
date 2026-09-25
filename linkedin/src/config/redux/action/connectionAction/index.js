@@ -4,7 +4,9 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 
 export const fetchAllUsers = createAsyncThunk("connections/fetchUsers", async (_, thunkAPI) => {
   try {
-    const response = await clientServer.get("/user/get_all_users");
+    const response = await clientServer.get("/user/get_all_users", {
+      params: { token: getToken() },
+    });
     return response.data.profiles;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to load users" });
@@ -19,6 +21,8 @@ export const sendConnectionRequest = createAsyncThunk(
         token: getToken(),
         connectionId,
       });
+      thunkAPI.dispatch(fetchSentRequests());
+      thunkAPI.dispatch(fetchIncomingRequests());
       return { connectionId, message: response.data.message };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to send request" });
@@ -56,6 +60,7 @@ export const respondToRequest = createAsyncThunk(
         action_type,
       });
       thunkAPI.dispatch(fetchIncomingRequests());
+      thunkAPI.dispatch(fetchSentRequests());
       return requestId;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to respond to request" });

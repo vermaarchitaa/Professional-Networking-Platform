@@ -47,7 +47,9 @@ const connectionSlice = createSlice({
       })
       .addCase(fetchSentRequests.fulfilled, (state, action) => {
         state.sentRequests = action.payload;
-        state.pendingIds = action.payload.map((r) => r.connectionId?._id || r.connectionId);
+        state.pendingIds = action.payload
+          .filter((r) => r.status_accepted == null)
+          .map((r) => r.connectionId?._id || r.connectionId);
       })
       .addCase(fetchIncomingRequests.fulfilled, (state, action) => {
         state.incomingRequests = action.payload;

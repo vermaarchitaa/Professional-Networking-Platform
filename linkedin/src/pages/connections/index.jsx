@@ -34,9 +34,17 @@ export default function ConnectionsPage() {
     dispatch(fetchIncomingRequests());
   }, [dispatch]);
 
-  const acceptedIds = sentRequests
+  const acceptedFromSent = sentRequests
     .filter((r) => r.status_accepted === true)
     .map((r) => r.connectionId?._id || r.connectionId);
+
+  const acceptedFromIncoming = incomingRequests
+    .filter((r) => r.status_accepted === true)
+    .map((r) => r.userId?._id || r.userId);
+
+  const acceptedIds = [...acceptedFromSent, ...acceptedFromIncoming];
+
+  const pendingIncoming = incomingRequests.filter((r) => r.status_accepted == null);
 
   const otherUsers = users.filter((u) => {
     const id = u.userId?._id;
@@ -59,7 +67,7 @@ export default function ConnectionsPage() {
             className={tab === "incoming" ? styles.tabActive : styles.tab}
             onClick={() => setTab("incoming")}
           >
-            Requests ({incomingRequests.length})
+            Requests ({pendingIncoming.length})
           </button>
           <button
             className={tab === "sent" ? styles.tabActive : styles.tab}
@@ -101,10 +109,10 @@ export default function ConnectionsPage() {
 
         {tab === "incoming" && (
           <div className={styles.list}>
-            {incomingRequests.length === 0 ? (
+            {pendingIncoming.length === 0 ? (
               <p className={styles.loading}>No pending requests</p>
             ) : (
-              incomingRequests.map((req) => (
+              pendingIncoming.map((req) => (
                 <div key={req._id} className={styles.requestCard}>
                   <Avatar user={req.userId} size={48} />
                   <div className={styles.requestInfo}>
