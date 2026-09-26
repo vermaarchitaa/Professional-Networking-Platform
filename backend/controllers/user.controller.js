@@ -8,17 +8,31 @@ import { createNotification } from "../utils/notificationHelper.js";
 import PDFDocument from 'pdfkit';
 import bcrypt from 'bcrypt';
 import fs from "fs";
+import path from "path";
 import Post from "../models/posts.model.js";
+import { UPLOADS_DIR, ensureUploadsDir, isPdfEmbeddableImage } from "../utils/uploads.js";
 
 const convertUserDataToPDF = async (userData) => {
+    ensureUploadsDir();
+
     const doc = new PDFDocument();
 
     const outputPath = crypto.randomBytes(32).toString("hex") + ".pdf";
-    const stream = fs.createWriteStream("uploads/" + outputPath);
+    const stream = fs.createWriteStream(path.join(UPLOADS_DIR, outputPath));
 
     doc.pipe(stream);
 
-    doc.image(`uploads/${userData.userId.profilePicture}`, {align: "center", width: 100});
+    const picture = userData.userId?.profilePicture;
+    const picturePath = picture ? path.join(UPLOADS_DIR, path.basename(picture)) : "";
+    if (
+        picture &&
+        picture !== "default.jpg" &&
+        isPdfEmbeddableImage(picture) &&
+        fs.existsSync(picturePath)
+    ) {
+        doc.image(picturePath, { align: "center", width: 100 });
+    }
+
     doc.fontSize(14).text(`Name: ${userData.userId.name}`);
     doc.fontSize(14).text(`Username: ${userData.userId.username}`);
     doc.fontSize(14).text(`Email: ${userData.userId.email}`);
@@ -32,7 +46,11 @@ const convertUserDataToPDF = async (userData) => {
         doc.fontSize(14).text(`Years: ${work.years}`);
     })
 
-    doc.end();
+    await new Promise((resolve, reject) => {
+        stream.on("finish", resolve);
+        stream.on("error", reject);
+        doc.end();
+    });
 
     return outputPath;
 }
@@ -107,6 +125,9 @@ export const uploadProfilePicture = async (req, res) => {
 
         if(!user){
             return res.status(404).json({ message: "User not found"})
+        }
+        if(!req.file){
+            return res.status(400).json({ message: "No file uploaded" });
         }
         user.profilePicture = req.file.filename;
 

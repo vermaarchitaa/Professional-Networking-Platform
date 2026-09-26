@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import postRoutes from "./routes/posts.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import { ensureUploadsDir } from "./utils/uploads.js";
 
 dotenv.config();
 
@@ -28,12 +29,19 @@ app.use(notificationRoutes);
 app.use(express.static("uploads"));
 
 app.use((err, req, res, next) => {
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ message: "File is too large" });
+  }
+  if (err.message === "Unsupported file type") {
+    return res.status(400).json({ message: err.message });
+  }
   console.error(err.stack);
   res.status(500).json({ message: err.message });
 });
 
 const start = async () => {
   try {
+    ensureUploadsDir();
     await mongoose.connect(process.env.MONGO_URI);
 
     console.log("✅ MongoDB Connected");
