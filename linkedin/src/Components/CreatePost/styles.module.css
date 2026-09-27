@@ -14,7 +14,9 @@
   border-radius: 12px;
   width: min(552px, 100%);
   max-height: 90vh;
-  overflow: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
   padding: 1rem 1.1rem 1.1rem;
 }
@@ -24,6 +26,9 @@
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 0.8rem;
+  position: relative;
+  z-index: 5;
+  overflow: visible;
 }
 
 .identity {
@@ -43,13 +48,188 @@
   margin-top: 0.35rem;
 }
 
-.audience span {
-  display: inline-block;
+.settingWrap {
+  position: relative;
+}
+
+.audienceBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   border: 1px solid #cfcfcf;
   border-radius: 16px;
-  padding: 0.15rem 0.6rem;
+  padding: 0.15rem 0.55rem 0.15rem 0.65rem;
   font-size: 0.75rem;
   color: #666;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.audienceBtn:hover,
+.audienceBtn[aria-expanded="true"] {
+  background: #f3f2ef;
+  border-color: #bdbdbd;
+}
+
+.settingsMenu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  width: min(320px, calc(100vw - 2.4rem));
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+  padding: 0.7rem 0 0.45rem;
+  z-index: 30;
+}
+
+.settingsMenuEnd {
+  left: auto;
+  right: 0;
+}
+
+.settingsTitle {
+  margin: 0;
+  padding: 0 1rem 0.55rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #191919;
+}
+
+.settingsOption {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: #191919;
+  font-family: inherit;
+}
+
+.settingsOption:hover {
+  background: #f3f2ef;
+}
+
+.optionIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f3f2ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #191919;
+}
+
+.optionText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.optionLabel {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.optionDesc {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.optionTrailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  color: #666;
+}
+
+.radioOff,
+.radioOn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.radioOff {
+  border: 2px solid #707070;
+}
+
+.radioOn {
+  border: 6px solid #0a66c2;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0.85rem 1rem 0.45rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.brandTitle {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #191919;
+}
+
+.learnMore {
+  border: none;
+  background: none;
+  color: #0a66c2;
+  font-weight: 600;
+  font-size: 0.8rem;
+  padding: 0.15rem 0 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.toggle {
+  width: 40px;
+  height: 22px;
+  border: none;
+  border-radius: 999px;
+  background: #b2b2b2;
+  padding: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggleOn {
+  background: #057642;
+}
+
+.toggleKnob {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.toggleOn .toggleKnob {
+  transform: translateX(18px);
+}
+
+.composerBody {
+  overflow: auto;
+  min-height: 0;
 }
 
 .closeBtn {
@@ -206,5 +386,12 @@
 
   .textarea {
     min-height: 120px;
+  }
+
+  .settingsMenu,
+  .settingsMenuEnd {
+    left: 0;
+    right: auto;
+    width: min(300px, calc(100vw - 2rem));
   }
 }

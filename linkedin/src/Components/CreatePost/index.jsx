@@ -20,6 +20,68 @@ const ALLOWED_EXTS = new Set(["jpeg", "jpg", "png", "gif", "webp", "mp4", "webm"
 const VIDEO_EXTS = new Set(["mp4", "webm"]);
 const EMOJIS = ["😀", "😁", "😂", "🥹", "😍", "🤩", "👍", "👏", "🙏", "🎉", "🔥", "💯", "💡", "📌", "🚀", "❤️"];
 
+const VISIBILITY_LABELS = {
+  anyone: "Post to Anyone",
+  connections: "Post to Connections only",
+  group: "Post to Group",
+};
+
+const COMMENT_LABELS = {
+  anyone: "Comments: Anyone",
+  connections: "Comments: Connections only",
+  off: "Comments: Off",
+};
+
+const Icon = ({ children }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {children}
+  </svg>
+);
+
+const GlobeIcon = () => (
+  <Icon>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+  </Icon>
+);
+
+const ConnectionsIcon = () => (
+  <Icon>
+    <circle cx="9" cy="8" r="3" />
+    <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+    <circle cx="17" cy="9" r="2.4" />
+    <path d="M16 14.5c2.4.3 4.5 1.7 5 4.5" />
+  </Icon>
+);
+
+const GroupIcon = () => (
+  <Icon>
+    <circle cx="8" cy="9" r="2.4" />
+    <circle cx="16" cy="9" r="2.4" />
+    <circle cx="12" cy="7.5" r="2.2" />
+    <path d="M3.8 19a4.4 4.4 0 0 1 8.4 0M11.8 19a4.4 4.4 0 0 1 8.4 0" />
+  </Icon>
+);
+
+const CommentsOffIcon = () => (
+  <Icon>
+    <path d="M5 16.5 3 20l4.2-1.5A8.5 8.5 0 1 0 5 16.5Z" />
+    <path d="m8 9 8 8M16 9l-8 8" />
+  </Icon>
+);
+
+const ChevronDownIcon = () => (
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
+    <path d="m9 6 6 6-6 6" />
+  </svg>
+);
+
 const isAllowedFile = (file) => {
   const ext = String(file.name || "").split(".").pop().toLowerCase();
   return ALLOWED_TYPES.has(file.type) || ALLOWED_EXTS.has(ext);
@@ -43,6 +105,8 @@ export default function CreatePost({ isOpen, onClose, user }) {
   const dispatch = useDispatch();
   const textareaRef = useRef(null);
   const mediaItemsRef = useRef([]);
+  const visibilityRef = useRef(null);
+  const commentsRef = useRef(null);
   const [body, setBody] = useState("");
   const [mediaItems, setMediaItems] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -51,6 +115,10 @@ export default function CreatePost({ isOpen, onClose, user }) {
   const [showPlus, setShowPlus] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [selectedPostVisibility, setSelectedPostVisibility] = useState("anyone");
+  const [selectedCommentPermission, setSelectedCommentPermission] = useState("anyone");
+  const [brandPartnership, setBrandPartnership] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   const revokeAll = (items) => {
     items.forEach((item) => URL.revokeObjectURL(item.previewUrl));
@@ -69,6 +137,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
     setShowEmoji(false);
     setShowPlus(false);
     setError("");
+    setOpenDropdown(null);
   };
 
   useEffect(() => {
@@ -88,12 +157,32 @@ export default function CreatePost({ isOpen, onClose, user }) {
         setShowEditor(false);
         return;
       }
+      if (openDropdown) {
+        setOpenDropdown(null);
+        return;
+      }
       resetDraft();
       onClose?.();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, showEditor, onClose]);
+  }, [isOpen, showEditor, openDropdown, onClose]);
+
+  useEffect(() => {
+    if (!isOpen) setOpenDropdown(null);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!openDropdown) return undefined;
+    const onPointerDown = (event) => {
+      const target = event.target;
+      if (visibilityRef.current?.contains(target)) return;
+      if (commentsRef.current?.contains(target)) return;
+      setOpenDropdown(null);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [openDropdown]);
 
   useEffect(() => () => {
     revokeAll(mediaItemsRef.current);
@@ -215,8 +304,153 @@ export default function CreatePost({ isOpen, onClose, user }) {
             <div className={styles.identity}>
               <p className={styles.name}>{user?.name || "You"}</p>
               <div className={styles.audience}>
-                <span>Post to Anyone</span>
-                <span>Comments: Anyone</span>
+                <div className={styles.settingWrap} ref={visibilityRef}>
+                  <button
+                    type="button"
+                    className={styles.audienceBtn}
+                    aria-haspopup="dialog"
+                    aria-expanded={openDropdown === "visibility"}
+                    onClick={() => {
+                      setOpenDropdown((current) => (current === "visibility" ? null : "visibility"));
+                      setShowEmoji(false);
+                      setShowPlus(false);
+                    }}
+                  >
+                    {VISIBILITY_LABELS[selectedPostVisibility]}
+                    <ChevronDownIcon />
+                  </button>
+                  {openDropdown === "visibility" && (
+                    <div className={styles.settingsMenu} role="dialog" aria-label="Who can see your post?">
+                      <p className={styles.settingsTitle}>Who can see your post?</p>
+                      <button
+                        type="button"
+                        className={styles.settingsOption}
+                        onClick={() => {
+                          setSelectedPostVisibility("anyone");
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        <span className={styles.optionIcon}><GlobeIcon /></span>
+                        <span className={styles.optionText}>
+                          <span className={styles.optionLabel}>Anyone</span>
+                          <span className={styles.optionDesc}>Anyone on or off LinkedIn</span>
+                        </span>
+                        <span className={selectedPostVisibility === "anyone" ? styles.radioOn : styles.radioOff} />
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.settingsOption}
+                        onClick={() => {
+                          setSelectedPostVisibility("connections");
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        <span className={styles.optionIcon}><ConnectionsIcon /></span>
+                        <span className={styles.optionText}>
+                          <span className={styles.optionLabel}>Connections only</span>
+                        </span>
+                        <span className={selectedPostVisibility === "connections" ? styles.radioOn : styles.radioOff} />
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.settingsOption}
+                        onClick={() => {
+                          setSelectedPostVisibility("group");
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        <span className={styles.optionIcon}><GroupIcon /></span>
+                        <span className={styles.optionText}>
+                          <span className={styles.optionLabel}>Group</span>
+                        </span>
+                        <span className={styles.optionTrailing}>
+                          <span className={selectedPostVisibility === "group" ? styles.radioOn : styles.radioOff} />
+                          <ChevronRightIcon />
+                        </span>
+                      </button>
+                      <div className={styles.brandRow}>
+                        <div>
+                          <p className={styles.brandTitle}>Brand Partnership</p>
+                          <button type="button" className={styles.learnMore}>Learn more</button>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={brandPartnership}
+                          aria-label="Brand Partnership"
+                          className={`${styles.toggle} ${brandPartnership ? styles.toggleOn : ""}`}
+                          onClick={() => setBrandPartnership((current) => !current)}
+                        >
+                          <span className={styles.toggleKnob} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.settingWrap} ref={commentsRef}>
+                  <button
+                    type="button"
+                    className={styles.audienceBtn}
+                    aria-haspopup="dialog"
+                    aria-expanded={openDropdown === "comments"}
+                    onClick={() => {
+                      setOpenDropdown((current) => (current === "comments" ? null : "comments"));
+                      setShowEmoji(false);
+                      setShowPlus(false);
+                    }}
+                  >
+                    {COMMENT_LABELS[selectedCommentPermission]}
+                    <ChevronDownIcon />
+                  </button>
+                  {openDropdown === "comments" && (
+                    <div className={`${styles.settingsMenu} ${styles.settingsMenuEnd}`} role="dialog" aria-label="Comment settings">
+                      <p className={styles.settingsTitle}>Comment settings</p>
+                      <button
+                        type="button"
+                        className={styles.settingsOption}
+                        onClick={() => {
+                          setSelectedCommentPermission("anyone");
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        <span className={styles.optionIcon}><GlobeIcon /></span>
+                        <span className={styles.optionText}>
+                          <span className={styles.optionLabel}>Anyone</span>
+                        </span>
+                        <span className={selectedCommentPermission === "anyone" ? styles.radioOn : styles.radioOff} />
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.settingsOption}
+                        onClick={() => {
+                          setSelectedCommentPermission("connections");
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        <span className={styles.optionIcon}><ConnectionsIcon /></span>
+                        <span className={styles.optionText}>
+                          <span className={styles.optionLabel}>Connections only</span>
+                        </span>
+                        <span className={selectedCommentPermission === "connections" ? styles.radioOn : styles.radioOff} />
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.settingsOption}
+                        onClick={() => {
+                          setSelectedCommentPermission("off");
+                          setOpenDropdown(null);
+                        }}
+                      >
+                        <span className={styles.optionIcon}><CommentsOffIcon /></span>
+                        <span className={styles.optionText}>
+                          <span className={styles.optionLabel}>Off</span>
+                        </span>
+                        <span className={selectedCommentPermission === "off" ? styles.radioOn : styles.radioOff} />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <button type="button" className={styles.closeBtn} onClick={closeComposer} aria-label="Close">
@@ -224,41 +458,43 @@ export default function CreatePost({ isOpen, onClose, user }) {
             </button>
           </header>
 
-          <textarea
-            ref={textareaRef}
-            className={`${styles.textarea} ${error ? styles.inputError : ""}`}
-            placeholder="Share your thoughts ..."
-            value={body}
-            onChange={(e) => {
-              setBody(e.target.value);
-              if (error) setError("");
-            }}
-            maxLength={5000}
-          />
-          {error && <p className={styles.fieldError}>{error}</p>}
+          <div className={styles.composerBody}>
+            <textarea
+              ref={textareaRef}
+              className={`${styles.textarea} ${error ? styles.inputError : ""}`}
+              placeholder="Share your thoughts ..."
+              value={body}
+              onChange={(e) => {
+                setBody(e.target.value);
+                if (error) setError("");
+              }}
+              maxLength={5000}
+            />
+            {error && <p className={styles.fieldError}>{error}</p>}
 
-          {mediaItems.length > 0 && (
-            <div className={styles.compactGallery}>
-              {mediaItems.map((item, index) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  className={styles.compactTile}
-                  onClick={() => {
-                    setSelectedIndex(index);
-                    setShowEditor(true);
-                  }}
-                  aria-label="Edit media"
-                >
-                  {item.kind === "video" ? (
-                    <video src={item.previewUrl} muted />
-                  ) : (
-                    <img src={item.previewUrl} alt="" />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+            {mediaItems.length > 0 && (
+              <div className={styles.compactGallery}>
+                {mediaItems.map((item, index) => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={styles.compactTile}
+                    onClick={() => {
+                      setSelectedIndex(index);
+                      setShowEditor(true);
+                    }}
+                    aria-label="Edit media"
+                  >
+                    {item.kind === "video" ? (
+                      <video src={item.previewUrl} muted />
+                    ) : (
+                      <img src={item.previewUrl} alt="" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className={styles.toolbar}>
             <div className={styles.tools}>
@@ -269,6 +505,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                   onClick={() => {
                     setShowEmoji((open) => !open);
                     setShowPlus(false);
+                    setOpenDropdown(null);
                   }}
                   aria-label="Emoji"
                 >
@@ -299,6 +536,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                 onClick={() => {
                   setShowEmoji(false);
                   setShowPlus(false);
+                  setOpenDropdown(null);
                   setShowEditor(true);
                 }}
                 aria-label="Media"
@@ -322,6 +560,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                   onClick={() => {
                     setShowPlus((open) => !open);
                     setShowEmoji(false);
+                    setOpenDropdown(null);
                   }}
                   aria-label="More"
                 >
