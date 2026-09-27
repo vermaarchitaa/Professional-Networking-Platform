@@ -17,6 +17,16 @@ const postSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     }],
+    reactions: [{
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        type: {
+            type: String,
+            default: "like"
+        }
+    }],
     createdAt: {
         type: Date,
         default: Date.now
@@ -36,6 +46,19 @@ const postSchema = mongoose.Schema({
     fileType: {
         type: String,
         default: ''
+    },
+    mediaItems: {
+        type: [{
+            filename: {
+                type: String,
+                default: ''
+            },
+            fileType: {
+                type: String,
+                default: ''
+            }
+        }],
+        default: []
     }
 });
 

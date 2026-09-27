@@ -6,6 +6,7 @@ import {
   toggleLike,
   fetchComments,
   addComment,
+  toggleCommentLike,
 } from "@/config/redux/action/postAction";
 
 const initialState = {
@@ -53,6 +54,17 @@ const postSlice = createSlice({
         if (post) {
           post.likes = action.payload.likes;
           post.isLiked = action.payload.liked;
+          post.myReaction = action.payload.myReaction || null;
+        }
+      })
+      .addCase(toggleCommentLike.fulfilled, (state, action) => {
+        const list = state.comments[action.payload.postId];
+        if (!list) return;
+        const comment = list.find((item) => item._id === action.payload.commentId);
+        if (comment) {
+          comment.likes = action.payload.likes;
+          comment.isLiked = action.payload.liked;
+          comment.myReaction = action.payload.myReaction || null;
         }
       })
       .addCase(fetchComments.fulfilled, (state, action) => {

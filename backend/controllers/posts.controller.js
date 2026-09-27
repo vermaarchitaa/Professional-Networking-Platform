@@ -3,6 +3,64 @@ import User from "../models/user.model.js";
 import Comment from "../models/comments.model.js";
 import { createNotification } from "../utils/notificationHelper.js";
 
+const REACTION_TYPES = new Set(["like", "love", "celebrate", "funny", "insightful", "support"]);
+
+const normalizeReactionType = (type) => (REACTION_TYPES.has(type) ? type : "like");
+
+const applyUserReaction = (reactions = [], likedBy = [], userId, type) => {
+    const uid = userId.toString();
+    const nextReactions = (reactions || []).map((reaction) => ({
+        userId: reaction.userId,
+        type: reaction.type,
+    }));
+    let nextLikedBy = [...(likedBy || [])];
+    const existingIndex = nextReactions.findIndex((reaction) => reaction.userId.toString() === uid);
+    let myReaction = null;
+
+    if (existingIndex >= 0 && nextReactions[existingIndex].type === type) {
+        nextReactions.splice(existingIndex, 1);
+        nextLikedBy = nextLikedBy.filter((id) => id.toString() !== uid);
+    } else if (existingIndex >= 0) {
+        nextReactions[existingIndex].type = type;
+        myReaction = type;
+        if (!nextLikedBy.some((id) => id.toString() === uid)) nextLikedBy.push(userId);
+    } else {
+        nextReactions.push({ userId, type });
+        if (!nextLikedBy.some((id) => id.toString() === uid)) nextLikedBy.push(userId);
+        myReaction = type;
+    }
+
+    return {
+        reactions: nextReactions,
+        likedBy: nextLikedBy,
+        myReaction,
+        likes: nextLikedBy.length,
+        liked: Boolean(myReaction),
+    };
+};
+
+const isAllowedGifUrl = (url) => {
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+        return parsed.protocol === "https:" && (
+            host === "giphy.com" ||
+            host.endsWith(".giphy.com") ||
+            host.endsWith("giphy.net")
+        );
+    } catch {
+        return false;
+    }
+};
+
+const resolveMyReaction = (reactions = [], likedBy = [], currentUserId) => {
+    if (!currentUserId) return null;
+    const found = (reactions || []).find((reaction) => reaction.userId.toString() === currentUserId);
+    if (found) return found.type;
+    if ((likedBy || []).some((id) => id.toString() === currentUserId)) return "like";
+    return null;
+};
+
 export const activeCheck = async (req, res) => {
     return res.status(200).json({ message: "RUNNING" })
 }
@@ -18,12 +76,20 @@ export const createPost = async (req, res) => {
             return res.status(404).json({ message: "User not found"})
         }
 
+        const files = Array.isArray(req.files) ? req.files : [];
+        const firstFile = files[0];
+        const mediaItems = files.map((file) => ({
+            filename: file.filename,
+            fileType: file.mimetype.split("/")[1]
+        }));
+
         const post = new Post({
             userId: user._id,
             body: req.body.body,
-            media: req.file != undefined ? req.file.filename : "",
-            fileType: req.file != undefined ? req.file.mimetype.split("/")[1] : ""
-        })
+            media: firstFile ? firstFile.filename : "",
+            fileType: firstFile ? firstFile.mimetype.split("/")[1] : "",
+            mediaItems
+        });
 
         await post.save();
 
@@ -51,10 +117,13 @@ export const getAllPosts = async (req, res) => {
 
         const postsWithLikeStatus = posts.map((post) => {
             const postObj = post.toObject();
-            const isLiked = currentUserId
-                ? post.likedBy.some((id) => id.toString() === currentUserId)
-                : false;
-            return { ...postObj, isLiked };
+            const myReaction = resolveMyReaction(post.reactions, post.likedBy, currentUserId);
+            return {
+                ...postObj,
+                isLiked: Boolean(myReaction),
+                myReaction,
+                likes: (post.likedBy || []).length,
+            };
         });
 
         return res.json({ posts: postsWithLikeStatus })
@@ -111,7 +180,7 @@ export const deletePost = async (req, res) => {
 
 export const commentPost = async (req, res) => {
 
-    const { token, post_id, commentBody } = req.body;
+    const { token, post_id, commentBody, parent_comment_id } = req.body;
 
     try{
 
@@ -129,10 +198,38 @@ export const commentPost = async (req, res) => {
             return res.status(404).json({ message: "Post not found "});
         }
 
+        let parentCommentId = null;
+        if (parent_comment_id) {
+            const parent = await Comment.findOne({ _id: parent_comment_id, postId: post_id });
+            if (!parent) {
+                return res.status(404).json({ message: "Parent comment not found" });
+            }
+            parentCommentId = parent.parentCommentId || parent._id;
+        }
+
+        const rawGifUrl = typeof req.body.gifUrl === "string" ? req.body.gifUrl.trim() : "";
+        if (rawGifUrl && !isAllowedGifUrl(rawGifUrl)) {
+            return res.status(400).json({ message: "Invalid GIF URL" });
+        }
+        const gifUrl = rawGifUrl;
+        const uploaded = req.file
+            ? { filename: req.file.filename, fileType: req.file.mimetype.split("/")[1] }
+            : { filename: "", fileType: "" };
+        const hasImage = Boolean(uploaded.filename);
+        const hasGif = Boolean(gifUrl) && !hasImage;
+        const body = (commentBody || "").trim();
+
+        if (!body && !hasImage && !hasGif) {
+            return res.status(400).json({ message: "Comment cannot be empty" });
+        }
+
         const comment = new Comment ({
             userId: user._id,
             postId: post_id,
-            body: commentBody
+            body,
+            parentCommentId,
+            media: uploaded,
+            gifUrl: hasGif ? gifUrl : ""
         });
 
         await comment.save();
@@ -155,7 +252,7 @@ export const commentPost = async (req, res) => {
 }
 
 export const get_comments_by_post = async (req, res) => {
-    const { post_id } = req.query;
+    const { post_id, token } = req.query;
 
     try{
 
@@ -165,11 +262,28 @@ export const get_comments_by_post = async (req, res) => {
             return res.status(404).json({ message: "Post not found" });
         }
 
+        let currentUserId = null;
+        if (token) {
+            const user = await User.findOne({ token }).select("_id");
+            if (user) currentUserId = user._id.toString();
+        }
+
         const comments = await Comment.find({ postId: post_id })
             .populate('userId', 'name username profilePicture')
             .sort({ _id: -1 });
 
-        return res.json({ comments });
+        const commentsWithReactions = comments.map((comment) => {
+            const commentObj = comment.toObject();
+            const myReaction = resolveMyReaction(comment.reactions, [], currentUserId);
+            return {
+                ...commentObj,
+                likes: (comment.reactions || []).length,
+                myReaction,
+                isLiked: Boolean(myReaction),
+            };
+        });
+
+        return res.json({ comments: commentsWithReactions });
 
     } catch(error){
         return res.status(500).json({ message: error.message});
@@ -200,6 +314,7 @@ export const delete_comment_of_user = async (req, res) => {
         }
 
         await Comment.deleteOne({"_id": comment_id });
+        await Comment.deleteMany({ parentCommentId: comment_id });
 
         return res.json({ message: "Comment Deleted"});
 
@@ -209,7 +324,7 @@ export const delete_comment_of_user = async (req, res) => {
 }
 
 export const toggleLike = async (req, res) => {
-    const { token, post_id } = req.body;
+    const { token, post_id, reactionType } = req.body;
 
     try {
         const user = await User.findOne({ token }).select("_id name");
@@ -218,34 +333,92 @@ export const toggleLike = async (req, res) => {
         const post = await Post.findOne({ _id: post_id });
         if (!post) return res.status(404).json({ message: "Post not found" });
 
+        const type = normalizeReactionType(reactionType);
         const userId = user._id;
-        const alreadyLiked = post.likedBy.some((id) => id.toString() === userId.toString());
+        const hadReaction = Boolean(resolveMyReaction(post.reactions, post.likedBy, userId.toString()));
+        const next = applyUserReaction(post.reactions, post.likedBy, userId, type);
 
-        if (alreadyLiked) {
-            post.likedBy = post.likedBy.filter((id) => id.toString() !== userId.toString());
-            post.likes = Math.max(0, post.likes - 1);
-        } else {
-            post.likedBy.push(userId);
-            post.likes = post.likes + 1;
+        post.reactions = next.reactions;
+        post.likedBy = next.likedBy;
+        post.likes = next.likes;
 
-            if (post.userId.toString() !== userId.toString()) {
-                await createNotification({
-                    recipientId: post.userId,
-                    senderId: userId,
-                    type: "like",
-                    message: `${user.name} liked your post`,
-                    referenceId: post_id,
-                });
-            }
+        if (!hadReaction && next.myReaction && post.userId.toString() !== userId.toString()) {
+            await createNotification({
+                recipientId: post.userId,
+                senderId: userId,
+                type: "like",
+                message: `${user.name} reacted to your post`,
+                referenceId: post_id,
+            });
         }
 
         await post.save();
 
         return res.json({
-            liked: !alreadyLiked,
-            likes: post.likes,
+            liked: next.liked,
+            likes: next.likes,
+            myReaction: next.myReaction,
             postId: post_id,
         });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export const toggleCommentLike = async (req, res) => {
+    const { token, comment_id, reactionType } = req.body;
+
+    try {
+        const user = await User.findOne({ token }).select("_id");
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const comment = await Comment.findOne({ _id: comment_id });
+        if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+        const type = normalizeReactionType(reactionType);
+        const next = applyUserReaction(comment.reactions, [], user._id, type);
+        comment.reactions = next.reactions;
+        await comment.save();
+
+        return res.json({
+            commentId: comment_id,
+            postId: comment.postId.toString(),
+            liked: next.liked,
+            likes: next.reactions.length,
+            myReaction: next.myReaction,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export const searchGifs = async (req, res) => {
+    const apiKey = process.env.GIPHY_API_KEY;
+    if (!apiKey) {
+        return res.status(503).json({
+            message: "GIF search is not configured. Add GIPHY_API_KEY to the backend environment.",
+        });
+    }
+
+    const query = String(req.query.q || "").trim();
+    const endpoint = query
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(query)}&limit=16&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${encodeURIComponent(apiKey)}&limit=16&rating=g`;
+
+    try {
+        const response = await fetch(endpoint);
+        if (!response.ok) {
+            return res.status(502).json({ message: "GIF provider request failed" });
+        }
+        const data = await response.json();
+        const gifs = (data.data || []).map((item) => ({
+            id: item.id,
+            url: item.images?.original?.url || item.images?.downsized?.url || "",
+            preview: item.images?.fixed_height_small?.url || item.images?.preview_gif?.url || item.images?.original?.url || "",
+            description: item.title || "GIF",
+        })).filter((item) => item.url);
+
+        return res.json({ gifs, attribution: "GIPHY" });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }

@@ -7,6 +7,7 @@ export const UPLOADS_DIR = "uploads";
 
 const IMAGE_TYPES = {
   "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
   "image/png": ".png",
   "image/gif": ".gif",
   "image/webp": ".webp",
@@ -65,6 +66,7 @@ const createUploader = (allowedTypes, maxBytes) => {
 
 export const profilePictureUpload = createUploader(PROFILE_TYPES, 2 * 1024 * 1024);
 export const postMediaUpload = createUploader(POST_MEDIA_TYPES, 10 * 1024 * 1024);
+export const commentImageUpload = createUploader(IMAGE_TYPES, 5 * 1024 * 1024);
 
 export const isPdfEmbeddableImage = (filename) => {
   const ext = path.extname(filename || "").toLowerCase();

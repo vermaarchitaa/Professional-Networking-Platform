@@ -48,9 +48,11 @@
 }
 
 .media {
+  position: relative;
   margin-bottom: 0.8rem;
   border-radius: 8px;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .mediaFile {
@@ -58,6 +60,176 @@
   max-height: 400px;
   object-fit: cover;
   display: block;
+  pointer-events: none;
+}
+
+.mediaCount {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.viewerOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+  padding: 1rem;
+}
+
+.viewer {
+  display: flex;
+  width: min(1100px, 100%);
+  height: min(88vh, 820px);
+  max-height: 92vh;
+  background: #111;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.viewerMediaPane {
+  position: relative;
+  flex: 1.35;
+  min-width: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewerMedia {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.viewerClose,
+.viewerPrev,
+.viewerNext {
+  position: absolute;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.viewerClose {
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  z-index: 2;
+}
+
+.viewerPrev,
+.viewerNext {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+}
+
+.viewerPrev {
+  left: 0.6rem;
+}
+
+.viewerNext {
+  right: 0.6rem;
+}
+
+.viewerCounter {
+  position: absolute;
+  left: 50%;
+  bottom: 0.7rem;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.viewerDetails {
+  flex: 0 0 360px;
+  width: 360px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.viewerDetailsScroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1rem 0.4rem;
+}
+
+.viewerPostBody {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0.4rem 0 0.8rem;
+  white-space: pre-wrap;
+}
+
+.viewerActions {
+  display: flex;
+  gap: 0.8rem;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0.6rem 0;
+  margin-bottom: 0.8rem;
+}
+
+.viewerComments {
+  padding-bottom: 0.6rem;
+}
+
+.viewerComposer {
+  border-top: 1px solid #eee;
+  padding: 0.8rem 1rem 1rem;
+  background: white;
+}
+
+@media (max-width: 800px) {
+  .viewer {
+    flex-direction: column;
+    height: auto;
+    max-height: 92vh;
+    overflow: auto;
+  }
+
+  .viewerMediaPane {
+    min-height: 220px;
+    max-height: 42vh;
+    flex: none;
+  }
+
+  .viewerDetails {
+    width: 100%;
+    flex: 1;
+    max-height: 50vh;
+  }
+
+  .viewerPrev,
+  .viewerNext {
+    width: 34px;
+    height: 34px;
+  }
 }
 
 .actions {
@@ -100,8 +272,10 @@
 
 .commentInput {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.4rem;
   margin-bottom: 0.8rem;
+  flex-wrap: wrap;
 }
 
 .commentInput input {
@@ -127,11 +301,119 @@
   opacity: 0.5;
 }
 
-.comment {
+.comment,
+.reply {
   display: flex;
   align-items: flex-start;
   gap: 0.6rem;
   margin-bottom: 0.6rem;
+}
+
+.reply {
+  margin-top: 0.55rem;
+  padding-left: 0.2rem;
+}
+
+.commentMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.commentActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.commentAction {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.replyBox {
+  margin-top: 0.5rem;
+}
+
+.composerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.iconBtn {
+  background: #f3f2ef;
+  border: none;
+  border-radius: 14px;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.emojiWrap {
+  position: relative;
+}
+
+.emojiPopover {
+  position: absolute;
+  bottom: calc(100% + 0.3rem);
+  left: 0;
+  width: 180px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  background: white;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  padding: 0.4rem;
+  z-index: 4;
+}
+
+.emojiBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.05rem;
+}
+
+.composerNote {
+  color: #666;
+  font-size: 0.75rem;
+  margin: -0.3rem 0 0.6rem;
+}
+
+.attachmentPreview {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: -0.3rem 0 0.7rem;
+}
+
+.attachmentPreview img,
+.commentMedia {
+  max-width: 180px;
+  max-height: 140px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
+.commentMedia {
+  margin-top: 0.4rem;
+}
+
+.attachmentPreview button {
+  border: none;
+  background: none;
+  color: #00488b;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .commentBody {

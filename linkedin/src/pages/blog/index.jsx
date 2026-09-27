@@ -5,7 +5,7 @@ import Avatar from "@/Components/Avatar";
 import { PostSkeleton } from "@/Components/Skeleton";
 import { blogArticles } from "@/config/blogArticles";
 import { fetchTrendingPosts } from "@/config/redux/action/postAction";
-import { getMediaUrl } from "@/config/utils";
+import { getMediaUrl, getPostMediaItems, isImageMedia } from "@/config/utils";
 import styles from "./style.module.css";
 
 export default function BlogPage() {
@@ -77,21 +77,24 @@ export default function BlogPage() {
             ) : trendingPosts.length === 0 ? (
               <p className={styles.emptyTrending}>No trending posts yet. Start posting on the feed!</p>
             ) : (
-              trendingPosts.map((post) => (
-                <div key={post._id} className={styles.trendingCard}>
-                  <div className={styles.trendingHeader}>
-                    <Avatar user={post.userId} size={36} />
-                    <div>
-                      <p className={styles.trendingAuthor}>{post.userId?.name}</p>
-                      <p className={styles.trendingLikes}>❤️ {post.likes} likes</p>
+              trendingPosts.map((post) => {
+                const firstImage = getPostMediaItems(post).find(isImageMedia);
+                return (
+                  <div key={post._id} className={styles.trendingCard}>
+                    <div className={styles.trendingHeader}>
+                      <Avatar user={post.userId} size={36} />
+                      <div>
+                        <p className={styles.trendingAuthor}>{post.userId?.name}</p>
+                        <p className={styles.trendingLikes}>❤️ {post.likes} likes</p>
+                      </div>
                     </div>
+                    <p className={styles.trendingBody}>{post.body.slice(0, 120)}{post.body.length > 120 ? "..." : ""}</p>
+                    {firstImage && (
+                      <img src={getMediaUrl(firstImage.filename)} alt="" className={styles.trendingMedia} />
+                    )}
                   </div>
-                  <p className={styles.trendingBody}>{post.body.slice(0, 120)}{post.body.length > 120 ? "..." : ""}</p>
-                  {post.media && (
-                    <img src={getMediaUrl(post.media)} alt="" className={styles.trendingMedia} />
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </aside>
         </div>

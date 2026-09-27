@@ -22,12 +22,14 @@ export const fetchTrendingPosts = createAsyncThunk("posts/fetchTrending", async 
   }
 });
 
-export const createPost = createAsyncThunk("posts/create", async ({ body, media }, thunkAPI) => {
+export const createPost = createAsyncThunk("posts/create", async ({ body, mediaFiles }, thunkAPI) => {
   try {
     const formData = new FormData();
     formData.append("token", getToken());
-    formData.append("body", body);
-    if (media) formData.append("media", media);
+    formData.append("body", body ?? "");
+    (mediaFiles || []).forEach((file) => {
+      if (file) formData.append("media", file);
+    });
 
     const response = await clientServer.post("/post", formData, {
       headers: { "Content-Type": "multipart/form-data" },
@@ -47,11 +49,14 @@ export const deletePost = createAsyncThunk("posts/delete", async (postId, thunkA
   }
 });
 
-export const toggleLike = createAsyncThunk("posts/toggleLike", async (postId, thunkAPI) => {
+export const toggleLike = createAsyncThunk("posts/toggleLike", async (payload, thunkAPI) => {
   try {
+    const postId = typeof payload === "string" ? payload : payload.postId;
+    const reactionType = typeof payload === "string" ? "like" : payload.reactionType || "like";
     const response = await clientServer.post("/toggle_post_like", {
       token: getToken(),
       post_id: postId,
+      reactionType,
     });
     return response.data;
   } catch (error) {
@@ -59,9 +64,27 @@ export const toggleLike = createAsyncThunk("posts/toggleLike", async (postId, th
   }
 });
 
+export const toggleCommentLike = createAsyncThunk(
+  "posts/toggleCommentLike",
+  async ({ commentId, reactionType = "like" }, thunkAPI) => {
+    try {
+      const response = await clientServer.post("/toggle_comment_like", {
+        token: getToken(),
+        comment_id: commentId,
+        reactionType,
+      });
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to update comment reaction" });
+    }
+  }
+);
+
 export const fetchComments = createAsyncThunk("posts/fetchComments", async (postId, thunkAPI) => {
   try {
-    const response = await clientServer.get("/get_comments", { params: { post_id: postId } });
+    const response = await clientServer.get("/get_comments", {
+      params: { post_id: postId, token: getToken() },
+    });
     return { postId, comments: response.data.comments || [] };
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to load comments" });
@@ -70,13 +93,17 @@ export const fetchComments = createAsyncThunk("posts/fetchComments", async (post
 
 export const addComment = createAsyncThunk(
   "posts/addComment",
-  async ({ postId, commentBody }, thunkAPI) => {
+  async ({ postId, commentBody, parentCommentId, mediaFile, gifUrl }, thunkAPI) => {
     try {
-      await clientServer.post("/comment", {
-        token: getToken(),
-        post_id: postId,
-        commentBody,
-      });
+      const formData = new FormData();
+      formData.append("token", getToken());
+      formData.append("post_id", postId);
+      formData.append("commentBody", commentBody ?? "");
+      if (parentCommentId) formData.append("parent_comment_id", parentCommentId);
+      if (mediaFile) formData.append("media", mediaFile);
+      if (gifUrl) formData.append("gifUrl", gifUrl);
+
+      await clientServer.post("/comment", formData);
       thunkAPI.dispatch(fetchComments(postId));
       return postId;
     } catch (error) {
@@ -84,6 +111,11 @@ export const addComment = createAsyncThunk(
     }
   }
 );
+
+export const searchGifs = async (query) => {
+  const response = await clientServer.get("/gifs", { params: { q: query } });
+  return response.data;
+};
 
 export const deleteComment = createAsyncThunk(
   "posts/deleteComment",

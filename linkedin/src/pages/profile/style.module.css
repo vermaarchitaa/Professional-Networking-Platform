@@ -27,6 +27,18 @@
   font-size: 0.9rem;
 }
 
+.headline {
+  margin-top: 0.35rem;
+  color: #333 !important;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .uploadBtn {
   background: #00488b;
   color: white;
@@ -99,6 +111,266 @@
   display: flex;
   gap: 1rem;
   margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.displayText {
+  color: #333;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.displayMeta {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.35rem;
+}
+
+.displayEntry {
+  margin-bottom: 0.9rem;
+}
+
+.displayEntry:last-child {
+  margin-bottom: 0;
+}
+
+.displayEntryTitle {
+  font-weight: 600;
+  color: #222;
+}
+
+.activityCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 1.5rem;
+  overflow-x: hidden;
+}
+
+.activityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.8rem;
+}
+
+.activityTitle {
+  font-size: 1.1rem;
+  color: #00488b;
+  margin: 0;
+}
+
+.activityActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.createPostBtn {
+  background: white;
+  color: #00488b;
+  border: 1px solid #00488b;
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.editBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background: white;
+  color: #00488b;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 1rem;
+}
+
+.tab,
+.tabActive {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.tabActive {
+  color: #00488b;
+  border-bottom-color: #00488b;
+}
+
+.activityEmpty {
+  background: #f8f8f8;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.carousel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.carouselTrack {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.carouselTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselSlide {
+  flex: 0 0 260px;
+  width: 260px;
+}
+
+.carouselSlide > * {
+  margin-bottom: 0;
+}
+
+.carouselArrow {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background: white;
+  color: #00488b;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.carouselArrow:disabled {
+  visibility: hidden;
+}
+
+.showAll {
+  display: block;
+  width: 100%;
+  margin-top: 0.8rem;
+  padding-top: 0.9rem;
+  border: none;
+  border-top: 1px solid #eee;
+  background: none;
+  color: #00488b;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.imageTile {
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f3f2ef;
+}
+
+.imageTile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.imageTile:hover img {
+  transform: scale(1.03);
+}
+
+.imageModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+}
+
+.imageModal {
+  background: white;
+  border-radius: 12px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 1rem;
+  position: relative;
+}
+
+.imageModalClose {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  font-size: 0.95rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+}
+
+.imageModalImg {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+  background: #f3f2ef;
+}
+
+.imageModalBody {
+  margin-top: 0.8rem;
+  color: #333;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.imageModalMeta {
+  margin-top: 0.4rem;
+  color: #666;
+  font-size: 0.85rem;
 }
 
 .saveBtn {
@@ -166,7 +438,25 @@
     text-align: center;
   }
 
-  .actions {
+  .actions,
+  .headerActions,
+  .activityHeader,
+  .activityActions {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .editBtn {
+    width: 100%;
+    border-radius: 20px;
+  }
+
+  .imageGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .carouselSlide {
+    flex-basis: 78%;
+    width: 78%;
   }
 }
