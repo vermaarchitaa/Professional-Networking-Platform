@@ -3,10 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import Avatar from "@/Components/Avatar";
 import ReactionButton from "@/Components/ReactionButton";
 import GifPicker from "@/Components/GifPicker";
+import PostOwnerMenu from "@/Components/PostOwnerMenu";
 import {
   toggleLike,
   toggleCommentLike,
-  deletePost,
   fetchComments,
   addComment,
   deleteComment,
@@ -57,6 +57,10 @@ export default function PostCard({ post }) {
     postComments.filter((comment) => String(comment.parentCommentId) === String(commentId));
   const currentUserId = profile?.userId?._id;
   const isOwner = currentUserId && post.userId?._id === currentUserId;
+  const canComment = post.canComment !== false;
+  const commentBlockedMessage = (post.commentPermission || "anyone") === "off"
+    ? "Comments are turned off"
+    : "Only connections can comment on this post";
   const mediaItems = getPostMediaItems(post);
   const firstMedia = mediaItems[0];
   const viewerOpen = viewerIndex !== null;
@@ -169,12 +173,6 @@ export default function PostCard({ post }) {
       setOpenEmojiId(null);
       setOpenGifId(null);
     }, setReplyError);
-  };
-
-  const handleDelete = () => {
-    if (window.confirm("Delete this post?")) {
-      dispatch(deletePost(post._id));
-    }
   };
 
   const renderComposer = (composerId, value, setValue, onSubmit, error, placeholder) => {
@@ -312,20 +310,22 @@ export default function PostCard({ post }) {
             count={comment.likes || 0}
             onSelect={(reactionType) => dispatch(toggleCommentLike({ commentId: comment._id, reactionType }))}
           />
-          <button
-            type="button"
-            className={styles.commentAction}
-            onClick={() => {
-              setReplyToId(comment._id);
-              setReplyText("");
-              setReplyError("");
-              setOpenEmojiId(null);
-              setOpenGifId(null);
-              setAttachment(replyComposerId(comment._id), null);
-            }}
-          >
-            Reply
-          </button>
+          {canComment && (
+            <button
+              type="button"
+              className={styles.commentAction}
+              onClick={() => {
+                setReplyToId(comment._id);
+                setReplyText("");
+                setReplyError("");
+                setOpenEmojiId(null);
+                setOpenGifId(null);
+                setAttachment(replyComposerId(comment._id), null);
+              }}
+            >
+              Reply
+            </button>
+          )}
           {comment.userId?._id === currentUserId && (
             <button
               className={styles.commentDelete}
@@ -335,7 +335,7 @@ export default function PostCard({ post }) {
             </button>
           )}
         </div>
-        {replyToId === comment._id && (
+        {canComment && replyToId === comment._id && (
           <div className={styles.replyBox}>
             {renderComposer(
               replyComposerId(comment._id),
@@ -386,11 +386,7 @@ export default function PostCard({ post }) {
             @{post.userId?.username} · {formatDate(post.createdAt)}
           </p>
         </div>
-        {isOwner && (
-          <button className={styles.deleteBtn} onClick={handleDelete} aria-label="Delete post">
-            ✕
-          </button>
-        )}
+        {isOwner && !viewerOpen && <PostOwnerMenu post={post} />}
       </div>
 
       <p className={styles.body}>{post.body}</p>
@@ -429,7 +425,9 @@ export default function PostCard({ post }) {
 
       {showComments && !viewerOpen && (
         <div className={styles.commentSection}>
-          {renderComposer(CARD_MAIN, commentText, setCommentText, handleAddComment, commentError, "Add a comment...")}
+          {canComment
+            ? renderComposer(CARD_MAIN, commentText, setCommentText, handleAddComment, commentError, "Add a comment...")
+            : <p className={styles.noComments}>{commentBlockedMessage}</p>}
           {commentList}
         </div>
       )}
@@ -496,6 +494,7 @@ export default function PostCard({ post }) {
                       {formatDate(post.createdAt)}
                     </p>
                   </div>
+                  {isOwner && <PostOwnerMenu post={post} />}
                 </div>
                 {post.body && <p className={styles.viewerPostBody}>{post.body}</p>}
 
@@ -512,7 +511,9 @@ export default function PostCard({ post }) {
               </div>
 
               <div className={styles.viewerComposer}>
-                {renderComposer(VIEWER_MAIN, commentText, setCommentText, handleAddComment, commentError, "Add a comment...")}
+                {canComment
+                  ? renderComposer(VIEWER_MAIN, commentText, setCommentText, handleAddComment, commentError, "Add a comment...")
+                  : <p className={styles.noComments}>{commentBlockedMessage}</p>}
               </div>
             </aside>
           </div>

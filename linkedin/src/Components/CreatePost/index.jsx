@@ -276,6 +276,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
       createPost({
         body: body.trim(),
         mediaFiles: mediaItems.map((item) => item.file),
+        commentPermission: selectedCommentPermission,
       })
     );
     if (createPost.fulfilled.match(result)) {

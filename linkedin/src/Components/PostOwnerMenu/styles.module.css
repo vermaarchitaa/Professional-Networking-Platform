@@ -1,0 +1,229 @@
+.triggerWrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.menuBtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.menuBtn:hover,
+.menuBtn[aria-expanded="true"] {
+  background: #f3f2ef;
+  color: #191919;
+}
+
+.menu {
+  position: fixed;
+  z-index: 1400;
+  min-width: 280px;
+  max-width: calc(100vw - 1.5rem);
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+  padding: 0.35rem 0;
+}
+
+.menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: #191919;
+  font-size: 0.92rem;
+  font-family: inherit;
+}
+
+.menuItem:hover {
+  background: #f3f2ef;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1450;
+  padding: 1rem;
+}
+
+.dialog {
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  padding: 1.1rem 1.15rem 1rem;
+}
+
+.dialog h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.dialogCopy {
+  margin: 0 0 1rem;
+  color: #555;
+  font-size: 0.92rem;
+}
+
+.editArea {
+  width: 100%;
+  min-height: 140px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.editFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.emojiWrap {
+  position: relative;
+}
+
+.emojiTrigger {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #f3f2ef;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.emojiPopover {
+  position: absolute;
+  bottom: calc(100% + 0.4rem);
+  left: 0;
+  background: white;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  padding: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  width: 180px;
+  z-index: 2;
+}
+
+.emojiBtn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.editFooter .dialogActions {
+  margin-top: 0;
+}
+
+.primaryBtn,
+.secondaryBtn,
+.dangerBtn {
+  border: none;
+  border-radius: 20px;
+  padding: 0.45rem 1.1rem;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.primaryBtn {
+  background: #00488b;
+  color: #fff;
+}
+
+.secondaryBtn {
+  background: #f3f2ef;
+  color: #191919;
+}
+
+.dangerBtn {
+  background: #cc1016;
+  color: #fff;
+}
+
+.primaryBtn:disabled,
+.dangerBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #e53935;
+  font-size: 0.8rem;
+  margin: 0.4rem 0 0;
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+}
+
+.option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.2rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: #191919;
+}
+
+.option:hover {
+  background: #f3f2ef;
+}
+
+.radioOff,
+.radioOn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.radioOff {
+  border: 2px solid #707070;
+}
+
+.radioOn {
+  border: 6px solid #0a66c2;
+}

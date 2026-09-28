@@ -3,6 +3,7 @@ import {
   fetchPosts,
   createPost,
   deletePost,
+  updatePost,
   toggleLike,
   fetchComments,
   addComment,
@@ -48,6 +49,14 @@ const postSlice = createSlice({
       })
       .addCase(deletePost.fulfilled, (state, action) => {
         state.posts = state.posts.filter((p) => p._id !== action.payload);
+      })
+      .addCase(updatePost.fulfilled, (state, action) => {
+        const updated = action.payload;
+        if (!updated?._id) return;
+        const index = state.posts.findIndex((p) => String(p._id) === String(updated._id));
+        if (index >= 0) {
+          state.posts[index] = { ...state.posts[index], ...updated };
+        }
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
         const post = state.posts.find((p) => p._id === action.payload.postId);

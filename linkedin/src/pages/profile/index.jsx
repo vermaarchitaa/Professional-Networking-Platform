@@ -16,7 +16,7 @@ import { fetchPosts } from "@/config/redux/action/postAction";
 import { ProfileFormSkeleton, PostSkeleton } from "@/Components/Skeleton";
 import { validateProfile } from "@/config/validation";
 import useAuthGuard from "@/hooks/useAuth";
-import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia } from "@/config/utils";
+import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
 import styles from "./style.module.css";
 
 const emptyWork = { company: "", position: "", years: "" };
@@ -54,9 +54,8 @@ export default function ProfilePage() {
   }, [dispatch]);
 
   const myId = profile?.userId?._id;
-  const myPosts = [...posts]
-    .filter((p) => p.userId?._id === myId)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const myPosts = sortActivityPosts(posts.filter((p) => p.userId?._id === myId));
+  const featuredSignature = myPosts.filter((post) => post.featured === true).map((post) => post._id).join(",");
   const imageTiles = myPosts.flatMap((post) =>
     getPostMediaItems(post)
       .filter(isImageMedia)
@@ -117,6 +116,13 @@ export default function ProfilePage() {
       window.removeEventListener("resize", updateCarouselNav);
     };
   }, [myPosts.length, activityTab, postsLoading]);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    el.scrollTo({ left: 0, behavior: "smooth" });
+    updateCarouselNav();
+  }, [featuredSignature]);
 
   const scrollCarousel = (direction) => {
     const el = carouselRef.current;

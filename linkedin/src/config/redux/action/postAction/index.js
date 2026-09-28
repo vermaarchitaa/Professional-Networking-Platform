@@ -22,11 +22,12 @@ export const fetchTrendingPosts = createAsyncThunk("posts/fetchTrending", async 
   }
 });
 
-export const createPost = createAsyncThunk("posts/create", async ({ body, mediaFiles }, thunkAPI) => {
+export const createPost = createAsyncThunk("posts/create", async ({ body, mediaFiles, commentPermission }, thunkAPI) => {
   try {
     const formData = new FormData();
     formData.append("token", getToken());
     formData.append("body", body ?? "");
+    if (commentPermission) formData.append("commentPermission", commentPermission);
     (mediaFiles || []).forEach((file) => {
       if (file) formData.append("media", file);
     });
@@ -48,6 +49,22 @@ export const deletePost = createAsyncThunk("posts/delete", async (postId, thunkA
     return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to delete post" });
   }
 });
+
+export const updatePost = createAsyncThunk(
+  "posts/update",
+  async ({ postId, body, commentPermission, featured }, thunkAPI) => {
+    try {
+      const payload = { token: getToken(), post_id: postId };
+      if (body !== undefined) payload.body = body;
+      if (commentPermission !== undefined) payload.commentPermission = commentPermission;
+      if (featured !== undefined) payload.featured = featured;
+      const response = await clientServer.post("/update_post", payload);
+      return response.data.post;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to update post" });
+    }
+  }
+);
 
 export const toggleLike = createAsyncThunk("posts/toggleLike", async (payload, thunkAPI) => {
   try {

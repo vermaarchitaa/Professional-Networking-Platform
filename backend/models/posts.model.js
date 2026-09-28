@@ -59,6 +59,15 @@ const postSchema = mongoose.Schema({
             }
         }],
         default: []
+    },
+    commentPermission: {
+        type: String,
+        enum: ["anyone", "connections", "off"],
+        default: "anyone"
+    },
+    featured: {
+        type: Boolean,
+        default: false
     }
 });
 

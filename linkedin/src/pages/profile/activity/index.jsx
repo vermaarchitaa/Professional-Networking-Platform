@@ -8,7 +8,7 @@ import { PostSkeleton } from "@/Components/Skeleton";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import useAuthGuard from "@/hooks/useAuth";
-import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia } from "@/config/utils";
+import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
 import styles from "./style.module.css";
 
 export default function ProfileActivityPage() {
@@ -36,9 +36,7 @@ export default function ProfileActivityPage() {
   }, [previewTile]);
 
   const myId = profile?.userId?._id;
-  const myPosts = [...posts]
-    .filter((p) => p.userId?._id === myId)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const myPosts = sortActivityPosts(posts.filter((p) => p.userId?._id === myId));
   const imageTiles = myPosts.flatMap((post) =>
     getPostMediaItems(post)
       .filter(isImageMedia)

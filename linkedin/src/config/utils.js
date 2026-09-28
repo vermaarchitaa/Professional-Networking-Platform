@@ -55,3 +55,10 @@ export const formatDate = (dateString) => {
     year: "numeric",
   });
 };
+
+export const sortActivityPosts = (posts) =>
+  [...posts].sort((a, b) => {
+    const featuredDiff = Number(b.featured === true) - Number(a.featured === true);
+    if (featuredDiff !== 0) return featuredDiff;
+    return new Date(b.createdAt) - new Date(a.createdAt);
+  });

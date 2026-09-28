@@ -1,6 +1,7 @@
 import Post from "../models/posts.model.js";
 import User from "../models/user.model.js";
 import Comment from "../models/comments.model.js";
+import ConnectionRequest from "../models/connections.model.js";
 import { createNotification } from "../utils/notificationHelper.js";
 
 const REACTION_TYPES = new Set(["like", "love", "celebrate", "funny", "insightful", "support"]);
@@ -61,6 +62,64 @@ const resolveMyReaction = (reactions = [], likedBy = [], currentUserId) => {
     return null;
 };
 
+const COMMENT_PERMISSIONS = new Set(["anyone", "connections", "off"]);
+
+const normalizeCommentPermission = (value) => (
+    COMMENT_PERMISSIONS.has(value) ? value : "anyone"
+);
+
+const loadConnectedUserIds = async (currentUserId) => {
+    const ids = new Set();
+    if (!currentUserId) return ids;
+    const rows = await ConnectionRequest.find({
+        status_accepted: true,
+        $or: [{ userId: currentUserId }, { connectionId: currentUserId }],
+    }).select("userId connectionId");
+    rows.forEach((row) => {
+        const a = row.userId.toString();
+        const b = row.connectionId.toString();
+        ids.add(a === currentUserId ? b : a);
+    });
+    return ids;
+};
+
+const isAcceptedConnection = async (userA, userB) => {
+    if (!userA || !userB) return false;
+    if (userA.toString() === userB.toString()) return true;
+    const found = await ConnectionRequest.findOne({
+        status_accepted: true,
+        $or: [
+            { userId: userA, connectionId: userB },
+            { userId: userB, connectionId: userA },
+        ],
+    }).select("_id");
+    return Boolean(found);
+};
+
+const canUserCommentOnPost = (post, currentUserId, connectedIds) => {
+    const permission = normalizeCommentPermission(post.commentPermission);
+    if (permission === "off") return false;
+    if (permission === "anyone") return true;
+    if (!currentUserId) return false;
+    const ownerId = post.userId?._id?.toString?.() || post.userId.toString();
+    if (ownerId === currentUserId) return true;
+    return connectedIds.has(ownerId);
+};
+
+const serializePost = (post, currentUserId, connectedIds) => {
+    const postObj = post.toObject();
+    const myReaction = resolveMyReaction(post.reactions, post.likedBy, currentUserId);
+    return {
+        ...postObj,
+        commentPermission: normalizeCommentPermission(postObj.commentPermission),
+        featured: postObj.featured === true,
+        canComment: canUserCommentOnPost(post, currentUserId, connectedIds),
+        isLiked: Boolean(myReaction),
+        myReaction,
+        likes: (post.likedBy || []).length,
+    };
+};
+
 export const activeCheck = async (req, res) => {
     return res.status(200).json({ message: "RUNNING" })
 }
@@ -82,13 +141,15 @@ export const createPost = async (req, res) => {
             filename: file.filename,
             fileType: file.mimetype.split("/")[1]
         }));
+        const commentPermission = normalizeCommentPermission(req.body.commentPermission);
 
         const post = new Post({
             userId: user._id,
             body: req.body.body,
             media: firstFile ? firstFile.filename : "",
             fileType: firstFile ? firstFile.mimetype.split("/")[1] : "",
-            mediaItems
+            mediaItems,
+            commentPermission
         });
 
         await post.save();
@@ -115,16 +176,8 @@ export const getAllPosts = async (req, res) => {
             .populate('userId', 'name username email profilePicture')
             .sort({ createdAt: -1 });
 
-        const postsWithLikeStatus = posts.map((post) => {
-            const postObj = post.toObject();
-            const myReaction = resolveMyReaction(post.reactions, post.likedBy, currentUserId);
-            return {
-                ...postObj,
-                isLiked: Boolean(myReaction),
-                myReaction,
-                likes: (post.likedBy || []).length,
-            };
-        });
+        const connectedIds = await loadConnectedUserIds(currentUserId);
+        const postsWithLikeStatus = posts.map((post) => serializePost(post, currentUserId, connectedIds));
 
         return res.json({ posts: postsWithLikeStatus })
     } catch(error){
@@ -178,6 +231,67 @@ export const deletePost = async (req, res) => {
     }
 }
 
+export const updatePost = async (req, res) => {
+    const { token, post_id, body, commentPermission, featured } = req.body;
+
+    try {
+        const user = await User.findOne({ token }).select("_id");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const post = await Post.findOne({ _id: post_id });
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        if (post.userId.toString() !== user._id.toString()) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const updates = {};
+
+        if (body !== undefined) {
+            const nextBody = String(body);
+            if (nextBody.trim().length > 5000) {
+                return res.status(400).json({ message: "Post must be under 5000 characters" });
+            }
+            updates.body = nextBody;
+            updates.updatedAt = new Date();
+        }
+
+        if (commentPermission !== undefined) {
+            if (!COMMENT_PERMISSIONS.has(commentPermission)) {
+                return res.status(400).json({ message: "Invalid comment permission" });
+            }
+            updates.commentPermission = commentPermission;
+        }
+
+        if (featured !== undefined) {
+            if (featured === true || featured === "true") updates.featured = true;
+            else if (featured === false || featured === "false") updates.featured = false;
+            else return res.status(400).json({ message: "Invalid featured value" });
+        }
+
+        const fresh = Object.keys(updates).length
+            ? await Post.findOneAndUpdate(
+                { _id: post_id, userId: user._id },
+                { $set: updates },
+                { returnDocument: "after" }
+            ).populate("userId", "name username email profilePicture")
+            : await Post.findById(post._id).populate("userId", "name username email profilePicture");
+
+        if (!fresh) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        const connectedIds = await loadConnectedUserIds(user._id.toString());
+        return res.json({ post: serializePost(fresh, user._id.toString(), connectedIds) });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
 export const commentPost = async (req, res) => {
 
     const { token, post_id, commentBody, parent_comment_id } = req.body;
@@ -196,6 +310,21 @@ export const commentPost = async (req, res) => {
 
         if(!post){
             return res.status(404).json({ message: "Post not found "});
+        }
+
+        const commentPermission = normalizeCommentPermission(post.commentPermission);
+        if (commentPermission === "off") {
+            return res.status(403).json({ message: "Comments are turned off for this post" });
+        }
+        if (commentPermission === "connections") {
+            const ownerId = post.userId.toString();
+            const commenterId = user._id.toString();
+            if (ownerId !== commenterId) {
+                const connected = await isAcceptedConnection(ownerId, commenterId);
+                if (!connected) {
+                    return res.status(403).json({ message: "Only connections can comment on this post" });
+                }
+            }
         }
 
         let parentCommentId = null;
