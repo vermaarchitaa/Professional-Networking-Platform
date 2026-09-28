@@ -368,14 +368,6 @@ export default function ProfilePage() {
               >
                 Create a post
               </button>
-              <button
-                type="button"
-                className={styles.editBtn}
-                onClick={openEditor}
-                aria-label="Edit profile"
-              >
-                ✎
-              </button>
             </div>
           </div>
 
