@@ -8,7 +8,7 @@ import { PostSkeleton } from "@/Components/Skeleton";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import useAuthGuard from "@/hooks/useAuth";
-import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
+import { getMediaUrl, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
 import styles from "./style.module.css";
 
 export default function ProfileActivityPage() {
@@ -17,7 +17,7 @@ export default function ProfileActivityPage() {
   const { profile, isLoading: profileLoading } = useSelector((state) => state.profile);
   const { posts, isLoading: postsLoading } = useSelector((state) => state.posts);
   const [activityTab, setActivityTab] = useState("posts");
-  const [previewTile, setPreviewTile] = useState(null);
+  const [viewerPostId, setViewerPostId] = useState(null);
 
   useAuthGuard();
 
@@ -26,23 +26,11 @@ export default function ProfileActivityPage() {
     dispatch(fetchPosts());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (!previewTile) return;
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") setPreviewTile(null);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [previewTile]);
-
   const myId = profile?.userId?._id;
   const myPosts = sortActivityPosts(posts.filter((p) => p.userId?._id === myId));
-  const imageTiles = myPosts.flatMap((post) =>
-    getPostMediaItems(post)
-      .filter(isImageMedia)
-      .map((item) => ({ post, item }))
-  );
-  const tabEmpty = activityTab === "images" ? imageTiles.length === 0 : myPosts.length === 0;
+  const imagePosts = myPosts.filter((post) => getPostMediaItems(post).some(isImageMedia));
+  const viewerPost = posts.find((post) => post._id === viewerPostId);
+  const tabEmpty = activityTab === "images" ? imagePosts.length === 0 : myPosts.length === 0;
 
   return (
     <DashboardLayout>
@@ -69,7 +57,7 @@ export default function ProfileActivityPage() {
               className={activityTab === "posts" ? styles.tabActive : styles.tab}
               onClick={() => {
                 setActivityTab("posts");
-                setPreviewTile(null);
+                setViewerPostId(null);
               }}
             >
               Posts
@@ -98,56 +86,36 @@ export default function ProfileActivityPage() {
             </div>
           ) : activityTab === "images" ? (
             <div className={styles.imageGrid}>
-              {imageTiles.map(({ post, item }) => (
-                <button
-                  type="button"
-                  key={`${post._id}-${item.filename}`}
-                  className={styles.imageTile}
-                  onClick={() => setPreviewTile({ post, item })}
-                  aria-label="View image"
-                >
-                  <img src={getMediaUrl(item.filename)} alt="" />
-                </button>
-              ))}
+              {imagePosts.map((post) => {
+                const imageItems = getPostMediaItems(post).filter(isImageMedia);
+                const extraCount = imageItems.length - 1;
+                return (
+                  <button
+                    type="button"
+                    key={post._id}
+                    className={styles.imageTile}
+                    onClick={() => setViewerPostId(post._id)}
+                    aria-label="View post"
+                  >
+                    <img src={getMediaUrl(imageItems[0].filename)} alt="" />
+                    {extraCount > 0 && (
+                      <span className={styles.imageCount}>+{extraCount}</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           ) : (
             myPosts.map((post) => <PostCard key={post._id} post={post} />)
           )}
 
-          {previewTile && (
-            <div
-              className={styles.imageModalOverlay}
-              onClick={() => setPreviewTile(null)}
-              role="presentation"
-            >
-              <div
-                className={styles.imageModal}
-                onClick={(e) => e.stopPropagation()}
-                role="dialog"
-                aria-modal="true"
-                aria-label="Image preview"
-              >
-                <button
-                  type="button"
-                  className={styles.imageModalClose}
-                  onClick={() => setPreviewTile(null)}
-                  aria-label="Close preview"
-                >
-                  ✕
-                </button>
-                <img
-                  src={getMediaUrl(previewTile.item.filename)}
-                  alt=""
-                  className={styles.imageModalImg}
-                />
-                {previewTile.post.body && (
-                  <p className={styles.imageModalBody}>{previewTile.post.body}</p>
-                )}
-                <p className={styles.imageModalMeta}>
-                  {formatDate(previewTile.post.createdAt)}
-                </p>
-              </div>
-            </div>
+          {viewerPost && (
+            <PostCard
+              post={viewerPost}
+              autoOpenViewer
+              hideCard
+              onViewerClose={() => setViewerPostId(null)}
+            />
           )}
         </section>
       </div>

@@ -33,7 +33,7 @@ const revokeAttachment = (attachment) => {
   if (attachment?.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
 };
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, autoOpenViewer = false, hideCard = false, onViewerClose }) {
   const dispatch = useDispatch();
   const { comments } = useSelector((state) => state.posts);
   const { profile } = useSelector((state) => state.profile);
@@ -78,6 +78,7 @@ export default function PostCard({ post }) {
     setViewerIndex(null);
     setOpenEmojiId(null);
     setOpenGifId(null);
+    onViewerClose?.();
   };
 
   const goPrev = () => {
@@ -104,6 +105,15 @@ export default function PostCard({ post }) {
       window.removeEventListener("keydown", onKeyDown);
     };
   }, [viewerOpen, mediaItems.length]);
+
+  useEffect(() => {
+    if (!autoOpenViewer) return;
+    if (mediaItems.length === 0) return;
+    setViewerIndex(0);
+    setOpenEmojiId(null);
+    setOpenGifId(null);
+    dispatch(fetchComments(post._id));
+  }, [autoOpenViewer, post._id]);
 
   useEffect(() => () => {
     revokeAttachment(mainAttachment);
@@ -359,7 +369,7 @@ export default function PostCard({ post }) {
   );
 
   return (
-    <div className={styles.card}>
+    <div className={hideCard ? undefined : styles.card}>
       <input
         ref={imageInputRef}
         type="file"
@@ -378,6 +388,8 @@ export default function PostCard({ post }) {
         }}
       />
 
+      {!hideCard && (
+        <>
       <div className={styles.header}>
         <Avatar user={post.userId} size={44} />
         <div className={styles.headerInfo}>
@@ -430,6 +442,8 @@ export default function PostCard({ post }) {
             : <p className={styles.noComments}>{commentBlockedMessage}</p>}
           {commentList}
         </div>
+      )}
+        </>
       )}
 
       {viewerOpen && viewerItem && (
