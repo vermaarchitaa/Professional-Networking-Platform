@@ -6,7 +6,6 @@ import { clearProfile } from "@/config/redux/reducer/profileReducer";
 import { clearConnections } from "@/config/redux/reducer/connectionReducer";
 import { clearNotifications } from "@/config/redux/reducer/notificationReducer";
 import NotificationBell from "@/Components/NotificationBell";
-import { getToken } from "@/config/utils";
 import { useAuthCheck } from "@/hooks/useAuth";
 import styles from "./styles.module.css";
 
@@ -18,7 +17,7 @@ export default function NavbarComponent() {
 
   useAuthCheck();
 
-  const isLoggedIn = loggedIn || !!getToken();
+  const isLoggedIn = loggedIn;
 
   const handleLogout = () => {
     dispatch(logout());
