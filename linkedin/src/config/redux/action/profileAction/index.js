@@ -67,6 +67,16 @@ export const uploadCoverPicture = createAsyncThunk("profile/uploadCover", async 
   }
 });
 
+export const deleteCoverPicture = createAsyncThunk("profile/deleteCover", async (_, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/delete_cover_picture", { token: getToken() });
+    thunkAPI.dispatch(fetchUserProfile());
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to delete cover photo" });
+  }
+});
+
 export const downloadResume = createAsyncThunk("profile/downloadResume", async (userId, thunkAPI) => {
   try {
     const response = await clientServer.get("/user/download_resume", {

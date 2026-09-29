@@ -10,7 +10,7 @@ import bcrypt from 'bcrypt';
 import fs from "fs";
 import path from "path";
 import Post from "../models/posts.model.js";
-import { UPLOADS_DIR, ensureUploadsDir, isPdfEmbeddableImage } from "../utils/uploads.js";
+import { UPLOADS_DIR, ensureUploadsDir, isPdfEmbeddableImage, removeUploadedFile } from "../utils/uploads.js";
 
 const convertUserDataToPDF = async (userData) => {
     ensureUploadsDir();
@@ -157,6 +157,34 @@ export const uploadCoverPicture = async (req, res) => {
         await user.save();
 
         return res.json({ message: "Cover photo updated" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export const deleteCoverPicture = async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        if (!token || typeof token !== "string") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const user = await User.findOne({ token: token });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const previous = user.coverPicture;
+        user.coverPicture = "";
+        await user.save();
+
+        if (previous) {
+            removeUploadedFile(previous);
+        }
+
+        return res.json({ message: "Cover photo deleted" });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }

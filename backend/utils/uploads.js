@@ -73,3 +73,17 @@ export const isPdfEmbeddableImage = (filename) => {
   const ext = path.extname(filename || "").toLowerCase();
   return ext === ".jpg" || ext === ".jpeg" || ext === ".png";
 };
+
+export const removeUploadedFile = (filename) => {
+  if (!filename || typeof filename !== "string") return;
+
+  const basename = path.basename(filename);
+  if (basename !== filename) return;
+  if (!/^[a-f0-9]{64}\.(jpg|jpeg|png|gif|webp)$/i.test(basename)) return;
+
+  const uploadsRoot = path.resolve(UPLOADS_DIR);
+  const target = path.resolve(UPLOADS_DIR, basename);
+  if (!target.startsWith(uploadsRoot + path.sep)) return;
+
+  fs.unlink(target, () => {});
+};

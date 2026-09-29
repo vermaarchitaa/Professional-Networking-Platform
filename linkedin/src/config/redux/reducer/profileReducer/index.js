@@ -5,6 +5,7 @@ import {
   updateUserInfo,
   uploadProfilePicture,
   uploadCoverPicture,
+  deleteCoverPicture,
 } from "@/config/redux/action/profileAction";
 
 const initialState = {
@@ -56,6 +57,13 @@ const profileSlice = createSlice({
       .addCase(uploadCoverPicture.rejected, (state, action) => {
         state.isError = true;
         state.message = action.payload?.message || "Failed to upload cover photo";
+      })
+      .addCase(deleteCoverPicture.fulfilled, (state, action) => {
+        state.message = action.payload?.message || "Cover photo deleted";
+      })
+      .addCase(deleteCoverPicture.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload?.message || "Failed to delete cover photo";
       });
   },
 });

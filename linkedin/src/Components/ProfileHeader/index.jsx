@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Avatar from "@/Components/Avatar";
+import CoverPhotoFlow from "@/Components/CoverPhotoFlow";
 import {
   downloadResume,
   updateProfileData,
-  uploadCoverPicture,
   uploadProfilePicture,
 } from "@/config/redux/action/profileAction";
 import { getMediaUrl } from "@/config/utils";
@@ -18,11 +18,10 @@ const OPEN_TO_VISIBILITY = [
 export default function ProfileHeader({ profile, onEditProfile }) {
   const dispatch = useDispatch();
   const { message, isError } = useSelector((state) => state.profile);
-  const coverInputRef = useRef(null);
   const photoInputRef = useRef(null);
   const resourcesRef = useRef(null);
   const [openPanel, setOpenPanel] = useState(null);
-  const [coverError, setCoverError] = useState("");
+  const [coverOpen, setCoverOpen] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [openToDraft, setOpenToDraft] = useState({
     enabled: false,
@@ -51,7 +50,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
   useEffect(() => {
     if (!openPanel) return undefined;
     const onKeyDown = (event) => {
-      if (event.key === "Escape") setOpenPanel(null);
+      if (event.key === "Escape" && !coverOpen) setOpenPanel(null);
     };
     const onPointerDown = (event) => {
       if (openPanel === "resources" && resourcesRef.current?.contains(event.target)) return;
@@ -63,18 +62,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
       window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("mousedown", onPointerDown);
     };
-  }, [openPanel]);
-
-  const handleCoverChange = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    setCoverError("");
-    const result = await dispatch(uploadCoverPicture(file));
-    if (uploadCoverPicture.rejected.match(result)) {
-      setCoverError(result.payload?.message || "Failed to update cover photo");
-    }
-  };
+  }, [openPanel, coverOpen]);
 
   const handlePhotoChange = async (event) => {
     const file = event.target.files?.[0];
@@ -113,17 +101,10 @@ export default function ProfileHeader({ profile, onEditProfile }) {
           type="button"
           className={styles.coverEdit}
           aria-label="Change cover photo"
-          onClick={() => coverInputRef.current?.click()}
+          onClick={() => setCoverOpen(true)}
         >
           ✎
         </button>
-        <input
-          ref={coverInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
-          hidden
-          onChange={handleCoverChange}
-        />
       </div>
 
       <div className={styles.body}>
@@ -182,8 +163,8 @@ export default function ProfileHeader({ profile, onEditProfile }) {
           ) : null}
         </div>
 
-        {(coverError || photoError || (isError && message)) && (
-          <p className={styles.error}>{coverError || photoError || message}</p>
+        {(photoError || (isError && message)) && (
+          <p className={styles.error}>{photoError || message}</p>
         )}
 
         <div className={styles.actions}>
@@ -327,6 +308,13 @@ export default function ProfileHeader({ profile, onEditProfile }) {
           </div>
         </div>
       )}
+
+      <CoverPhotoFlow
+        open={coverOpen}
+        coverSrc={coverSrc}
+        hasCover={Boolean(user?.coverPicture)}
+        onClose={() => setCoverOpen(false)}
+      />
     </section>
   );
 }
