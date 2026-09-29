@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Avatar from "@/Components/Avatar";
 import CoverPhotoFlow from "@/Components/CoverPhotoFlow";
+import { CameraIcon } from "@/Components/CoverPhotoFlow/icons";
 import {
   downloadResume,
   updateProfileData,
@@ -32,7 +33,8 @@ export default function ProfileHeader({ profile, onEditProfile }) {
   const [showOpenToDetails, setShowOpenToDetails] = useState(false);
 
   const user = profile?.userId;
-  const coverSrc = user?.coverPicture ? getMediaUrl(user.coverPicture) : "";
+  const hasCover = Boolean(user?.coverPicture);
+  const coverSrc = hasCover ? getMediaUrl(user.coverPicture) : "";
   const firstSchool = (profile?.education || []).find((item) => item.school)?.school;
   const connectionsCount = Number(profile?.connectionsCount || 0);
   const openToWork = profile?.openToWork || {};
@@ -100,10 +102,10 @@ export default function ProfileHeader({ profile, onEditProfile }) {
         <button
           type="button"
           className={styles.coverEdit}
-          aria-label="Change cover photo"
+          aria-label={hasCover ? "Change cover photo" : "Add cover photo"}
           onClick={() => setCoverOpen(true)}
         >
-          ✎
+          {hasCover ? "✎" : <CameraIcon />}
         </button>
       </div>
 
@@ -312,7 +314,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
       <CoverPhotoFlow
         open={coverOpen}
         coverSrc={coverSrc}
-        hasCover={Boolean(user?.coverPicture)}
+        hasCover={hasCover}
         onClose={() => setCoverOpen(false)}
       />
     </section>

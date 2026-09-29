@@ -9,13 +9,18 @@
   padding: 1rem;
 }
 
-.dialog {
+.dialog,
+.compactDialog {
   width: min(760px, 100%);
   max-height: calc(100vh - 2rem);
   overflow: auto;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+}
+
+.compactDialog {
+  width: min(420px, 100%);
 }
 
 .header {
@@ -62,14 +67,25 @@
 }
 
 .previewFallback {
-  background: linear-gradient(135deg, #8fb4d6 0%, #3b6fa0 45%, #1b3f66 100%);
+  background-color: #c8d6e2;
+  background-image:
+    radial-gradient(ellipse 85% 130% at 8% 8%, rgba(255, 255, 255, 0.72) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 95% at 92% 18%, rgba(154, 178, 201, 0.78) 0%, transparent 54%),
+    radial-gradient(ellipse 90% 80% at 72% 100%, rgba(176, 196, 214, 0.9) 0%, transparent 58%),
+    radial-gradient(ellipse 50% 60% at 30% 70%, rgba(255, 255, 255, 0.28) 0%, transparent 60%),
+    linear-gradient(135deg, #d9e4ed 0%, #b7c8d6 48%, #9eb4c6 100%);
 }
 
-.actions {
+.actions,
+.compactActions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.5rem;
   padding: 0.85rem 1.1rem 1.15rem;
+}
+
+.compactActions {
+  grid-template-columns: 1fr;
 }
 
 .actionBtn {
@@ -102,7 +118,8 @@
 }
 
 @media (max-width: 640px) {
-  .dialog {
+  .dialog,
+  .compactDialog {
     width: 100%;
   }
 
