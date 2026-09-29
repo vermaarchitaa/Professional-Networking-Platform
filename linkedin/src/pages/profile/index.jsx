@@ -2,15 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/layout/DashboardLayout";
-import Avatar from "@/Components/Avatar";
 import CreatePost from "@/Components/CreatePost";
 import PostCard from "@/Components/PostCard";
+import ProfileHeader from "@/Components/ProfileHeader";
 import {
   fetchUserProfile,
   updateProfileData,
   updateUserInfo,
-  uploadProfilePicture,
-  downloadResume,
 } from "@/config/redux/action/profileAction";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import { ProfileFormSkeleton, PostSkeleton } from "@/Components/Skeleton";
@@ -36,6 +34,7 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [location, setLocation] = useState("");
   const [saved, setSaved] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
@@ -75,6 +74,7 @@ export default function ProfilePage() {
     setName(profile.userId?.name || "");
     setUsername(profile.userId?.username || "");
     setEmail(profile.userId?.email || "");
+    setLocation(profile.location || "");
   }, [profile]);
 
   useEffect(() => {
@@ -140,7 +140,7 @@ export default function ProfilePage() {
     }
     setFieldErrors({});
     dispatch(updateUserInfo({ name, username, email }));
-    dispatch(updateProfileData({ bio, currentPost, pastWork, education }));
+    dispatch(updateProfileData({ bio, currentPost, pastWork, education, location }));
     setIsEditing(false);
   };
 
@@ -156,6 +156,7 @@ export default function ProfilePage() {
     setName(profile.userId?.name || "");
     setUsername(profile.userId?.username || "");
     setEmail(profile.userId?.email || "");
+    setLocation(profile.location || "");
     setFieldErrors({});
     setIsEditing(false);
   };
@@ -165,11 +166,6 @@ export default function ProfilePage() {
     setTimeout(() => {
       editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
-  };
-
-  const handlePhotoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) dispatch(uploadProfilePicture(file));
   };
 
   const updateWork = (index, field, value) => {
@@ -201,27 +197,8 @@ export default function ProfilePage() {
   return (
     <DashboardLayout>
       <div className={styles.container}>
-        <div className={styles.header} id="profile-edit" ref={editRef}>
-          <Avatar user={profile?.userId} size={96} />
-          <div className={styles.headerInfo}>
-            <h1>{profile?.userId?.name}</h1>
-            <p>@{profile?.userId?.username}</p>
-            {profile?.currentPost && <p className={styles.headline}>{profile.currentPost}</p>}
-          </div>
-          <div className={styles.headerActions}>
-            <label className={styles.uploadBtn}>
-              Change Photo
-              <input type="file" accept="image/*" hidden onChange={handlePhotoChange} />
-            </label>
-            <button
-              type="button"
-              className={styles.downloadBtn}
-              onClick={() => dispatch(downloadResume(profile?.userId?._id))}
-            >
-              Download Resume (PDF)
-            </button>
-          </div>
-        </div>
+        <ProfileHeader profile={profile} onEditProfile={openEditor} />
+        <div id="profile-edit" ref={editRef} />
 
         {saved && <p className={styles.success}>{message}</p>}
 
@@ -299,6 +276,13 @@ export default function ProfilePage() {
                     className={fieldErrors.email ? styles.inputError : ""}
                   />
                   {fieldErrors.email && <span className={styles.fieldError}>{fieldErrors.email}</span>}
+                </div>
+                <div className={`${styles.fieldWrap} ${styles.fullWidth}`}>
+                  <input
+                    placeholder="Location (e.g. Ghaziabad, Uttar Pradesh, India)"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
                 </div>
               </div>
             </section>

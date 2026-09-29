@@ -50,6 +50,28 @@ const ProfileSchema = new mongoose.Schema({
     education: {
         type: [educationSchema],
         default: [],
+    },
+    location: {
+        type: String,
+        default: ""
+    },
+    openToWork: {
+        enabled: {
+            type: Boolean,
+            default: false
+        },
+        visibility: {
+            type: String,
+            default: "recruiters"
+        },
+        location: {
+            type: String,
+            default: ""
+        },
+        workTypes: {
+            type: String,
+            default: ""
+        }
     }
 });
 

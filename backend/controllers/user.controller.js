@@ -139,6 +139,28 @@ export const uploadProfilePicture = async (req, res) => {
         return res.status(500).json({ message: error.message})
     }
 }
+
+export const uploadCoverPicture = async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        const user = await User.findOne({ token: token });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (!req.file) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        user.coverPicture = req.file.filename;
+        await user.save();
+
+        return res.json({ message: "Cover photo updated" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
 export const updateUserProfile = async (req, res) => {
     try{
 
@@ -183,20 +205,63 @@ export const getUserAndProfile = async (req, res) => {
         }
 
         const userProfile = await Profile.findOne({ userId: user._id })
-           .populate('userId', 'name email username profilePicture');
-        
-        return res.json(userProfile);
+           .populate('userId', 'name email username profilePicture coverPicture');
+
+        if (!userProfile) {
+            return res.status(404).json({ message: "Profile not found" });
+        }
+
+        const connectionsCount = await ConnectionRequest.countDocuments({
+            status_accepted: true,
+            $or: [{ userId: user._id }, { connectionId: user._id }],
+        });
+
+        return res.json({
+            ...userProfile.toObject(),
+            connectionsCount,
+        });
 
     } catch(error){
         return res.status(500).json({ message: error.message});
     }
 }
 
+const OPEN_TO_VISIBILITY = new Set(["recruiters", "anyone"]);
+
+const normalizeOpenToWork = (value) => {
+    if (value === undefined) return { ok: true };
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        return { ok: false, message: "openToWork must be an object" };
+    }
+    if (value.enabled !== undefined && typeof value.enabled !== "boolean") {
+        return { ok: false, message: "openToWork.enabled must be a boolean" };
+    }
+    if (value.visibility !== undefined && !OPEN_TO_VISIBILITY.has(value.visibility)) {
+        return { ok: false, message: "openToWork.visibility must be recruiters or anyone" };
+    }
+    if (value.location !== undefined && typeof value.location !== "string") {
+        return { ok: false, message: "openToWork.location must be a string" };
+    }
+    if (value.workTypes !== undefined && typeof value.workTypes !== "string") {
+        return { ok: false, message: "openToWork.workTypes must be a string" };
+    }
+
+    return {
+        ok: true,
+        value: {
+            enabled: Boolean(value.enabled),
+            visibility: value.visibility === "anyone" ? "anyone" : "recruiters",
+            location: typeof value.location === "string" ? value.location : "",
+            workTypes: typeof value.workTypes === "string" ? value.workTypes : "",
+        },
+    };
+};
+
 export const updateProfileData = async (req, res) => {
 
     try {
 
-        const { token, ...newProfileData } = req.body;
+        const { token, openToWork, connectionsCount, ...newProfileData } = req.body;
 
         const userProfile = await User.findOne({token: token});
 
@@ -205,8 +270,21 @@ export const updateProfileData = async (req, res) => {
         }
 
         const profile_to_update = await Profile.findOne({ userId: userProfile._id});
+        if(!profile_to_update){
+            return res.status(404).json({ message: "Profile not found" });
+        }
 
+        const normalizedOpenToWork = normalizeOpenToWork(openToWork);
+        if (!normalizedOpenToWork.ok) {
+            return res.status(400).json({ message: normalizedOpenToWork.message });
+        }
+
+        delete newProfileData.userId;
+        delete newProfileData.connectionsCount;
         Object.assign(profile_to_update, newProfileData);
+        if (normalizedOpenToWork.value) {
+            profile_to_update.set("openToWork", normalizedOpenToWork.value);
+        }
 
         await profile_to_update.save();
 
