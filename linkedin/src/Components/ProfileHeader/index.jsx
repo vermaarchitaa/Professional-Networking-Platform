@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import Avatar from "@/Components/Avatar";
 import CoverPhotoFlow from "@/Components/CoverPhotoFlow";
 import { CameraIcon } from "@/Components/CoverPhotoFlow/icons";
+import ProfilePhotoFlow from "@/Components/ProfilePhotoFlow";
+import { hasUploadedProfilePicture } from "@/Components/ProfilePhotoFlow/photoUtils";
 import {
   downloadResume,
   updateProfileData,
@@ -23,6 +25,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
   const resourcesRef = useRef(null);
   const [openPanel, setOpenPanel] = useState(null);
   const [coverOpen, setCoverOpen] = useState(false);
+  const [photoOpen, setPhotoOpen] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const [openToDraft, setOpenToDraft] = useState({
     enabled: false,
@@ -34,6 +37,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
 
   const user = profile?.userId;
   const hasCover = Boolean(user?.coverPicture);
+  const hasPhoto = hasUploadedProfilePicture(user);
   const coverSrc = hasCover ? getMediaUrl(user.coverPicture) : "";
   const firstSchool = (profile?.education || []).find((item) => item.school)?.school;
   const connectionsCount = Number(profile?.connectionsCount || 0);
@@ -52,7 +56,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
   useEffect(() => {
     if (!openPanel) return undefined;
     const onKeyDown = (event) => {
-      if (event.key === "Escape" && !coverOpen) setOpenPanel(null);
+      if (event.key === "Escape" && !coverOpen && !photoOpen) setOpenPanel(null);
     };
     const onPointerDown = (event) => {
       if (openPanel === "resources" && resourcesRef.current?.contains(event.target)) return;
@@ -64,7 +68,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
       window.removeEventListener("keydown", onKeyDown);
       document.removeEventListener("mousedown", onPointerDown);
     };
-  }, [openPanel, coverOpen]);
+  }, [openPanel, coverOpen, photoOpen]);
 
   const handlePhotoChange = async (event) => {
     const file = event.target.files?.[0];
@@ -111,24 +115,46 @@ export default function ProfileHeader({ profile, onEditProfile }) {
 
       <div className={styles.body}>
         <div className={styles.photoWrap}>
-          <div className={styles.photoRing}>
-            <Avatar user={user} size={152} />
+          <div className={hasPhoto ? styles.photoRing : styles.photoRingEmpty}>
+            {hasPhoto ? (
+              <Avatar user={user} size={152} />
+            ) : (
+              <div className={styles.photoPlaceholder} aria-hidden="true">
+                <svg viewBox="0 0 80 80" width="72" height="72" fill="none">
+                  <circle cx="40" cy="28" r="14" fill="#c3c6c9" />
+                  <path d="M16 68c2.5-16 12-24 24-24s21.5 8 24 24" fill="#c3c6c9" />
+                </svg>
+              </div>
+            )}
           </div>
-          <button
-            type="button"
-            className={styles.photoEdit}
-            aria-label="Change profile photo"
-            onClick={() => photoInputRef.current?.click()}
-          >
-            ✎
-          </button>
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
-            hidden
-            onChange={handlePhotoChange}
-          />
+          {hasPhoto ? (
+            <>
+              <button
+                type="button"
+                className={styles.photoEdit}
+                aria-label="Change profile photo"
+                onClick={() => photoInputRef.current?.click()}
+              >
+                ✎
+              </button>
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
+                hidden
+                onChange={handlePhotoChange}
+              />
+            </>
+          ) : (
+            <button
+              type="button"
+              className={styles.photoAdd}
+              aria-label="Add profile photo"
+              onClick={() => setPhotoOpen(true)}
+            >
+              +
+            </button>
+          )}
         </div>
 
         <button
@@ -316,6 +342,10 @@ export default function ProfileHeader({ profile, onEditProfile }) {
         coverSrc={coverSrc}
         hasCover={hasCover}
         onClose={() => setCoverOpen(false)}
+      />
+      <ProfilePhotoFlow
+        open={photoOpen}
+        onClose={() => setPhotoOpen(false)}
       />
     </section>
   );
