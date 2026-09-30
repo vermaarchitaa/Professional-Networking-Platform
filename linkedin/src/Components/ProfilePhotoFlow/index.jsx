@@ -1,29 +1,54 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
+import ProfilePhotoMenu from "@/Components/ProfilePhotoMenu";
 import ProfilePhotoIntro from "@/Components/ProfilePhotoIntro";
 import ProfilePhotoCamera from "@/Components/ProfilePhotoCamera";
 import ProfilePhotoEditor from "@/Components/ProfilePhotoEditor";
+import ProfilePhotoFrames from "@/Components/ProfilePhotoFrames";
+import ProfilePhotoDeleteDialog from "@/Components/ProfilePhotoDeleteDialog";
+import { loadImageFromSrc } from "@/Components/CoverPhotoFlow/coverUtils";
 import {
   PHOTO_ACCEPT,
   loadImageFromBlob,
   revokeImageUrl,
   validateProfilePhotoFile,
 } from "@/Components/ProfilePhotoFlow/photoUtils";
-import { uploadProfilePicture } from "@/config/redux/action/profileAction";
+import { deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadProfilePicture } from "@/config/redux/action/profileAction";
 
-export default function ProfilePhotoFlow({ open, onClose }) {
+export default function ProfilePhotoFlow({
+  open,
+  hasPhoto,
+  photoSrc,
+  frameId,
+  visibility,
+  onClose,
+}) {
   const dispatch = useDispatch();
   const fileInputRef = useRef(null);
   const imageRef = useRef(null);
   const loadGenRef = useRef(0);
-  const [view, setView] = useState("intro");
+  const cameraRequestRef = useRef(null);
+  const savingRef = useRef(false);
+  const deletingRef = useRef(false);
+  const startView = hasPhoto ? "menu" : "intro";
+  const wasOpenRef = useRef(open);
+  const [view, setView] = useState(startView);
+  const [returnView, setReturnView] = useState(startView);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [image, setImage] = useState(null);
   const [previewSrc, setPreviewSrc] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const savingRef = useRef(false);
+  const [deleting, setDeleting] = useState(false);
+  const [frameSaving, setFrameSaving] = useState(false);
 
   imageRef.current = image;
+
+  if (open !== wasOpenRef.current) {
+    wasOpenRef.current = open;
+    setView(startView);
+    setReturnView(startView);
+  }
 
   const resetEditor = () => {
     loadGenRef.current += 1;
@@ -35,22 +60,32 @@ export default function ProfilePhotoFlow({ open, onClose }) {
 
   const closeAll = () => {
     resetEditor();
-    setView("intro");
+    setView(startView);
+    setReturnView(startView);
+    setDeleteOpen(false);
     setError("");
     setSaving(false);
     savingRef.current = false;
+    setDeleting(false);
+    deletingRef.current = false;
+    setFrameSaving(false);
     onClose();
   };
 
   useEffect(() => {
     if (!open) {
       resetEditor();
-      setView("intro");
+      cameraRequestRef.current = null;
+      setDeleteOpen(false);
       setError("");
       setSaving(false);
       savingRef.current = false;
+      setDeleting(false);
+      deletingRef.current = false;
+      setFrameSaving(false);
       return undefined;
     }
+
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -62,24 +97,62 @@ export default function ProfilePhotoFlow({ open, onClose }) {
     if (!open) return undefined;
     const onKeyDown = (event) => {
       if (event.key !== "Escape") return;
+      if (deleteOpen) {
+        setError("");
+        setDeleteOpen(false);
+        return;
+      }
       if (view === "editor") {
         resetEditor();
+        setError("");
+        setView(returnView);
+        return;
+      }
+      if (view === "camera") {
+        cameraRequestRef.current = null;
         setError("");
         setView("intro");
         return;
       }
-      if (view === "camera") {
+      if (view === "frames") {
         setError("");
-        setView("intro");
+        setView("menu");
+        return;
+      }
+      if (view === "intro" && hasPhoto) {
+        setError("");
+        setView("menu");
         return;
       }
       closeAll();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, view]);
+  }, [open, view, returnView, deleteOpen, hasPhoto]);
 
-  const openEditorFromBlob = async (blob) => {
+  const openEditorFromSrc = async (src, nextReturnView) => {
+    const gen = ++loadGenRef.current;
+    setError("");
+    try {
+      const loaded = await loadImageFromSrc(src);
+      if (gen !== loadGenRef.current) {
+        revokeImageUrl(loaded);
+        return;
+      }
+      revokeImageUrl(imageRef.current);
+      imageRef.current = loaded;
+      setImage(loaded);
+      setPreviewSrc(loaded._objectUrl || src);
+      setReturnView(nextReturnView);
+      setView("editor");
+    } catch {
+      if (gen === loadGenRef.current) {
+        setError("Could not load this image for editing.");
+      }
+    }
+  };
+
+  const openEditorFromBlob = async (blob, nextReturnView) => {
     const gen = ++loadGenRef.current;
     setError("");
     try {
@@ -92,6 +165,7 @@ export default function ProfilePhotoFlow({ open, onClose }) {
       imageRef.current = loaded;
       setImage(loaded);
       setPreviewSrc(loaded._objectUrl);
+      setReturnView(nextReturnView);
       setView("editor");
     } catch {
       if (gen === loadGenRef.current) {
@@ -111,7 +185,7 @@ export default function ProfilePhotoFlow({ open, onClose }) {
       setView("intro");
       return;
     }
-    openEditorFromBlob(file);
+    openEditorFromBlob(file, "intro");
   };
 
   const handleSave = async (file) => {
@@ -129,16 +203,83 @@ export default function ProfilePhotoFlow({ open, onClose }) {
     closeAll();
   };
 
+  const handleDelete = async () => {
+    if (deletingRef.current) return;
+    deletingRef.current = true;
+    setDeleting(true);
+    setError("");
+    const result = await dispatch(deleteProfilePicture());
+    if (deleteProfilePicture.rejected.match(result)) {
+      deletingRef.current = false;
+      setDeleting(false);
+      setError(result.payload?.message || "Failed to delete profile picture");
+      return;
+    }
+    closeAll();
+  };
+
+  const handleVisibilityChange = async (nextVisibility) => {
+    setError("");
+    const result = await dispatch(updateProfilePhotoVisibility(nextVisibility));
+    if (updateProfilePhotoVisibility.rejected.match(result)) {
+      setError(result.payload?.message || "Failed to update visibility");
+      throw new Error("visibility");
+    }
+  };
+
+  const handleApplyFrame = async (nextFrame) => {
+    setFrameSaving(true);
+    setError("");
+    const result = await dispatch(updateProfilePictureFrame(nextFrame));
+    setFrameSaving(false);
+    if (updateProfilePictureFrame.rejected.match(result)) {
+      setError(result.payload?.message || "Failed to update frame");
+      return;
+    }
+    setView("menu");
+  };
+
   if (!open) return null;
 
   return (
     <>
+      {view === "menu" && (
+        <ProfilePhotoMenu
+          open
+          photoSrc={photoSrc}
+          frameId={frameId}
+          visibility={visibility}
+          error={!deleteOpen ? error : ""}
+          onClose={closeAll}
+          onEdit={() => openEditorFromSrc(photoSrc, "menu")}
+          onUpdate={() => {
+            setError("");
+            setView("intro");
+          }}
+          onFrames={() => {
+            setError("");
+            setView("frames");
+          }}
+          onDelete={() => {
+            setError("");
+            setDeleteOpen(true);
+          }}
+          onVisibilityChange={handleVisibilityChange}
+        />
+      )}
+
       {view === "intro" && (
         <ProfilePhotoIntro
           error={error}
-          onClose={closeAll}
+          onClose={hasPhoto ? () => {
+            setError("");
+            setView("menu");
+          } : closeAll}
           onUseCamera={() => {
             setError("");
+            cameraRequestRef.current = navigator.mediaDevices?.getUserMedia
+              ? navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+              : null;
             setView("camera");
           }}
           onUploadPhoto={() => fileInputRef.current?.click()}
@@ -147,12 +288,20 @@ export default function ProfilePhotoFlow({ open, onClose }) {
 
       {view === "camera" && (
         <ProfilePhotoCamera
-          onClose={closeAll}
+          initialRequest={cameraRequestRef.current}
+          onClose={() => {
+            cameraRequestRef.current = null;
+            closeAll();
+          }}
           onCancel={() => {
+            cameraRequestRef.current = null;
             setError("");
             setView("intro");
           }}
-          onCapture={(blob) => openEditorFromBlob(blob)}
+          onCapture={(blob) => {
+            cameraRequestRef.current = null;
+            openEditorFromBlob(blob, "intro");
+          }}
         />
       )}
 
@@ -165,9 +314,35 @@ export default function ProfilePhotoFlow({ open, onClose }) {
           onClose={() => {
             resetEditor();
             setError("");
-            setView("intro");
+            setView(returnView);
           }}
           onSave={handleSave}
+        />
+      )}
+
+      {view === "frames" && (
+        <ProfilePhotoFrames
+          photoSrc={photoSrc}
+          frameId={frameId}
+          saving={frameSaving}
+          error={error}
+          onClose={() => {
+            setError("");
+            setView("menu");
+          }}
+          onApply={handleApplyFrame}
+        />
+      )}
+
+      {deleteOpen && (
+        <ProfilePhotoDeleteDialog
+          error={error}
+          deleting={deleting}
+          onCancel={() => {
+            setError("");
+            setDeleteOpen(false);
+          }}
+          onConfirm={handleDelete}
         />
       )}
 

@@ -31,6 +31,16 @@ const UserSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    profilePhotoVisibility: {
+        type: String,
+        enum: ["connections", "network", "members", "anyone"],
+        default: "anyone"
+    },
+    profilePictureFrame: {
+        type: String,
+        enum: ["original", "open-to-work", "hiring"],
+        default: "original"
+    },
     createdAt:{
         type: Date,
         default: Date.now

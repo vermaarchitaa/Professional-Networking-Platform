@@ -100,6 +100,34 @@
   height: 72px !important;
 }
 
+.photoButton {
+  display: block;
+  width: 160px;
+  height: 160px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  line-height: 0;
+  overflow: visible;
+}
+
+.headerPhoto {
+  width: 160px;
+  height: 160px;
+}
+
+.photoButton:hover .headerPhoto {
+  opacity: 0.96;
+}
+
+.photoButton:focus-visible {
+  outline: 2px solid #0a66c2;
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
 .photoEdit {
   position: absolute;
   right: 8px;
@@ -397,7 +425,9 @@
 
   .photoWrap,
   .photoRing,
-  .photoRingEmpty {
+  .photoRingEmpty,
+  .photoButton,
+  .headerPhoto {
     width: 112px;
     height: 112px;
   }

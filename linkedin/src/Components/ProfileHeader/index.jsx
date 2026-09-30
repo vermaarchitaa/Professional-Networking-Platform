@@ -1,14 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import Avatar from "@/Components/Avatar";
 import CoverPhotoFlow from "@/Components/CoverPhotoFlow";
 import { CameraIcon } from "@/Components/CoverPhotoFlow/icons";
 import ProfilePhotoFlow from "@/Components/ProfilePhotoFlow";
-import { hasUploadedProfilePicture } from "@/Components/ProfilePhotoFlow/photoUtils";
+import { ProfilePhotoBadge } from "@/Components/ProfilePhotoFrames";
+import {
+  hasUploadedProfilePicture,
+  normalizePhotoVisibility,
+  normalizeProfileFrame,
+} from "@/Components/ProfilePhotoFlow/photoUtils";
 import {
   downloadResume,
   updateProfileData,
-  uploadProfilePicture,
 } from "@/config/redux/action/profileAction";
 import { getMediaUrl } from "@/config/utils";
 import styles from "./styles.module.css";
@@ -21,12 +24,10 @@ const OPEN_TO_VISIBILITY = [
 export default function ProfileHeader({ profile, onEditProfile }) {
   const dispatch = useDispatch();
   const { message, isError } = useSelector((state) => state.profile);
-  const photoInputRef = useRef(null);
   const resourcesRef = useRef(null);
   const [openPanel, setOpenPanel] = useState(null);
   const [coverOpen, setCoverOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
-  const [photoError, setPhotoError] = useState("");
   const [openToDraft, setOpenToDraft] = useState({
     enabled: false,
     visibility: "recruiters",
@@ -39,6 +40,9 @@ export default function ProfileHeader({ profile, onEditProfile }) {
   const hasCover = Boolean(user?.coverPicture);
   const hasPhoto = hasUploadedProfilePicture(user);
   const coverSrc = hasCover ? getMediaUrl(user.coverPicture) : "";
+  const photoSrc = hasPhoto ? getMediaUrl(user.profilePicture) : "";
+  const photoFrame = normalizeProfileFrame(user?.profilePictureFrame);
+  const photoVisibility = normalizePhotoVisibility(user?.profilePhotoVisibility);
   const firstSchool = (profile?.education || []).find((item) => item.school)?.school;
   const connectionsCount = Number(profile?.connectionsCount || 0);
   const openToWork = profile?.openToWork || {};
@@ -69,17 +73,6 @@ export default function ProfileHeader({ profile, onEditProfile }) {
       document.removeEventListener("mousedown", onPointerDown);
     };
   }, [openPanel, coverOpen, photoOpen]);
-
-  const handlePhotoChange = async (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    setPhotoError("");
-    const result = await dispatch(uploadProfilePicture(file));
-    if (uploadProfilePicture.rejected.match(result)) {
-      setPhotoError(result.payload?.message || "Failed to update photo");
-    }
-  };
 
   const handleSaveOpenTo = async () => {
     const result = await dispatch(
@@ -115,45 +108,39 @@ export default function ProfileHeader({ profile, onEditProfile }) {
 
       <div className={styles.body}>
         <div className={styles.photoWrap}>
-          <div className={hasPhoto ? styles.photoRing : styles.photoRingEmpty}>
-            {hasPhoto ? (
-              <Avatar user={user} size={152} />
-            ) : (
-              <div className={styles.photoPlaceholder} aria-hidden="true">
-                <svg viewBox="0 0 80 80" width="72" height="72" fill="none">
-                  <circle cx="40" cy="28" r="14" fill="#c3c6c9" />
-                  <path d="M16 68c2.5-16 12-24 24-24s21.5 8 24 24" fill="#c3c6c9" />
-                </svg>
-              </div>
-            )}
-          </div>
           {hasPhoto ? (
-            <>
-              <button
-                type="button"
-                className={styles.photoEdit}
-                aria-label="Change profile photo"
-                onClick={() => photoInputRef.current?.click()}
-              >
-                ✎
-              </button>
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
-                hidden
-                onChange={handlePhotoChange}
-              />
-            </>
-          ) : (
             <button
               type="button"
-              className={styles.photoAdd}
-              aria-label="Add profile photo"
+              className={styles.photoButton}
+              aria-label="Edit profile photo"
               onClick={() => setPhotoOpen(true)}
             >
-              +
+              <ProfilePhotoBadge
+                src={photoSrc}
+                frameId={photoFrame}
+                className={styles.headerPhoto}
+                alt=""
+              />
             </button>
+          ) : (
+            <>
+              <div className={styles.photoRingEmpty}>
+                <div className={styles.photoPlaceholder} aria-hidden="true">
+                  <svg viewBox="0 0 80 80" width="72" height="72" fill="none">
+                    <circle cx="40" cy="28" r="14" fill="#c3c6c9" />
+                    <path d="M16 68c2.5-16 12-24 24-24s21.5 8 24 24" fill="#c3c6c9" />
+                  </svg>
+                </div>
+              </div>
+              <button
+                type="button"
+                className={styles.photoAdd}
+                aria-label="Add profile photo"
+                onClick={() => setPhotoOpen(true)}
+              >
+                +
+              </button>
+            </>
           )}
         </div>
 
@@ -191,9 +178,7 @@ export default function ProfileHeader({ profile, onEditProfile }) {
           ) : null}
         </div>
 
-        {(photoError || (isError && message)) && (
-          <p className={styles.error}>{photoError || message}</p>
-        )}
+        {isError && message ? <p className={styles.error}>{message}</p> : null}
 
         <div className={styles.actions}>
           <button type="button" className={styles.primaryBtn} onClick={() => setOpenPanel("openTo")}>
@@ -345,6 +330,10 @@ export default function ProfileHeader({ profile, onEditProfile }) {
       />
       <ProfilePhotoFlow
         open={photoOpen}
+        hasPhoto={hasPhoto}
+        photoSrc={photoSrc}
+        frameId={photoFrame}
+        visibility={photoVisibility}
         onClose={() => setPhotoOpen(false)}
       />
     </section>

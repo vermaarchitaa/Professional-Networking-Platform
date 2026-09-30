@@ -4,6 +4,10 @@ import {
   CloseIcon,
   CropIcon,
   FilterIcon,
+  FlipHIcon,
+  FlipVIcon,
+  RotateLeftIcon,
+  RotateRightIcon,
 } from "@/Components/CoverPhotoFlow/icons";
 import {
   COVER_FILTERS,
@@ -31,12 +35,13 @@ export default function ProfilePhotoEditor({
   const canvasRef = useRef(null);
   const stageRef = useRef(null);
   const dragRef = useRef(null);
-  const lastTapRef = useRef(0);
+  const editRef = useRef({ ...DEFAULT_EDIT_STATE, zoom: 1.2 });
   const [tab, setTab] = useState("crop");
-  const [edit, setEdit] = useState(() => ({ ...DEFAULT_EDIT_STATE }));
+  const [edit, setEdit] = useState(() => ({ ...DEFAULT_EDIT_STATE, zoom: 1.2 }));
   const [processError, setProcessError] = useState("");
   const [exporting, setExporting] = useState(false);
   const busy = saving || exporting || !image;
+  editRef.current = edit;
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -53,7 +58,7 @@ export default function ProfilePhotoEditor({
   }, [edit, image]);
 
   useEffect(() => {
-    setEdit({ ...DEFAULT_EDIT_STATE });
+    setEdit({ ...DEFAULT_EDIT_STATE, zoom: 1.2 });
     setTab("crop");
     setProcessError("");
   }, [image]);
@@ -61,6 +66,11 @@ export default function ProfilePhotoEditor({
   useEffect(() => {
     redraw();
   }, [redraw]);
+
+  useEffect(() => () => {
+    document.body.style.userSelect = "";
+    dragRef.current = null;
+  }, []);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -82,42 +92,49 @@ export default function ProfilePhotoEditor({
       }, canvas?.clientWidth || 420, canvas?.clientHeight || 420));
     };
     stage.addEventListener("wheel", onWheel, { passive: false });
-    return () => stage.removeEventListener("wheel", onWheel);
+    return () => {
+      stage.removeEventListener("wheel", onWheel);
+    };
   }, [image]);
 
-  const toggleZoom = () => {
+  const applyEdit = (patch) => {
     const canvas = canvasRef.current;
     setEdit((current) => clampPhotoEdit(image, {
       ...current,
-      zoom: current.zoom > 1.4 ? 1 : 2,
+      ...patch,
     }, canvas?.clientWidth || 420, canvas?.clientHeight || 420));
   };
 
+  const toggleZoom = () => {
+    applyEdit({ zoom: edit.zoom > 1.4 ? 1 : 2 });
+  };
+
   const onPointerDown = (event) => {
+    if (event.button != null && event.button !== 0) return;
     event.preventDefault();
-    const now = Date.now();
-    if (now - lastTapRef.current < 280) {
-      toggleZoom();
-      lastTapRef.current = 0;
-      return;
-    }
-    lastTapRef.current = now;
+    document.body.style.userSelect = "none";
     const canvas = canvasRef.current;
+    const current = editRef.current;
     dragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      panX: edit.panX,
-      panY: edit.panY,
-      width: canvas?.clientWidth || 1,
-      height: canvas?.clientHeight || 1,
+      panX: current.panX,
+      panY: current.panY,
+      width: Math.max(canvas?.clientWidth || 0, 1),
+      height: Math.max(canvas?.clientHeight || 0, 1),
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* some browsers reject capture on this node */
+    }
   };
 
   const onPointerMove = (event) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
     const dx = (event.clientX - drag.startX) / drag.width;
     const dy = (event.clientY - drag.startY) / drag.height;
     setEdit((current) => clampPhotoEdit(image, {
@@ -127,9 +144,17 @@ export default function ProfilePhotoEditor({
     }, drag.width, drag.height));
   };
 
-  const onPointerUp = (event) => {
-    if (dragRef.current?.pointerId === event.pointerId) {
-      dragRef.current = null;
+  const endDrag = (event) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    const target = event.currentTarget;
+    dragRef.current = null;
+    document.body.style.userSelect = "";
+    if (target?.hasPointerCapture?.(event.pointerId)) {
+      try {
+        target.releasePointerCapture(event.pointerId);
+      } catch {
+        /* already released */
+      }
     }
   };
 
@@ -171,11 +196,17 @@ export default function ProfilePhotoEditor({
               className={styles.cropStage}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
               onDoubleClick={toggleZoom}
+              onDragStart={(event) => event.preventDefault()}
             >
-              <canvas ref={canvasRef} className={styles.previewCanvas} />
+              <canvas
+                ref={canvasRef}
+                className={styles.previewCanvas}
+                draggable={false}
+                onDragStart={(event) => event.preventDefault()}
+              />
               <div className={styles.cropGuide} />
             </div>
           </div>
@@ -198,9 +229,36 @@ export default function ProfilePhotoEditor({
 
             {tab === "crop" && (
               <div className={styles.panel}>
-                <p className={styles.hint}>
-                  Drag to reposition. Use the slider or scroll to zoom. Double-click to toggle zoom.
-                </p>
+                <div className={styles.toolRow}>
+                  <button
+                    type="button"
+                    className={styles.toolBtn}
+                    onClick={() => applyEdit({ rotation: (edit.rotation - 90 + 360) % 360 })}
+                  >
+                    <RotateLeftIcon /> Rotate left
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.toolBtn}
+                    onClick={() => applyEdit({ rotation: (edit.rotation + 90) % 360 })}
+                  >
+                    <RotateRightIcon /> Rotate right
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.toolBtn}
+                    onClick={() => applyEdit({ flipH: !edit.flipH })}
+                  >
+                    <FlipHIcon /> Flip horizontal
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.toolBtn}
+                    onClick={() => applyEdit({ flipV: !edit.flipV })}
+                  >
+                    <FlipVIcon /> Flip vertical
+                  </button>
+                </div>
                 <label className={styles.label}>
                   Zoom
                   <span>{Math.round(edit.zoom * 100)}%</span>
@@ -212,13 +270,20 @@ export default function ProfilePhotoEditor({
                   max="3"
                   step="0.01"
                   value={edit.zoom}
-                  onChange={(event) => {
-                    const canvas = canvasRef.current;
-                    setEdit((current) => clampPhotoEdit(image, {
-                      ...current,
-                      zoom: Number(event.target.value),
-                    }, canvas?.clientWidth || 420, canvas?.clientHeight || 420));
-                  }}
+                  onChange={(event) => applyEdit({ zoom: Number(event.target.value) })}
+                />
+                <label className={styles.label}>
+                  Rotate
+                  <span>{Math.round(edit.rotation)}°</span>
+                </label>
+                <input
+                  className={styles.slider}
+                  type="range"
+                  min="0"
+                  max="360"
+                  step="1"
+                  value={edit.rotation}
+                  onChange={(event) => applyEdit({ rotation: Number(event.target.value) })}
                 />
               </div>
             )}

@@ -1,10 +1,16 @@
 import { Router } from "express";
-import { register, login, uploadProfilePicture, uploadCoverPicture, deleteCoverPicture, updateUserProfile, getUserAndProfile, updateProfileData, getAllUserProfile, downloadProfile, sendConnectionRequest, acceptConnectionRequest, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
+import { register, login, uploadProfilePicture, deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadCoverPicture, deleteCoverPicture, updateUserProfile, getUserAndProfile, updateProfileData, getAllUserProfile, downloadProfile, sendConnectionRequest, acceptConnectionRequest, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
 import { profilePictureUpload, coverPhotoUpload } from "../utils/uploads.js";
 const router = Router();
 
 router.route("/update_profile_picture")
 .post(profilePictureUpload.single('profile_picture'), uploadProfilePicture);
+router.route("/delete_profile_picture")
+.post(deleteProfilePicture);
+router.route("/update_profile_photo_visibility")
+.post(updateProfilePhotoVisibility);
+router.route("/update_profile_picture_frame")
+.post(updateProfilePictureFrame);
 router.route("/update_cover_picture")
 .post(coverPhotoUpload.single('cover_picture'), uploadCoverPicture);
 router.route("/delete_cover_picture")

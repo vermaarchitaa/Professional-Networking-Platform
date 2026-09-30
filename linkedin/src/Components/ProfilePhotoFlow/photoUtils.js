@@ -14,6 +14,52 @@ export const PHOTO_OUTPUT_SIZE = 512;
 export const PHOTO_FILTERS = COVER_FILTERS;
 export { DEFAULT_EDIT_STATE, loadImageFromBlob, revokeImageUrl };
 
+export const PHOTO_FRAMES = [
+  { id: "original", label: "Original" },
+  { id: "open-to-work", label: "#OpenToWork" },
+  { id: "hiring", label: "#Hiring" },
+];
+
+export const PHOTO_VISIBILITY_OPTIONS = [
+  {
+    id: "connections",
+    label: "1st-degree connections only",
+    button: "1st-degree",
+    description: "LinkedIn members connected directly to you",
+  },
+  {
+    id: "network",
+    label: "Your network",
+    button: "Your network",
+    description: "People connected up to three degrees away",
+  },
+  {
+    id: "members",
+    label: "All LinkedIn members",
+    button: "All members",
+    description: "Members signed into LinkedIn",
+  },
+  {
+    id: "anyone",
+    label: "Anyone",
+    button: "Anyone",
+    description: "Anyone on or off LinkedIn",
+  },
+];
+
+export function normalizeProfileFrame(value) {
+  if (value === "open-to-work" || value === "openToWork") return "open-to-work";
+  if (value === "hiring") return "hiring";
+  return "original";
+}
+
+export function normalizePhotoVisibility(value) {
+  if (value === "connections" || value === "network" || value === "members" || value === "anyone") {
+    return value;
+  }
+  return "anyone";
+}
+
 export function hasUploadedProfilePicture(user) {
   const picture = user?.profilePicture;
   return Boolean(picture) && picture !== "default.jpg";
@@ -33,16 +79,25 @@ export function validateProfilePhotoFile(file) {
 
 export function clampPhotoEdit(image, edit, width = PHOTO_OUTPUT_SIZE, height = PHOTO_OUTPUT_SIZE) {
   if (!image) return edit;
-  const zoom = Math.min(3, Math.max(1, edit.zoom || 1));
-  const baseScale = getCoverBaseScale(image, width, height, edit.rotation || 0);
-  const scale = baseScale * zoom;
-  const maxPanX = Math.max(0, (image.naturalWidth * scale - width) / (2 * width));
-  const maxPanY = Math.max(0, (image.naturalHeight * scale - height) / (2 * height));
+  const rotation = ((edit.rotation % 360) + 360) % 360;
+  const zoom = Math.min(3, Math.max(1, Number(edit.zoom) || 1));
+  const coverBase = getCoverBaseScale(image, width, height, rotation);
+  const scale = coverBase * zoom;
+  const drawnW = (image.naturalWidth || 1) * scale;
+  const drawnH = (image.naturalHeight || 1) * scale;
+  const radians = (rotation * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(radians));
+  const sin = Math.abs(Math.sin(radians));
+  const displayedW = drawnW * cos + drawnH * sin;
+  const displayedH = drawnW * sin + drawnH * cos;
+  const maxPanX = Math.max(0, (displayedW - width) / (2 * width));
+  const maxPanY = Math.max(0, (displayedH - height) / (2 * height));
   return {
     ...edit,
+    rotation,
     zoom,
-    panX: Math.min(maxPanX, Math.max(-maxPanX, edit.panX || 0)),
-    panY: Math.min(maxPanY, Math.max(-maxPanY, edit.panY || 0)),
+    panX: Math.min(maxPanX, Math.max(-maxPanX, Number(edit.panX) || 0)),
+    panY: Math.min(maxPanY, Math.max(-maxPanY, Number(edit.panY) || 0)),
   };
 }
 
@@ -102,4 +157,15 @@ export function captureVideoFrame(video) {
 
 export function stopMediaStream(stream) {
   stream?.getTracks().forEach((track) => track.stop());
+}
+
+export function stopCamera(streamRef, videoRef) {
+  const stream = streamRef?.current;
+  if (stream) {
+    stream.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  }
+  if (videoRef?.current) {
+    videoRef.current.srcObject = null;
+  }
 }

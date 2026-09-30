@@ -51,6 +51,7 @@
 }
 
 .preview {
+  position: relative;
   background: #111;
   min-height: 280px;
   display: flex;
@@ -61,15 +62,43 @@
 .video {
   width: 100%;
   max-height: 420px;
+  min-height: 280px;
   object-fit: cover;
   display: block;
+  background: #111;
 }
 
 .status {
-  margin: 0;
-  padding: 2rem 1.25rem;
+  margin: 0 1.25rem 0.85rem;
   color: #ddd;
   text-align: center;
+}
+
+.statusBox {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 17, 17, 0.72);
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.statusBox .retryBtn {
+  pointer-events: auto;
+}
+
+.retryBtn {
+  border: 1px solid #0a66c2;
+  background: #fff;
+  color: #0a66c2;
+  border-radius: 24px;
+  padding: 0.4rem 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .controls {

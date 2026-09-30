@@ -4,6 +4,9 @@ import {
   updateProfileData,
   updateUserInfo,
   uploadProfilePicture,
+  deleteProfilePicture,
+  updateProfilePhotoVisibility,
+  updateProfilePictureFrame,
   uploadCoverPicture,
   deleteCoverPicture,
 } from "@/config/redux/action/profileAction";
@@ -50,6 +53,27 @@ const profileSlice = createSlice({
       })
       .addCase(uploadProfilePicture.fulfilled, (state, action) => {
         state.message = action.payload?.message || "Picture updated";
+      })
+      .addCase(deleteProfilePicture.fulfilled, (state, action) => {
+        state.message = action.payload?.message || "Profile picture deleted";
+      })
+      .addCase(deleteProfilePicture.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload?.message || "Failed to delete profile picture";
+      })
+      .addCase(updateProfilePhotoVisibility.fulfilled, (state, action) => {
+        state.message = action.payload?.message || "Visibility updated";
+      })
+      .addCase(updateProfilePhotoVisibility.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload?.message || "Failed to update visibility";
+      })
+      .addCase(updateProfilePictureFrame.fulfilled, (state, action) => {
+        state.message = action.payload?.message || "Frame updated";
+      })
+      .addCase(updateProfilePictureFrame.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload?.message || "Failed to update frame";
       })
       .addCase(uploadCoverPicture.fulfilled, (state, action) => {
         state.message = action.payload?.message || "Cover photo updated";

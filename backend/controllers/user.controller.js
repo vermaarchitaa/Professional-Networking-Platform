@@ -118,25 +118,42 @@ export const login = async (req, res) => {
 
 export const uploadProfilePicture = async (req, res) => {
     const { token } = req.body;
+    const uploaded = req.file?.filename;
 
-    try{
+    const discardUpload = () => {
+        if (uploaded) removeUploadedFile(uploaded);
+    };
 
-        const user = await User.findOne({ token: token});
-
-        if(!user){
-            return res.status(404).json({ message: "User not found"})
+    let saved = false;
+    try {
+        if (!token || typeof token !== "string") {
+            discardUpload();
+            return res.status(401).json({ message: "Unauthorized" });
         }
-        if(!req.file){
+
+        const user = await User.findOne({ token: token });
+
+        if (!user) {
+            discardUpload();
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (!uploaded) {
             return res.status(400).json({ message: "No file uploaded" });
         }
-        user.profilePicture = req.file.filename;
 
+        const previous = user.profilePicture;
+        user.profilePicture = uploaded;
         await user.save();
+        saved = true;
 
-        return res.json({ message: "Profile Picture Updated"});
+        if (previous && previous !== "default.jpg" && previous !== uploaded) {
+            removeUploadedFile(previous);
+        }
 
-    } catch(error){
-        return res.status(500).json({ message: error.message})
+        return res.json({ message: "Profile Picture Updated" });
+    } catch (error) {
+        if (!saved) discardUpload();
+        return res.status(500).json({ message: error.message });
     }
 }
 
@@ -189,6 +206,89 @@ export const deleteCoverPicture = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 }
+
+export const deleteProfilePicture = async (req, res) => {
+    const { token } = req.body;
+
+    try {
+        if (!token || typeof token !== "string") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const user = await User.findOne({ token: token });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const previous = user.profilePicture;
+        user.profilePicture = "default.jpg";
+        user.profilePictureFrame = "original";
+        await user.save();
+
+        if (previous && previous !== "default.jpg") {
+            removeUploadedFile(previous);
+        }
+
+        return res.json({ message: "Profile picture deleted" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+const PHOTO_VISIBILITY_VALUES = ["connections", "network", "members", "anyone"];
+const PHOTO_FRAME_VALUES = ["original", "open-to-work", "hiring"];
+
+export const updateProfilePhotoVisibility = async (req, res) => {
+    const { token, profilePhotoVisibility } = req.body;
+
+    try {
+        if (!token || typeof token !== "string") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        if (!PHOTO_VISIBILITY_VALUES.includes(profilePhotoVisibility)) {
+            return res.status(400).json({ message: "Invalid visibility option" });
+        }
+
+        const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.profilePhotoVisibility = profilePhotoVisibility;
+        await user.save();
+
+        return res.json({ message: "Profile photo visibility updated" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+export const updateProfilePictureFrame = async (req, res) => {
+    const { token, profilePictureFrame } = req.body;
+
+    try {
+        if (!token || typeof token !== "string") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        if (!PHOTO_FRAME_VALUES.includes(profilePictureFrame)) {
+            return res.status(400).json({ message: "Invalid frame option" });
+        }
+
+        const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.profilePictureFrame = profilePictureFrame;
+        await user.save();
+
+        return res.json({ message: "Profile photo frame updated" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
 export const updateUserProfile = async (req, res) => {
     try{
 
@@ -233,7 +333,7 @@ export const getUserAndProfile = async (req, res) => {
         }
 
         const userProfile = await Profile.findOne({ userId: user._id })
-           .populate('userId', 'name email username profilePicture coverPicture');
+           .populate('userId', 'name email username profilePicture coverPicture profilePhotoVisibility profilePictureFrame');
 
         if (!userProfile) {
             return res.status(404).json({ message: "Profile not found" });

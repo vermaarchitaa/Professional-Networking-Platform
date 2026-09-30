@@ -69,6 +69,9 @@
   position: relative;
   touch-action: none;
   cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
 }
 
 .cropStage:active {
@@ -81,6 +84,10 @@
   display: block;
   border-radius: 50%;
   background: #111;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .cropGuide {
@@ -150,6 +157,31 @@
 .slider {
   width: 100%;
   accent-color: #0a66c2;
+}
+
+.toolRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.45rem;
+}
+
+.toolBtn {
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: #191919;
+  font-family: inherit;
+}
+
+.toolBtn:hover {
+  background: #f3f2ef;
 }
 
 .filters {

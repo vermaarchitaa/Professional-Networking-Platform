@@ -67,6 +67,48 @@ export const uploadCoverPicture = createAsyncThunk("profile/uploadCover", async 
   }
 });
 
+export const deleteProfilePicture = createAsyncThunk("profile/deletePicture", async (_, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/delete_profile_picture", { token: getToken() });
+    thunkAPI.dispatch(fetchUserProfile());
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to delete profile picture" });
+  }
+});
+
+export const updateProfilePhotoVisibility = createAsyncThunk(
+  "profile/updatePhotoVisibility",
+  async (profilePhotoVisibility, thunkAPI) => {
+    try {
+      const response = await clientServer.post("/update_profile_photo_visibility", {
+        token: getToken(),
+        profilePhotoVisibility,
+      });
+      thunkAPI.dispatch(fetchUserProfile());
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to update visibility" });
+    }
+  }
+);
+
+export const updateProfilePictureFrame = createAsyncThunk(
+  "profile/updatePictureFrame",
+  async (profilePictureFrame, thunkAPI) => {
+    try {
+      const response = await clientServer.post("/update_profile_picture_frame", {
+        token: getToken(),
+        profilePictureFrame,
+      });
+      thunkAPI.dispatch(fetchUserProfile());
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to update frame" });
+    }
+  }
+);
+
 export const deleteCoverPicture = createAsyncThunk("profile/deleteCover", async (_, thunkAPI) => {
   try {
     const response = await clientServer.post("/delete_cover_picture", { token: getToken() });
