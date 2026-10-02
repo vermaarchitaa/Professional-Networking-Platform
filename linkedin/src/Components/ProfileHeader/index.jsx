@@ -42,6 +42,17 @@ function hasSavedValue(value) {
   return String(value || "").trim().length > 0;
 }
 
+function formatPronouns(value) {
+  const raw = String(value || "").trim();
+  if (!raw || raw === "custom") return "";
+  const labels = {
+    "he/him": "He/Him",
+    "she/her": "She/Her",
+    "they/them": "They/Them",
+  };
+  return labels[raw.toLowerCase()] || raw;
+}
+
 function ContactIcon({ name }) {
   if (name === "link") {
     return (
@@ -126,6 +137,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   const openToEnabled = Boolean(openToWork.enabled);
   const introLocation = [profile?.intro?.city, profile?.intro?.country].filter(Boolean).join(", ");
   const headerLocation = introLocation || profile?.location || "";
+  const headerPronouns = formatPronouns(profile?.intro?.pronouns);
   const headerSchool = String(profile?.intro?.education || "").trim();
 
   useEffect(() => {
@@ -253,11 +265,18 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
 
         <div className={styles.identityRow}>
           <div className={styles.identityMain}>
-            <h1>{user?.name || "Your name"}</h1>
+            <h1>
+              {user?.name || "Your name"}
+              {headerPronouns ? <span className={styles.pronouns}>{headerPronouns}</span> : null}
+            </h1>
             {profile?.currentPost ? <p className={styles.headline}>{profile.currentPost}</p> : null}
             <p className={styles.metaLine}>
               {headerLocation ? `${headerLocation} · ` : null}
-              <button type="button" className={styles.linkBtn} onClick={() => setOpenPanel("contact")}>
+              <button
+                type="button"
+                className={`${styles.linkBtn} ${styles.contactInfoLink}`}
+                onClick={() => setOpenPanel("contact")}
+              >
                 Contact info
               </button>
             </p>

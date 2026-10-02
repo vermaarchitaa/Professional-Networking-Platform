@@ -195,6 +195,13 @@
   margin: 0;
 }
 
+.pronouns {
+  margin-left: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #666;
+}
+
 .headline {
   margin: 0.2rem 0 0.35rem;
   color: #191919;
@@ -223,6 +230,30 @@
   padding: 0;
   font-size: inherit;
   font-family: inherit;
+}
+
+.contactInfoLink {
+  position: relative;
+  display: inline;
+  text-decoration: none;
+}
+
+.contactInfoLink::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.18s ease;
+}
+
+.contactInfoLink:hover::after,
+.contactInfoLink:focus-visible::after {
+  transform: scaleX(1);
 }
 
 .schoolBlock {
