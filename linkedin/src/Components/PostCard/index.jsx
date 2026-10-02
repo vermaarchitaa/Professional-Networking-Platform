@@ -398,7 +398,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
             @{post.userId?.username} · {formatDate(post.createdAt)}
           </p>
         </div>
-        {isOwner && !viewerOpen && <PostOwnerMenu post={post} />}
+        {!viewerOpen && <PostOwnerMenu post={post} />}
       </div>
 
       <p className={styles.body}>{post.body}</p>
@@ -508,7 +508,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                       {formatDate(post.createdAt)}
                     </p>
                   </div>
-                  {isOwner && <PostOwnerMenu post={post} />}
+                  <PostOwnerMenu post={post} />
                 </div>
                 {post.body && <p className={styles.viewerPostBody}>{post.body}</p>}
 

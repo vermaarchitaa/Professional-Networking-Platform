@@ -333,7 +333,7 @@ export const getUserAndProfile = async (req, res) => {
         }
 
         const userProfile = await Profile.findOne({ userId: user._id })
-           .populate('userId', 'name email username profilePicture coverPicture profilePhotoVisibility profilePictureFrame');
+           .populate('userId', 'name email username profilePicture coverPicture profilePhotoVisibility profilePictureFrame createdAt');
 
         if (!userProfile) {
             return res.status(404).json({ message: "Profile not found" });
@@ -388,7 +388,7 @@ export const getProfileByUsername = async (req, res) => {
         }
 
         const userProfile = await Profile.findOne({ userId: user._id })
-            .populate("userId", "name username profilePicture coverPicture profilePhotoVisibility profilePictureFrame");
+            .populate("userId", "name username profilePicture coverPicture profilePhotoVisibility profilePictureFrame createdAt");
 
         if (!userProfile) {
             return res.status(404).json({ message: "Profile not found" });

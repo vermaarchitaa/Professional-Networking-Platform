@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import CoverPhotoFlow from "@/Components/CoverPhotoFlow";
 import { CameraIcon } from "@/Components/CoverPhotoFlow/icons";
@@ -51,6 +52,51 @@ function formatPronouns(value) {
     "they/them": "They/Them",
   };
   return labels[raw.toLowerCase()] || raw;
+}
+
+function formatJoinedDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+function ResourceIcon({ name }) {
+  if (name === "message") {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    );
+  }
+  if (name === "pdf") {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6M8 13h8M8 17h5" />
+      </svg>
+    );
+  }
+  if (name === "saved") {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      </svg>
+    );
+  }
+  if (name === "activity") {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M4 14h4l2-8 4 16 2-8h4" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v4M12 16h.01" />
+    </svg>
+  );
 }
 
 function ContactIcon({ name }) {
@@ -110,9 +156,12 @@ function ContactIcon({ name }) {
 
 export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, isOwner = true }) {
   const dispatch = useDispatch();
+  const router = useRouter();
   const { message, isError } = useSelector((state) => state.profile);
   const resourcesRef = useRef(null);
+  const resourcesMenuRef = useRef(null);
   const [openPanel, setOpenPanel] = useState(null);
+  const [resourcesPlacement, setResourcesPlacement] = useState({ up: false, end: false });
   const [coverOpen, setCoverOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [introOpen, setIntroOpen] = useState(false);
@@ -139,6 +188,15 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   const headerLocation = introLocation || profile?.location || "";
   const headerPronouns = formatPronouns(profile?.intro?.pronouns);
   const headerSchool = String(profile?.intro?.education || "").trim();
+  const joinedLabel = formatJoinedDate(user?.createdAt);
+  const contactAdded = Boolean(
+    user?.username
+    || hasSavedValue(profile?.contactInfo?.email)
+    || hasSavedValue(profile?.contactInfo?.phone)
+    || hasSavedValue(profile?.contactInfo?.address)
+    || hasSavedValue(profile?.contactInfo?.website)
+    || hasSavedValue(profile?.contactInfo?.instantMessaging)
+  );
 
   useEffect(() => {
     setOpenToDraft({
@@ -166,6 +224,37 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
     };
   }, [openPanel, coverOpen, photoOpen, introOpen]);
 
+  useLayoutEffect(() => {
+    if (openPanel !== "resources") {
+      setResourcesPlacement({ up: false, end: false });
+      return undefined;
+    }
+
+    const placeMenu = () => {
+      const wrap = resourcesRef.current;
+      const menu = resourcesMenuRef.current;
+      if (!wrap || !menu) return;
+      const rect = wrap.getBoundingClientRect();
+      const menuHeight = menu.offsetHeight;
+      const menuWidth = menu.offsetWidth;
+      const gap = 8;
+      const pad = 12;
+      const spaceBelow = window.innerHeight - rect.bottom - gap - pad;
+      const spaceAbove = rect.top - gap - pad;
+      const up = spaceBelow < menuHeight && spaceAbove > spaceBelow;
+      const end = rect.left + menuWidth > window.innerWidth - pad;
+      setResourcesPlacement({ up, end });
+    };
+
+    placeMenu();
+    window.addEventListener("resize", placeMenu);
+    window.addEventListener("scroll", placeMenu, true);
+    return () => {
+      window.removeEventListener("resize", placeMenu);
+      window.removeEventListener("scroll", placeMenu, true);
+    };
+  }, [openPanel]);
+
   const handleSaveOpenTo = async () => {
     const result = await dispatch(
       updateProfileData({
@@ -181,7 +270,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   const visibilityLabel = OPEN_TO_VISIBILITY.find((item) => item.value === (openToWork.visibility || "recruiters"))?.label;
 
   return (
-    <section className={styles.card}>
+    <section className={`${styles.card} ${openPanel === "resources" ? styles.cardMenuOpen : ""}`}>
       <div className={styles.coverWrap}>
         {coverSrc ? (
           <img src={coverSrc} alt="" className={styles.coverImage} />
@@ -310,9 +399,6 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
               <button type="button" className={styles.secondaryBtn} onClick={onEditProfile}>
                 Add section
               </button>
-              <button type="button" className={styles.secondaryBtn} onClick={onEditProfile}>
-                Enhance profile
-              </button>
             </>
           ) : null}
           <div className={styles.resourcesWrap} ref={resourcesRef}>
@@ -324,31 +410,59 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
               Resources
             </button>
             {openPanel === "resources" && (
-              <div className={styles.resourcesMenu} role="menu">
+              <div
+                ref={resourcesMenuRef}
+                className={`${styles.resourcesMenu} ${resourcesPlacement.up ? styles.resourcesMenuUp : ""} ${resourcesPlacement.end ? styles.resourcesMenuEnd : ""}`}
+                role="menu"
+              >
                 <button
                   type="button"
+                  className={styles.resourcesItemDisabled}
+                  disabled
+                  // Messaging will be enabled later when a messaging system is implemented.
+                >
+                  <ResourceIcon name="message" />
+                  <span>Send profile in a message</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={!isOwner}
                   onClick={() => {
+                    if (!isOwner) return;
                     setOpenPanel(null);
                     dispatch(downloadResume(user?._id));
                   }}
                 >
-                  Download resume
+                  <ResourceIcon name="pdf" />
+                  <span>Save to PDF</span>
                 </button>
-                <button type="button" onClick={() => setOpenPanel("contact")}>
-                  Contact info
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenPanel(null);
+                    router.push("/saved");
+                  }}
+                >
+                  <ResourceIcon name="saved" />
+                  <span>Saved items</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenPanel(null);
+                    router.push("/profile/activity");
+                  }}
+                >
+                  <ResourceIcon name="activity" />
+                  <span>Activity</span>
+                </button>
+                <button type="button" onClick={() => setOpenPanel("aboutMember")}>
+                  <ResourceIcon name="about" />
+                  <span>About this member</span>
                 </button>
               </div>
             )}
           </div>
-          {isOwner ? (
-            <button
-              type="button"
-              className={styles.resumeBtn}
-              onClick={() => dispatch(downloadResume(user?._id))}
-            >
-              ⬇ Resume
-            </button>
-          ) : null}
         </div>
 
         {openToEnabled && (
@@ -511,6 +625,53 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 return items;
               })()}
             </dl>
+          </div>
+        </div>
+      )}
+
+      {openPanel === "aboutMember" && (
+        <div className={styles.overlay} onClick={() => setOpenPanel(null)} role="presentation">
+          <div
+            className={`${styles.dialog} ${styles.aboutDialog}`}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="about-member-title"
+          >
+            <div className={styles.contactDialogHeader}>
+              <h3 id="about-member-title">About this member</h3>
+              <button type="button" className={styles.aboutClose} onClick={() => setOpenPanel(null)} aria-label="Close">
+                ×
+              </button>
+            </div>
+            <div className={styles.aboutBody}>
+              <h4 className={styles.aboutSectionTitle}>Account history</h4>
+              {joinedLabel ? (
+                <div className={styles.aboutRow}>
+                  <p className={styles.aboutLabel}>Joined</p>
+                  <p className={styles.aboutValue}>{joinedLabel}</p>
+                </div>
+              ) : null}
+              <div className={styles.aboutRow}>
+                <p className={styles.aboutLabel}>Contact info</p>
+                <button
+                  type="button"
+                  className={styles.linkBtn}
+                  onClick={() => setOpenPanel("contact")}
+                >
+                  {contactAdded ? "Added" : "Not added"}
+                </button>
+              </div>
+              <div className={styles.aboutRow}>
+                <p className={styles.aboutLabel}>Profile photo</p>
+                <p className={styles.aboutValue}>{hasPhoto ? "Added" : "Not added"}</p>
+              </div>
+            </div>
+            <div className={styles.aboutFooter}>
+              <button type="button" className={styles.primaryBtn} onClick={() => setOpenPanel(null)}>
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

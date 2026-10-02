@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { activeCheck, createPost, getAllPosts, getTrendingPosts, deletePost, updatePost, commentPost, get_comments_by_post, delete_comment_of_user, toggleLike, toggleCommentLike, searchGifs } from "../controllers/posts.controller.js";
+import { activeCheck, createPost, getAllPosts, getTrendingPosts, deletePost, updatePost, commentPost, get_comments_by_post, delete_comment_of_user, toggleLike, toggleCommentLike, searchGifs, savePost, unsavePost, getSavedPosts } from "../controllers/posts.controller.js";
 import { postMediaUpload, commentImageUpload } from "../utils/uploads.js";
 
 const router = Router();
@@ -16,5 +16,8 @@ router.route("/get_comments").get(get_comments_by_post);
 router.route("/delete_comment").delete(delete_comment_of_user);
 router.route("/toggle_post_like").post(toggleLike);
 router.route("/toggle_comment_like").post(toggleCommentLike);
+router.route("/save_post").post(savePost);
+router.route("/unsave_post").post(unsavePost);
+router.route("/saved_posts").get(getSavedPosts);
 
 export default router;

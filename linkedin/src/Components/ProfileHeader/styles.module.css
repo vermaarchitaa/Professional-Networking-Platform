@@ -1,15 +1,22 @@
 .card {
+  position: relative;
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
+  overflow: visible;
   margin-bottom: 1rem;
+}
+
+.cardMenuOpen {
+  z-index: 40;
 }
 
 .coverWrap {
   position: relative;
   height: 200px;
   background-color: #c5d4e0;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
 }
 
 .coverImage,
@@ -320,6 +327,7 @@
   font-size: 0.9rem;
   cursor: pointer;
   font-family: inherit;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .primaryBtn {
@@ -328,16 +336,33 @@
   border: none;
 }
 
+.primaryBtn:hover {
+  background: #004182;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
 .secondaryBtn {
   background: white;
   color: #0a66c2;
   border: 1px solid #0a66c2;
 }
 
+.secondaryBtn:hover {
+  background: #eef3f8;
+  box-shadow: 0 1px 4px rgba(10, 102, 194, 0.12);
+}
+
 .ghostBtn {
   background: white;
   color: #666;
   border: 1px solid #b2b2b2;
+}
+
+.ghostBtn:hover {
+  background: #f3f2ef;
+  border-color: #191919;
+  color: #191919;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 .resumeBtn {
@@ -348,19 +373,32 @@
 
 .resourcesWrap {
   position: relative;
+  z-index: 2;
 }
 
 .resourcesMenu {
   position: absolute;
   top: calc(100% + 0.35rem);
   left: 0;
-  min-width: 200px;
+  min-width: 280px;
+  max-width: calc(100vw - 1.5rem);
   background: white;
   border: 1px solid #e6e6e6;
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  z-index: 5;
-  overflow: hidden;
+  z-index: 50;
+  padding: 0.35rem 0;
+  overflow: visible;
+}
+
+.resourcesMenuUp {
+  top: auto;
+  bottom: calc(100% + 0.35rem);
+}
+
+.resourcesMenuEnd {
+  left: auto;
+  right: 0;
 }
 
 .resourcesMenu button {
@@ -368,13 +406,77 @@
   border: none;
   background: none;
   text-align: left;
-  padding: 0.7rem 0.9rem;
+  padding: 0.75rem 0.95rem;
   cursor: pointer;
   font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #191919;
+  font-size: 0.95rem;
 }
 
-.resourcesMenu button:hover {
+.resourcesMenu button:hover:not(:disabled) {
   background: #f3f2ef;
+}
+
+.resourcesItemDisabled,
+.resourcesMenu button:disabled {
+  color: #8c8c8c;
+  cursor: default;
+}
+
+.aboutDialog {
+  width: min(480px, 100%);
+  padding: 0;
+}
+
+.aboutClose {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #666;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.aboutClose:hover {
+  background: #f3f2ef;
+}
+
+.aboutBody {
+  padding: 0.25rem 1.1rem 0.35rem;
+}
+
+.aboutSectionTitle {
+  margin: 0.35rem 0 0.85rem;
+  font-size: 1rem;
+  color: #191919;
+}
+
+.aboutRow {
+  margin: 0 0 0.95rem;
+}
+
+.aboutLabel {
+  margin: 0;
+  font-weight: 600;
+  color: #191919;
+}
+
+.aboutValue {
+  margin: 0.2rem 0 0;
+  color: #666;
+}
+
+.aboutFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1.1rem 1rem;
+  border-top: 1px solid #e8e8e8;
 }
 
 .openToCard {

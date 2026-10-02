@@ -148,3 +148,38 @@ export const deleteComment = createAsyncThunk(
     }
   }
 );
+
+export const savePost = createAsyncThunk("posts/save", async (postId, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/save_post", {
+      token: getToken(),
+      post_id: postId,
+    });
+    return { postId, ...response.data };
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to save post" });
+  }
+});
+
+export const unsavePost = createAsyncThunk("posts/unsave", async (postId, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/unsave_post", {
+      token: getToken(),
+      post_id: postId,
+    });
+    return { postId, ...response.data };
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to unsave post" });
+  }
+});
+
+export const fetchSavedPosts = createAsyncThunk("posts/fetchSaved", async (_, thunkAPI) => {
+  try {
+    const response = await clientServer.get("/saved_posts", {
+      params: { token: getToken() },
+    });
+    return response.data.posts || [];
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to load saved posts" });
+  }
+});

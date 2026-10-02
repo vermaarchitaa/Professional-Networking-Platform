@@ -1,0 +1,122 @@
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.sidebar {
+  position: sticky;
+  top: 80px;
+}
+
+.navCard,
+.header,
+.empty,
+.errorCard {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.navCard {
+  padding: 1rem 0.6rem 0.6rem;
+}
+
+.navCard h2 {
+  font-size: 1rem;
+  padding: 0 0.75rem 0.75rem;
+  margin: 0;
+}
+
+.navItemActive {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: none;
+  background: #edf3f8;
+  color: #0a66c2;
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-align: left;
+  border-radius: 8px;
+  padding: 0.7rem 0.75rem;
+  cursor: default;
+}
+
+.main {
+  min-width: 0;
+}
+
+.header {
+  padding: 1.25rem 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.header h1 {
+  font-size: 1.35rem;
+  margin: 0 0 0.35rem;
+}
+
+.header p {
+  margin: 0;
+  color: #666;
+  font-size: 0.92rem;
+}
+
+.feed {
+  min-width: 0;
+}
+
+.empty,
+.errorCard {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.emptyArt {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.empty h2,
+.errorCard h2 {
+  font-size: 1.2rem;
+  margin: 0 0 0.4rem;
+}
+
+.empty p,
+.errorCard p {
+  margin: 0 auto 1.2rem;
+  max-width: 28rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.feedBtn,
+.retryBtn {
+  border: none;
+  border-radius: 24px;
+  background: #0a66c2;
+  color: white;
+  font-weight: 700;
+  padding: 0.65rem 1.3rem;
+  cursor: pointer;
+}
+
+.feedBtn:hover,
+.retryBtn:hover {
+  background: #004182;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+}

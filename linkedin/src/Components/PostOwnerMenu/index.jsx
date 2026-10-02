@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useDispatch } from "react-redux";
-import { deletePost, updatePost } from "@/config/redux/action/postAction";
+import { useDispatch, useSelector } from "react-redux";
+import { deletePost, savePost, unsavePost, updatePost } from "@/config/redux/action/postAction";
 import { COMMENT_EMOJIS } from "@/config/reactions";
 import { validatePostBody } from "@/config/validation";
 import styles from "./styles.module.css";
@@ -44,8 +44,16 @@ const FeatureIcon = () => (
   </Icon>
 );
 
+const BookmarkIcon = ({ filled }) => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M7 4h10a1 1 0 0 1 1 1v16l-6-3.5L6 21V5a1 1 0 0 1 1-1Z" />
+  </svg>
+);
+
 export default function PostOwnerMenu({ post }) {
   const dispatch = useDispatch();
+  const { savedPostIds } = useSelector((state) => state.posts);
+  const { profile } = useSelector((state) => state.profile);
   const wrapRef = useRef(null);
   const buttonRef = useRef(null);
   const editAreaRef = useRef(null);
@@ -60,6 +68,9 @@ export default function PostOwnerMenu({ post }) {
 
   const commentPermission = post.commentPermission || "anyone";
   const featured = post.featured === true;
+  const currentUserId = profile?.userId?._id;
+  const isOwner = currentUserId && post.userId?._id === currentUserId;
+  const isSaved = post.isSaved === true || (savedPostIds || []).some((id) => String(id) === String(post._id));
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -198,6 +209,15 @@ export default function PostOwnerMenu({ post }) {
     await dispatch(updatePost({ postId: post._id, featured: !featured }));
   };
 
+  const handleToggleSave = async () => {
+    closeMenu();
+    if (isSaved) {
+      await dispatch(unsavePost(post._id));
+    } else {
+      await dispatch(savePost(post._id));
+    }
+  };
+
   const preventMenuFocusScroll = (event) => {
     event.preventDefault();
   };
@@ -210,22 +230,30 @@ export default function PostOwnerMenu({ post }) {
         style={{ top: menuPos.top, right: menuPos.right }}
         role="menu"
       >
-        <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("edit")}>
-          <EditIcon />
-          Edit post
+        <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={handleToggleSave}>
+          <BookmarkIcon filled={isSaved} />
+          {isSaved ? "Unsave post" : "Save post"}
         </button>
-        <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("delete")}>
-          <DeleteIcon />
-          Delete post
-        </button>
-        <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("comments")}>
-          <CommentIcon />
-          Who can comment on this post?
-        </button>
-        <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={handleFeature}>
-          <FeatureIcon />
-          {featured ? "Remove from featured" : "Feature on top of my profile"}
-        </button>
+        {isOwner && (
+          <>
+            <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("edit")}>
+              <EditIcon />
+              Edit post
+            </button>
+            <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("delete")}>
+              <DeleteIcon />
+              Delete post
+            </button>
+            <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("comments")}>
+              <CommentIcon />
+              Who can comment on this post?
+            </button>
+            <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={handleFeature}>
+              <FeatureIcon />
+              {featured ? "Remove from featured" : "Feature on top of my profile"}
+            </button>
+          </>
+        )}
       </div>,
       document.body
     )

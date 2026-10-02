@@ -2,6 +2,7 @@ import Post from "../models/posts.model.js";
 import User from "../models/user.model.js";
 import Comment from "../models/comments.model.js";
 import ConnectionRequest from "../models/connections.model.js";
+import SavedPost from "../models/savedPost.model.js";
 import { createNotification } from "../utils/notificationHelper.js";
 
 const REACTION_TYPES = new Set(["like", "love", "celebrate", "funny", "insightful", "support"]);
@@ -106,7 +107,15 @@ const canUserCommentOnPost = (post, currentUserId, connectedIds) => {
     return connectedIds.has(ownerId);
 };
 
-const serializePost = (post, currentUserId, connectedIds) => {
+const loadSavedPostIds = async (currentUserId) => {
+    const ids = new Set();
+    if (!currentUserId) return ids;
+    const rows = await SavedPost.find({ userId: currentUserId }).select("postId");
+    rows.forEach((row) => ids.add(row.postId.toString()));
+    return ids;
+};
+
+const serializePost = (post, currentUserId, connectedIds, savedIds = new Set()) => {
     const postObj = post.toObject();
     const myReaction = resolveMyReaction(post.reactions, post.likedBy, currentUserId);
     return {
@@ -117,6 +126,7 @@ const serializePost = (post, currentUserId, connectedIds) => {
         isLiked: Boolean(myReaction),
         myReaction,
         likes: (post.likedBy || []).length,
+        isSaved: savedIds.has(post._id.toString()),
     };
 };
 
@@ -177,7 +187,8 @@ export const getAllPosts = async (req, res) => {
             .sort({ createdAt: -1 });
 
         const connectedIds = await loadConnectedUserIds(currentUserId);
-        const postsWithLikeStatus = posts.map((post) => serializePost(post, currentUserId, connectedIds));
+        const savedIds = await loadSavedPostIds(currentUserId);
+        const postsWithLikeStatus = posts.map((post) => serializePost(post, currentUserId, connectedIds, savedIds));
 
         return res.json({ posts: postsWithLikeStatus })
     } catch(error){
@@ -223,6 +234,7 @@ export const deletePost = async (req, res) => {
         }
 
         await Post.deleteOne({ _id: post_id });
+        await SavedPost.deleteMany({ postId: post_id });
 
         return res.json({ message: "Post Deleted" });
 
@@ -286,7 +298,8 @@ export const updatePost = async (req, res) => {
         }
 
         const connectedIds = await loadConnectedUserIds(user._id.toString());
-        return res.json({ post: serializePost(fresh, user._id.toString(), connectedIds) });
+        const savedIds = await loadSavedPostIds(user._id.toString());
+        return res.json({ post: serializePost(fresh, user._id.toString(), connectedIds, savedIds) });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }
@@ -552,3 +565,84 @@ export const searchGifs = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 }
+
+export const savePost = async (req, res) => {
+    const { token, post_id } = req.body;
+
+    try {
+        const user = await User.findOne({ token }).select("_id");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const post = await Post.findById(post_id).select("_id");
+        if (!post) {
+            return res.status(404).json({ message: "Post not found" });
+        }
+
+        try {
+            await SavedPost.updateOne(
+                { userId: user._id, postId: post._id },
+                { $setOnInsert: { userId: user._id, postId: post._id, createdAt: new Date() } },
+                { upsert: true }
+            );
+        } catch (error) {
+            if (error.code !== 11000) throw error;
+        }
+
+        return res.json({ message: "Post saved", postId: post._id.toString(), saved: true });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const unsavePost = async (req, res) => {
+    const { token, post_id } = req.body;
+
+    try {
+        const user = await User.findOne({ token }).select("_id");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        await SavedPost.deleteOne({ userId: user._id, postId: post_id });
+
+        return res.json({ message: "Post unsaved", postId: String(post_id), saved: false });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const getSavedPosts = async (req, res) => {
+    try {
+        const token = req.query.token;
+        const user = await User.findOne({ token }).select("_id");
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const records = await SavedPost.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .populate({
+                path: "postId",
+                populate: { path: "userId", select: "name username email profilePicture" },
+            });
+
+        const connectedIds = await loadConnectedUserIds(user._id.toString());
+        const savedIds = new Set();
+        const posts = [];
+
+        for (const record of records) {
+            if (!record.postId) {
+                await SavedPost.deleteOne({ _id: record._id });
+                continue;
+            }
+            savedIds.add(record.postId._id.toString());
+            posts.push(serializePost(record.postId, user._id.toString(), connectedIds, savedIds));
+        }
+
+        return res.json({ posts });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
