@@ -4,6 +4,11 @@ export const validateEmail = (email) => {
   return "";
 };
 
+export const validateOptionalEmail = (email) => {
+  if (!email?.trim()) return "";
+  return validateEmail(email);
+};
+
 export const validatePassword = (password) => {
   if (!password) return "Password is required";
   if (password.length < 6) return "Password must be at least 6 characters";

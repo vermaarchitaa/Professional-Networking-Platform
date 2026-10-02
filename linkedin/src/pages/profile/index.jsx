@@ -7,25 +7,39 @@ import PostCard from "@/Components/PostCard";
 import ProfileHeader from "@/Components/ProfileHeader";
 import {
   fetchUserProfile,
+  fetchProfileByUsername,
   updateProfileData,
   updateUserInfo,
 } from "@/config/redux/action/profileAction";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import { ProfileFormSkeleton, PostSkeleton } from "@/Components/Skeleton";
+import EducationRecordForm, {
+  emptyEducation,
+  formatEducationDates,
+} from "@/Components/EducationRecordForm";
 import { validateProfile } from "@/config/validation";
 import useAuthGuard from "@/hooks/useAuth";
 import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
+import { clearViewedProfile } from "@/config/redux/reducer/profileReducer";
 import styles from "./style.module.css";
 
 const emptyWork = { company: "", position: "", years: "" };
-const emptyEducation = { school: "", degree: "", fieldOfStudy: "" };
 const PREVIEW_LIMIT = 3;
 
-export default function ProfilePage() {
+export default function ProfilePage({ publicUsername = "" }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const editRef = useRef(null);
-  const { profile, message, isLoading } = useSelector((state) => state.profile);
+  const educationRef = useRef(null);
+  const [highlightEducation, setHighlightEducation] = useState(false);
+  const {
+    profile: ownProfile,
+    viewedProfile,
+    viewedLoading,
+    viewedError,
+    message,
+    isLoading,
+  } = useSelector((state) => state.profile);
   const { posts, isLoading: postsLoading } = useSelector((state) => state.posts);
   const [bio, setBio] = useState("");
   const [currentPost, setCurrentPost] = useState("");
@@ -50,8 +64,18 @@ export default function ProfilePage() {
   useEffect(() => {
     dispatch(fetchUserProfile());
     dispatch(fetchPosts());
-  }, [dispatch]);
+    if (publicUsername) {
+      dispatch(fetchProfileByUsername(publicUsername));
+    } else {
+      dispatch(clearViewedProfile());
+    }
+  }, [dispatch, publicUsername]);
 
+  const isPublicRoute = Boolean(publicUsername);
+  const isOwner = !isPublicRoute || Boolean(
+    ownProfile?.userId?.username && publicUsername && ownProfile.userId.username === publicUsername
+  );
+  const profile = isPublicRoute && !isOwner ? viewedProfile : ownProfile;
   const myId = profile?.userId?._id;
   const myPosts = sortActivityPosts(posts.filter((p) => p.userId?._id === myId));
   const featuredSignature = myPosts.filter((post) => post.featured === true).map((post) => post._id).join(",");
@@ -162,9 +186,19 @@ export default function ProfilePage() {
   };
 
   const openEditor = () => {
+    if (!isOwner) return;
     setIsEditing(true);
     setTimeout(() => {
       editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  };
+
+  const openEducationSection = () => {
+    setIsEditing(false);
+    setTimeout(() => {
+      educationRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setHighlightEducation(true);
+      window.setTimeout(() => setHighlightEducation(false), 1600);
     }, 0);
   };
 
@@ -174,18 +208,28 @@ export default function ProfilePage() {
     setPastWork(updated);
   };
 
-  const updateEdu = (index, field, value) => {
-    const updated = [...education];
-    updated[index] = { ...updated[index], [field]: value };
-    setEducation(updated);
-  };
-
-  if (isLoading && !profile) {
+  if (
+    (!isPublicRoute && isLoading && !ownProfile)
+    || (isPublicRoute && !viewedProfile && !viewedError)
+  ) {
     return (
       <DashboardLayout>
         <div className={styles.container}>
           <ProfileFormSkeleton />
           <ProfileFormSkeleton />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (isPublicRoute && !viewedProfile) {
+    return (
+      <DashboardLayout>
+        <div className={styles.container}>
+          <section className={styles.section}>
+            <h2>Profile not available</h2>
+            <p className={styles.displayText}>{viewedError || "This profile URL is not available."}</p>
+          </section>
         </div>
       </DashboardLayout>
     );
@@ -197,18 +241,23 @@ export default function ProfilePage() {
   return (
     <DashboardLayout>
       <div className={styles.container}>
-        <ProfileHeader profile={profile} onEditProfile={openEditor} />
+        <ProfileHeader
+          profile={profile}
+          isOwner={isOwner}
+          onEditProfile={openEditor}
+          onOpenEducation={openEducationSection}
+        />
         <div id="profile-edit" ref={editRef} />
 
         {saved && <p className={styles.success}>{message}</p>}
 
-        {!isEditing ? (
+        {!(isOwner && isEditing) ? (
           <>
             <section className={styles.section}>
               <h2>About</h2>
               <p className={styles.displayText}>{profile?.bio || "No bio added yet."}</p>
-              {profile?.userId?.email && (
-                <p className={styles.displayMeta}>{profile.userId.email}</p>
+              {isOwner && ownProfile?.userId?.email && (
+                <p className={styles.displayMeta}>{ownProfile.userId.email}</p>
               )}
             </section>
 
@@ -228,19 +277,30 @@ export default function ProfilePage() {
               )}
             </section>
 
-            <section className={styles.section}>
+            <section
+              id="education"
+              ref={educationRef}
+              className={`${styles.section} ${highlightEducation ? styles.eduHighlight : ""}`}
+            >
               <h2>Education</h2>
               {visibleEdu.length === 0 ? (
                 <p className={styles.displayText}>No education added yet.</p>
               ) : (
-                visibleEdu.map((edu, i) => (
-                  <div key={i} className={styles.displayEntry}>
-                    <p className={styles.displayEntryTitle}>{edu.school || "School"}</p>
-                    <p className={styles.displayMeta}>
-                      {[edu.degree, edu.fieldOfStudy].filter(Boolean).join(" · ")}
-                    </p>
-                  </div>
-                ))
+                (profile?.education || []).map((edu, i) => {
+                  if (!edu.school && !edu.degree && !edu.fieldOfStudy) return null;
+                  return (
+                    <div
+                      key={i}
+                      className={`${styles.displayEntry} ${highlightEducation ? styles.eduItemHighlight : ""}`}
+                    >
+                      <p className={styles.displayEntryTitle}>{edu.school || "School"}</p>
+                      <p className={styles.displayMeta}>
+                        {[edu.degree, edu.fieldOfStudy, formatEducationDates(edu)].filter(Boolean).join(" · ")}
+                      </p>
+                      {edu.description ? <p className={styles.displayText}>{edu.description}</p> : null}
+                    </div>
+                  );
+                })
               )}
             </section>
           </>
@@ -316,13 +376,18 @@ export default function ProfilePage() {
               </button>
             </section>
 
-            <section className={styles.section}>
+            <section id="education" ref={educationRef} className={styles.section}>
               <h2>Education</h2>
               {education.map((edu, i) => (
-                <div key={i} className={styles.entryRow}>
-                  <input placeholder="School" value={edu.school} onChange={(e) => updateEdu(i, "school", e.target.value)} />
-                  <input placeholder="Degree" value={edu.degree} onChange={(e) => updateEdu(i, "degree", e.target.value)} />
-                  <input placeholder="Years / Field" value={edu.fieldOfStudy} onChange={(e) => updateEdu(i, "fieldOfStudy", e.target.value)} />
+                <div key={i} className={styles.eduEditorBlock}>
+                  <EducationRecordForm
+                    value={edu}
+                    onChange={(next) => {
+                      const updated = [...education];
+                      updated[i] = next;
+                      setEducation(updated);
+                    }}
+                  />
                 </div>
               ))}
               <button className={styles.addBtn} onClick={() => setEducation([...education, { ...emptyEducation }])}>
@@ -345,13 +410,15 @@ export default function ProfilePage() {
           <div className={styles.activityHeader}>
             <h2 className={styles.activityTitle}>Activity</h2>
             <div className={styles.activityActions}>
-              <button
-                type="button"
-                className={styles.createPostBtn}
-                onClick={() => setShowComposer(true)}
-              >
-                Create a post
-              </button>
+              {isOwner ? (
+                <button
+                  type="button"
+                  className={styles.createPostBtn}
+                  onClick={() => setShowComposer(true)}
+                >
+                  Create a post
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -468,7 +535,7 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {tabHasItems && (
+          {isOwner && tabHasItems && (
             <button
               type="button"
               className={styles.showAll}
@@ -479,11 +546,13 @@ export default function ProfilePage() {
           )}
         </section>
 
-        <CreatePost
-          isOpen={showComposer}
-          onClose={() => setShowComposer(false)}
-          user={profile?.userId}
-        />
+        {isOwner ? (
+          <CreatePost
+            isOpen={showComposer}
+            onClose={() => setShowComposer(false)}
+            user={ownProfile?.userId}
+          />
+        ) : null}
       </div>
     </DashboardLayout>
   );

@@ -1,0 +1,384 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.dialog {
+  width: min(744px, 100%);
+  max-height: calc(100vh - 3rem);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #191919;
+  flex: 1;
+  line-height: 1.3;
+}
+
+.backBtn {
+  border: none;
+  background: transparent;
+  color: #0a66c2;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.15rem;
+  flex-shrink: 0;
+}
+
+.backBtn:hover {
+  text-decoration: underline;
+}
+
+.closeBtn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  background: #f3f2ef;
+}
+
+.body {
+  padding: 0.75rem 1.5rem 1rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+
+.hint {
+  margin: 0.35rem 0 1rem;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-weight: 400;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  padding: 0.4rem 0.7rem;
+  min-height: 34px;
+  background: #fff;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid #0a66c2;
+  outline-offset: 0;
+  border-color: #0a66c2;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 5rem;
+  padding-top: 0.55rem;
+}
+
+.field input:read-only {
+  background: #f3f2ef;
+  color: rgba(0, 0, 0, 0.6);
+  border-color: transparent;
+}
+
+.note {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.counter {
+  align-self: flex-end;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.section {
+  margin-bottom: 0.35rem;
+}
+
+.sectionTitle {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #191919;
+}
+
+.addBtn {
+  border: none;
+  background: transparent;
+  color: #0a66c2;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.25rem 0 1rem;
+}
+
+.addBtn:hover {
+  text-decoration: underline;
+}
+
+.addBtn:disabled {
+  color: rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.eduList {
+  list-style: none;
+  margin: 0 0 0.35rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.eduCard {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+}
+
+.eduSelect {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-width: 0;
+  font-weight: 400;
+}
+
+.eduSelect input {
+  margin-top: 0.25rem;
+}
+
+.eduSchool,
+.eduMeta {
+  display: block;
+}
+
+.eduSchool {
+  font-weight: 600;
+  color: #191919;
+}
+
+.eduMeta {
+  margin-top: 0.15rem;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.eduActions {
+  display: flex;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.profileUrlBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  border: none;
+  background: transparent;
+  color: #0a66c2;
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0.15rem 0 0.85rem;
+  text-align: left;
+  transition: color 0.15s ease;
+}
+
+.profileUrlBtn span:first-child {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+.profileUrlBtn:hover {
+  color: #004182;
+}
+
+.profileUrlBtn:hover span:first-child {
+  text-decoration-thickness: 2px;
+}
+
+.externalIcon {
+  flex-shrink: 0;
+  font-size: 0.95rem;
+}
+
+.contactCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 0 0.5rem;
+  border-top: 1px solid #e8e8e8;
+  margin-top: 0.35rem;
+}
+
+.contactTitle {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #191919;
+}
+
+.contactMeta {
+  margin: 0.2rem 0 0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.linkBtn {
+  border: none;
+  background: transparent;
+  color: #0a66c2;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.linkBtn:hover {
+  text-decoration: underline;
+}
+
+.linkBtn:disabled {
+  color: rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.error {
+  margin: 0.35rem 0 0.75rem;
+  color: #b24020;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.85rem 1.5rem 1rem;
+  border-top: 1px solid #e8e8e8;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.saveBtn {
+  border: none;
+  background: #0a66c2;
+  color: #fff;
+  border-radius: 24px;
+  min-height: 40px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: #004182;
+}
+
+.saveBtn:disabled {
+  background: rgba(0, 0, 0, 0.3);
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .overlay {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .dialog {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .contactCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .saveBtn {
+    width: 100%;
+  }
+}

@@ -230,7 +230,25 @@
   align-items: center;
   gap: 0.55rem;
   min-width: 180px;
-  padding-top: 0.35rem;
+  max-width: 240px;
+  padding: 0.35rem 0.4rem;
+  margin: -0.35rem -0.4rem 0;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.15s ease;
+}
+
+.schoolBlock:hover {
+  background: #f3f2ef;
+}
+
+.schoolBlock:hover .schoolName {
+  color: #0a66c2;
+  text-decoration: underline;
 }
 
 .schoolLogo {
@@ -250,6 +268,8 @@
   font-weight: 600;
   font-size: 0.9rem;
   color: #191919;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .actions {
@@ -416,6 +436,80 @@
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.5rem;
+}
+
+.contactDialog {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 3rem);
+  overflow: auto;
+  padding: 0;
+}
+
+.contactDialogHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.1rem 1.1rem 0.85rem;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+
+.contactDialogHeader h3 {
+  margin: 0;
+}
+
+.contactDialogActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.contactList {
+  margin: 0;
+  padding: 0.85rem 1.1rem 1.1rem;
+}
+
+.contactItem {
+  margin: 0 0 0.95rem;
+}
+
+.contactItem dt {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.contactItem dt svg {
+  color: #191919;
+  flex-shrink: 0;
+}
+
+.contactItem dd {
+  margin: 0.2rem 0 0 1.7rem;
+  color: #191919;
+  word-break: break-word;
+}
+
+.contactItem a {
+  color: #0a66c2;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contactItem a:hover {
+  text-decoration: underline;
+}
+
+.contactEmpty {
+  margin: 0.35rem 0 0.5rem;
+  color: #666;
 }
 
 @media (max-width: 720px) {

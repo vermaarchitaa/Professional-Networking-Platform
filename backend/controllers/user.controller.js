@@ -354,7 +354,83 @@ export const getUserAndProfile = async (req, res) => {
     }
 }
 
+const sanitizeContactForViewer = (contact, isOwner) => {
+    if (isOwner || !contact || typeof contact !== "object") return contact || {};
+    const next = { ...contact };
+    if (next.emailVisibility === "only-me") next.email = "";
+    if (next.phoneVisibility === "only-me") {
+        next.phone = "";
+        next.phoneType = "";
+    }
+    return next;
+};
+
+export const getProfileByUsername = async (req, res) => {
+    try {
+        const { token, username } = req.body;
+        if (!token || typeof token !== "string") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const viewer = await User.findOne({ token });
+        if (!viewer) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const slug = String(username || "").trim();
+        if (!slug) {
+            return res.status(400).json({ message: "Username is required" });
+        }
+
+        const user = await User.findOne({ username: slug });
+        if (!user) {
+            return res.status(404).json({ message: "Profile not found" });
+        }
+
+        const userProfile = await Profile.findOne({ userId: user._id })
+            .populate("userId", "name username profilePicture coverPicture profilePhotoVisibility profilePictureFrame");
+
+        if (!userProfile) {
+            return res.status(404).json({ message: "Profile not found" });
+        }
+
+        const isOwner = String(viewer._id) === String(user._id);
+        const connectionsCount = await ConnectionRequest.countDocuments({
+            status_accepted: true,
+            $or: [{ userId: user._id }, { connectionId: user._id }],
+        });
+
+        const data = userProfile.toObject();
+        data.contactInfo = sanitizeContactForViewer(data.contactInfo, isOwner);
+        if (isOwner) {
+            data.userId = {
+                ...data.userId,
+                email: viewer.email,
+            };
+        }
+
+        return res.json({
+            ...data,
+            connectionsCount,
+            isOwner,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
 const OPEN_TO_VISIBILITY = new Set(["recruiters", "anyone"]);
+const CONTACT_VISIBILITY = new Set(["anyone", "connections", "only-me"]);
+const PHONE_TYPES = new Set(["", "Mobile", "Home", "Work"]);
+const PROFILE_STRING_FIELDS = ["bio", "currentPost", "location"];
+
+const asTrimmedString = (value, fallback = "") => {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value !== "string") return null;
+    return value.trim();
+};
+
+const joinLocation = (city, country) => [city, country].filter(Boolean).join(", ");
 
 const normalizeOpenToWork = (value) => {
     if (value === undefined) return { ok: true };
@@ -385,20 +461,122 @@ const normalizeOpenToWork = (value) => {
     };
 };
 
+const normalizeEducationIndex = (value, educationLength) => {
+    if (value === undefined || value === null || value === "") return { ok: true, value: null };
+    const index = Number(value);
+    if (!Number.isInteger(index) || index < 0 || index >= educationLength) {
+        return { ok: false, message: "intro.educationIndex must be a valid education record" };
+    }
+    return { ok: true, value: index };
+};
+
+const normalizeIntro = (value, educationLength) => {
+    if (value === undefined) return { ok: true };
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        return { ok: false, message: "intro must be an object" };
+    }
+
+    const additionalName = asTrimmedString(value.additionalName);
+    const pronouns = asTrimmedString(value.pronouns);
+    const industry = asTrimmedString(value.industry);
+    const city = asTrimmedString(value.city);
+    const country = asTrimmedString(value.country);
+    const education = asTrimmedString(value.education);
+    if ([additionalName, pronouns, industry, city, country, education].includes(null)) {
+        return { ok: false, message: "intro string fields must be strings" };
+    }
+
+    const educationIndex = normalizeEducationIndex(value.educationIndex, educationLength);
+    if (!educationIndex.ok) return educationIndex;
+
+    return {
+        ok: true,
+        value: {
+            additionalName,
+            pronouns,
+            industry,
+            city,
+            country,
+            education,
+            educationIndex: educationIndex.value,
+        },
+    };
+};
+
+const normalizeContactInfo = (value) => {
+    if (value === undefined) return { ok: true };
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        return { ok: false, message: "contactInfo must be an object" };
+    }
+
+    const email = asTrimmedString(value.email);
+    const phone = asTrimmedString(value.phone);
+    const phoneType = asTrimmedString(value.phoneType);
+    const address = asTrimmedString(value.address);
+    const birthday = asTrimmedString(value.birthday);
+    const website = asTrimmedString(value.website);
+    const instantMessaging = asTrimmedString(value.instantMessaging);
+    if ([email, phone, phoneType, address, birthday, website, instantMessaging].includes(null)) {
+        return { ok: false, message: "contactInfo string fields must be strings" };
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return { ok: false, message: "contactInfo.email must be a valid email" };
+    }
+    if (!PHONE_TYPES.has(phoneType)) {
+        return { ok: false, message: "contactInfo.phoneType must be Mobile, Home, Work, or empty" };
+    }
+    if (birthday && !/^\d{4}-\d{2}-\d{2}$/.test(birthday)) {
+        return { ok: false, message: "contactInfo.birthday must be YYYY-MM-DD" };
+    }
+
+    const emailVisibility = value.emailVisibility === undefined ? "anyone" : value.emailVisibility;
+    const phoneVisibility = value.phoneVisibility === undefined ? "anyone" : value.phoneVisibility;
+    if (!CONTACT_VISIBILITY.has(emailVisibility) || !CONTACT_VISIBILITY.has(phoneVisibility)) {
+        return { ok: false, message: "contact visibility must be anyone, connections, or only-me" };
+    }
+
+    return {
+        ok: true,
+        value: {
+            email,
+            phone,
+            phoneType,
+            address,
+            birthday,
+            website,
+            instantMessaging,
+            emailVisibility,
+            phoneVisibility,
+        },
+    };
+};
+
 export const updateProfileData = async (req, res) => {
 
     try {
+        const {
+            token,
+            openToWork,
+            intro,
+            contactInfo,
+            connectionsCount,
+            userId,
+            _id,
+            ...rest
+        } = req.body;
 
-        const { token, openToWork, connectionsCount, ...newProfileData } = req.body;
+        if (!token || typeof token !== "string") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
 
-        const userProfile = await User.findOne({token: token});
+        const userProfile = await User.findOne({ token: token });
 
-        if(!userProfile) {
+        if (!userProfile) {
             return res.status(404).json({ message: "User not fouund" });
         }
 
-        const profile_to_update = await Profile.findOne({ userId: userProfile._id});
-        if(!profile_to_update){
+        const profile_to_update = await Profile.findOne({ userId: userProfile._id });
+        if (!profile_to_update) {
             return res.status(404).json({ message: "Profile not found" });
         }
 
@@ -407,20 +585,57 @@ export const updateProfileData = async (req, res) => {
             return res.status(400).json({ message: normalizedOpenToWork.message });
         }
 
-        delete newProfileData.userId;
-        delete newProfileData.connectionsCount;
-        Object.assign(profile_to_update, newProfileData);
+        for (const key of PROFILE_STRING_FIELDS) {
+            if (rest[key] === undefined) continue;
+            if (typeof rest[key] !== "string") {
+                return res.status(400).json({ message: `${key} must be a string` });
+            }
+            profile_to_update[key] = rest[key];
+        }
+
+        if (rest.pastWork !== undefined) {
+            if (!Array.isArray(rest.pastWork)) {
+                return res.status(400).json({ message: "pastWork must be an array" });
+            }
+            profile_to_update.pastWork = rest.pastWork;
+        }
+        if (rest.education !== undefined) {
+            if (!Array.isArray(rest.education)) {
+                return res.status(400).json({ message: "education must be an array" });
+            }
+            profile_to_update.education = rest.education;
+        }
+
+        const educationLength = (profile_to_update.education || []).length;
+        const normalizedIntro = normalizeIntro(intro, educationLength);
+        if (!normalizedIntro.ok) {
+            return res.status(400).json({ message: normalizedIntro.message });
+        }
+        const normalizedContact = normalizeContactInfo(contactInfo);
+        if (!normalizedContact.ok) {
+            return res.status(400).json({ message: normalizedContact.message });
+        }
+
         if (normalizedOpenToWork.value) {
             profile_to_update.set("openToWork", normalizedOpenToWork.value);
+        }
+        if (normalizedIntro.value) {
+            profile_to_update.set("intro", normalizedIntro.value);
+            if (rest.location === undefined) {
+                profile_to_update.location = joinLocation(
+                    normalizedIntro.value.city,
+                    normalizedIntro.value.country
+                );
+            }
+        }
+        if (normalizedContact.value) {
+            profile_to_update.set("contactInfo", normalizedContact.value);
         }
 
         await profile_to_update.save();
 
-        return res.json({ message: "Profile Update"});
-
-
-
-    } catch(error){
+        return res.json({ message: "Profile Update" });
+    } catch (error) {
         return res.status(500).json({ message: error.message });
     }
 }

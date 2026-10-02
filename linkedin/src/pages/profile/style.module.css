@@ -97,6 +97,12 @@
   margin-bottom: 0.6rem;
 }
 
+.eduEditorBlock {
+  margin-bottom: 1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid #eee;
+}
+
 .addBtn {
   background: none;
   border: 1px dashed #00488b;
@@ -137,6 +143,16 @@
 .displayEntryTitle {
   font-weight: 600;
   color: #222;
+}
+
+.eduHighlight {
+  box-shadow: 0 0 0 2px #0a66c2, 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.eduItemHighlight {
+  background: #e8f1fa;
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
 }
 
 .activityCard {

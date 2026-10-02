@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchUserProfile,
+  fetchProfileByUsername,
   updateProfileData,
   updateUserInfo,
   uploadProfilePicture,
@@ -13,6 +14,9 @@ import {
 
 const initialState = {
   profile: null,
+  viewedProfile: null,
+  viewedLoading: false,
+  viewedError: "",
   isLoading: false,
   isError: false,
   message: "",
@@ -25,6 +29,11 @@ const profileSlice = createSlice({
     clearProfile: () => initialState,
     clearProfileMessage: (state) => {
       state.message = "";
+    },
+    clearViewedProfile: (state) => {
+      state.viewedProfile = null;
+      state.viewedLoading = false;
+      state.viewedError = "";
     },
   },
   extraReducers: (builder) => {
@@ -40,6 +49,20 @@ const profileSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload?.message || "Failed to load profile";
+      })
+      .addCase(fetchProfileByUsername.pending, (state) => {
+        state.viewedLoading = true;
+        state.viewedError = "";
+      })
+      .addCase(fetchProfileByUsername.fulfilled, (state, action) => {
+        state.viewedLoading = false;
+        state.viewedProfile = action.payload;
+        state.viewedError = "";
+      })
+      .addCase(fetchProfileByUsername.rejected, (state, action) => {
+        state.viewedLoading = false;
+        state.viewedProfile = null;
+        state.viewedError = action.payload?.message || "Profile not found";
       })
       .addCase(updateProfileData.fulfilled, (state, action) => {
         state.message = action.payload?.message || "Profile updated";
@@ -92,5 +115,5 @@ const profileSlice = createSlice({
   },
 });
 
-export const { clearProfile, clearProfileMessage } = profileSlice.actions;
+export const { clearProfile, clearProfileMessage, clearViewedProfile } = profileSlice.actions;
 export default profileSlice.reducer;

@@ -11,6 +11,18 @@ export const fetchUserProfile = createAsyncThunk("profile/fetch", async (_, thun
   }
 });
 
+export const fetchProfileByUsername = createAsyncThunk("profile/fetchByUsername", async (username, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/get_profile_by_username", {
+      token: getToken(),
+      username,
+    });
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Profile not found" });
+  }
+});
+
 export const updateProfileData = createAsyncThunk("profile/update", async (profileData, thunkAPI) => {
   try {
     const response = await clientServer.post("/update_profile_data", {

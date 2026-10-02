@@ -3,6 +3,18 @@ export const getToken = () => {
   return localStorage.getItem("token");
 };
 
+export const getPublicProfilePath = (username) => {
+  const slug = String(username || "").trim();
+  return slug ? `/in/${slug}` : "";
+};
+
+export const getPublicProfileHref = (username) => {
+  const path = getPublicProfilePath(username);
+  if (!path) return "";
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
+};
+
 export const getMediaUrl = (filename) => {
   if (!filename || filename === "default.jpg") return "/images/default-avatar.png";
   return `http://localhost:9090/${filename}`;

@@ -13,6 +13,22 @@ const educationSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    startDate: {
+        type: String,
+        default: '',
+    },
+    endDate: {
+        type: String,
+        default: '',
+    },
+    current: {
+        type: Boolean,
+        default: false,
+    },
+    description: {
+        type: String,
+        default: '',
+    },
 });
 
 const workSchema = new mongoose.Schema({
@@ -54,6 +70,74 @@ const ProfileSchema = new mongoose.Schema({
     location: {
         type: String,
         default: ""
+    },
+    intro: {
+        additionalName: {
+            type: String,
+            default: ""
+        },
+        pronouns: {
+            type: String,
+            default: ""
+        },
+        industry: {
+            type: String,
+            default: ""
+        },
+        city: {
+            type: String,
+            default: ""
+        },
+        country: {
+            type: String,
+            default: ""
+        },
+        education: {
+            type: String,
+            default: ""
+        },
+        educationIndex: {
+            type: Number,
+            default: null
+        }
+    },
+    contactInfo: {
+        email: {
+            type: String,
+            default: ""
+        },
+        phone: {
+            type: String,
+            default: ""
+        },
+        phoneType: {
+            type: String,
+            default: ""
+        },
+        address: {
+            type: String,
+            default: ""
+        },
+        birthday: {
+            type: String,
+            default: ""
+        },
+        website: {
+            type: String,
+            default: ""
+        },
+        instantMessaging: {
+            type: String,
+            default: ""
+        },
+        emailVisibility: {
+            type: String,
+            default: "anyone"
+        },
+        phoneVisibility: {
+            type: String,
+            default: "anyone"
+        }
     },
     openToWork: {
         enabled: {
