@@ -759,13 +759,6 @@ export default function ProfilePage({ publicUsername = "" }) {
               onAdd={openAddSkill}
               onOpenDetails={() => router.push(isPublicRoute ? `/in/${encodeURIComponent(publicUsername)}/skills` : "/profile/skills")}
             />
-
-            <LanguagesSection
-              profile={profile}
-              isOwner={isOwner}
-              onAdd={openAddLanguage}
-              onOpenDetails={() => router.push(isPublicRoute ? `/in/${encodeURIComponent(publicUsername)}/languages` : "/profile/languages")}
-            />
           </>
         ) : (
           <>
@@ -1008,6 +1001,13 @@ export default function ProfilePage({ publicUsername = "" }) {
             </button>
           )}
         </section>
+
+        <LanguagesSection
+          profile={profile}
+          isOwner={isOwner}
+          onAdd={openAddLanguage}
+          onOpenDetails={() => router.push(isPublicRoute ? `/in/${encodeURIComponent(publicUsername)}/languages` : "/profile/languages")}
+        />
 
         {isOwner ? (
           <CreatePost
