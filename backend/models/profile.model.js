@@ -69,6 +69,32 @@ const educationSchema = new mongoose.Schema({
     },
 });
 
+const skillAssociationSchema = new mongoose.Schema({
+    kind: {
+        type: String,
+        default: 'education',
+    },
+    refId: {
+        type: String,
+        default: '',
+    },
+}, { _id: false });
+
+const profileSkillSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        default: '',
+    },
+    category: {
+        type: String,
+        default: '',
+    },
+    associations: {
+        type: [skillAssociationSchema],
+        default: [],
+    },
+});
+
 const workSchema = new mongoose.Schema({
     company: {
         type: String,
@@ -103,6 +129,10 @@ const ProfileSchema = new mongoose.Schema({
     },
     education: {
         type: [educationSchema],
+        default: [],
+    },
+    skills: {
+        type: [profileSkillSchema],
         default: [],
     },
     location: {

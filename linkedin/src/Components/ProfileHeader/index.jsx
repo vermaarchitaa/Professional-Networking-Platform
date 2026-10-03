@@ -165,7 +165,7 @@ function ContactIcon({ name }) {
   );
 }
 
-export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, onAddAbout, onAddEducation, isOwner = true }) {
+export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, onAddAbout, onAddEducation, onAddSkill, isOwner = true }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const { message, isError } = useSelector((state) => state.profile);
@@ -553,6 +553,11 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                     if (label === "Add education") {
                       setOpenPanel(null);
                       onAddEducation?.();
+                      return;
+                    }
+                    if (label === "Add skill" || label === "Add skills") {
+                      setOpenPanel(null);
+                      onAddSkill?.();
                     }
                   }}
                 >

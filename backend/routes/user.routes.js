@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login, uploadProfilePicture, deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadCoverPicture, deleteCoverPicture, uploadEducationMedia, updateUserProfile, getUserAndProfile, getProfileByUsername, updateProfileData, getAllUserProfile, downloadProfile, sendConnectionRequest, acceptConnectionRequest, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
+import { register, login, uploadProfilePicture, deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadCoverPicture, deleteCoverPicture, uploadEducationMedia, updateUserProfile, getUserAndProfile, getProfileByUsername, updateProfileData, addProfileSkill, updateProfileSkill, deleteProfileSkill, getAllUserProfile, downloadProfile, sendConnectionRequest, acceptConnectionRequest, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
 import { profilePictureUpload, coverPhotoUpload, educationMediaUpload } from "../utils/uploads.js";
 const router = Router();
 
@@ -24,6 +24,9 @@ router.route('/user_update').post(updateUserProfile);
 router.route('/get_user_and_profile').post(getUserAndProfile);
 router.route('/get_profile_by_username').post(getProfileByUsername);
 router.route("/update_profile_data").post(updateProfileData);
+router.route("/add_profile_skill").post(addProfileSkill);
+router.route("/update_profile_skill").post(updateProfileSkill);
+router.route("/delete_profile_skill").post(deleteProfileSkill);
 router.route("/user/get_all_users").get(getAllUserProfile);
 router.route("/user/download_resume").get(downloadProfile);
 router.route("/user/send_connection_request").post(sendConnectionRequest);

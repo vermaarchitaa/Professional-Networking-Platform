@@ -104,6 +104,23 @@
   margin: 0;
 }
 
+.aboutMore {
+  display: inline;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  color: #666;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aboutMore:hover {
+  color: #0a66c2;
+  text-decoration: underline;
+}
+
 .entryHeader {
   display: flex;
   align-items: flex-start;

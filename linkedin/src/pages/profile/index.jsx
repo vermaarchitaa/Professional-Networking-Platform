@@ -10,6 +10,7 @@ import {
   fetchProfileByUsername,
   updateProfileData,
   updateUserInfo,
+  addProfileSkill,
 } from "@/config/redux/action/profileAction";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import { ProfileFormSkeleton, PostSkeleton } from "@/Components/Skeleton";
@@ -21,6 +22,9 @@ import EducationRecordForm, {
 import EditAboutModal, { ABOUT_MAX_LENGTH } from "@/Components/EditAboutModal";
 import EditEducationModal from "@/Components/EditEducationModal";
 import EducationMediaViewer from "@/Components/EducationMediaViewer";
+import SkillsSection from "@/Components/SkillsSection";
+import AddSkillModal from "@/Components/AddSkillModal";
+import { listProfileSkills } from "@/Components/SkillsSection/skillUtils";
 import { validateProfile } from "@/config/validation";
 import useAuthGuard from "@/hooks/useAuth";
 import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
@@ -29,6 +33,16 @@ import styles from "./style.module.css";
 
 const emptyWork = { company: "", position: "", years: "" };
 const PREVIEW_LIMIT = 3;
+const ABOUT_PREVIEW_LIMIT = 240;
+
+function getAboutPreview(text) {
+  const value = String(text || "");
+  if (value.length <= ABOUT_PREVIEW_LIMIT) return { preview: value, canExpand: false };
+  const slice = value.slice(0, ABOUT_PREVIEW_LIMIT);
+  const breakAt = Math.max(slice.lastIndexOf(" "), slice.lastIndexOf("\n"));
+  const preview = (breakAt > 80 ? slice.slice(0, breakAt) : slice).replace(/\s+$/, "");
+  return { preview, canExpand: true };
+}
 
 export default function ProfilePage({ publicUsername = "" }) {
   const dispatch = useDispatch();
@@ -60,11 +74,15 @@ export default function ProfilePage({ publicUsername = "" }) {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [aboutSaving, setAboutSaving] = useState(false);
   const [aboutError, setAboutError] = useState("");
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
   const [educationOpen, setEducationOpen] = useState(false);
   const [educationSaving, setEducationSaving] = useState(false);
   const [educationError, setEducationError] = useState("");
   const [educationTarget, setEducationTarget] = useState(null);
   const [educationMediaViewer, setEducationMediaViewer] = useState(null);
+  const [skillModalOpen, setSkillModalOpen] = useState(false);
+  const [skillSaving, setSkillSaving] = useState(false);
+  const [skillError, setSkillError] = useState("");
   const [activityTab, setActivityTab] = useState("posts");
   const [previewTile, setPreviewTile] = useState(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -112,6 +130,10 @@ export default function ProfilePage({ publicUsername = "" }) {
     setEmail(profile.userId?.email || "");
     setLocation(profile.location || "");
   }, [profile]);
+
+  useEffect(() => {
+    setIsAboutExpanded(false);
+  }, [profile?.bio]);
 
   useEffect(() => {
     if (message) {
@@ -244,6 +266,24 @@ export default function ProfilePage({ publicUsername = "" }) {
     setEducationOpen(true);
   };
 
+  const openAddSkill = () => {
+    if (!isOwner) return;
+    setSkillError("");
+    setSkillModalOpen(true);
+  };
+
+  const handleSaveSkill = async (name) => {
+    setSkillSaving(true);
+    setSkillError("");
+    const result = await dispatch(addProfileSkill(name));
+    setSkillSaving(false);
+    if (addProfileSkill.fulfilled.match(result)) {
+      setSkillModalOpen(false);
+      return;
+    }
+    setSkillError(result.payload?.message || "Failed to add skill");
+  };
+
   const openEditEducation = (entry) => {
     if (!isOwner) return;
     const list = profile?.education || [];
@@ -357,6 +397,8 @@ export default function ProfilePage({ publicUsername = "" }) {
 
   const visibleWork = (profile?.pastWork || []).filter((w) => w.company || w.position || w.years);
   const visibleEdu = (profile?.education || []).filter((e) => String(e?.school || "").trim());
+  const aboutText = String(profile?.bio || "").trim();
+  const aboutPreview = getAboutPreview(aboutText);
   const openEducationDetails = () => {
     router.push(isPublicRoute ? `/in/${encodeURIComponent(publicUsername)}/education` : "/profile/education");
   };
@@ -384,6 +426,7 @@ export default function ProfilePage({ publicUsername = "" }) {
           onOpenEducation={openEducationSection}
           onAddAbout={openAboutEditor}
           onAddEducation={openAddEducation}
+          onAddSkill={openAddSkill}
         />
         <div id="profile-edit" ref={editRef} />
 
@@ -391,7 +434,7 @@ export default function ProfilePage({ publicUsername = "" }) {
 
         {!(isOwner && isEditing) ? (
           <>
-            {String(profile?.bio || "").trim() ? (
+            {aboutText ? (
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                   <h2>About</h2>
@@ -406,7 +449,18 @@ export default function ProfilePage({ publicUsername = "" }) {
                     </button>
                   ) : null}
                 </div>
-                <p className={`${styles.displayText} ${styles.aboutText}`}>{profile.bio}</p>
+                <p className={`${styles.displayText} ${styles.aboutText}`}>
+                  {isAboutExpanded || !aboutPreview.canExpand ? aboutText : `${aboutPreview.preview}... `}
+                  {aboutPreview.canExpand ? (
+                    <button
+                      type="button"
+                      className={styles.aboutMore}
+                      onClick={() => setIsAboutExpanded((open) => !open)}
+                    >
+                      {isAboutExpanded ? "less" : "more"}
+                    </button>
+                  ) : null}
+                </p>
               </section>
             ) : null}
 
@@ -527,6 +581,13 @@ export default function ProfilePage({ publicUsername = "" }) {
                 ) : null}
               </section>
             ) : null}
+
+            <SkillsSection
+              profile={profile}
+              isOwner={isOwner}
+              onAdd={openAddSkill}
+              onOpenDetails={() => router.push(isPublicRoute ? `/in/${encodeURIComponent(publicUsername)}/skills` : "/profile/skills")}
+            />
           </>
         ) : (
           <>
@@ -806,6 +867,17 @@ export default function ProfilePage({ publicUsername = "" }) {
             onClose={closeEducationEditor}
             onSave={handleSaveEducation}
             onDelete={handleDeleteEducation}
+          />
+        ) : null}
+        {isOwner ? (
+          <AddSkillModal
+            isOpen={skillModalOpen}
+            profile={profile}
+            existingNames={listProfileSkills(profile).map((item) => item.name)}
+            isSaving={skillSaving}
+            error={skillError}
+            onClose={() => !skillSaving && setSkillModalOpen(false)}
+            onSave={handleSaveSkill}
           />
         ) : null}
       </div>

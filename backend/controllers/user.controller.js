@@ -473,6 +473,18 @@ const EDUCATION_SKILL_MAX = 80;
 const EDUCATION_SKILLS_LIMIT = 5;
 const EDUCATION_MEDIA_NAME_MAX = 200;
 const EDUCATION_MEDIA_DESCRIPTION_MAX = 2000;
+const PROFILE_SKILL_NAME_MAX = 80;
+const PROFILE_SKILL_CATEGORIES = new Set(["", "tools"]);
+const PROFILE_SKILL_ASSOCIATION_KINDS = new Set(["education", "experience"]);
+const PROFILE_TOOLS_SKILLS = new Set([
+    "html", "html5", "css", "cascading style sheets", "cascading style sheets (css)",
+    "javascript", "typescript", "react", "react.js", "reactjs", "next.js", "nextjs",
+    "node.js", "nodejs", "express", "express.js", "mongodb", "sql", "mysql", "postgresql",
+    "python", "java", "c", "c++", "c#", "go", "golang", "php", "ruby", "kotlin", "swift",
+    "git", "github", "docker", "kubernetes", "linux", "aws", "azure", "redux",
+    "tailwind css", "tailwind", "figma", "excel", "microsoft excel", "microsoft office",
+    "powerpoint", "wordpress", "django", "flask", "spring", "android", "ios",
+]);
 const YYYY_MM = /^\d{4}-(0[1-9]|1[0-2])$/;
 const STORED_MEDIA_FILE = /^[a-f0-9]{64}\.(jpg|jpeg|png|gif|webp|pdf|doc|docx)$/i;
 
@@ -613,6 +625,88 @@ const normalizeEducationArray = (value) => {
     }
 
     return { ok: true, value: next };
+};
+
+const inferProfileSkillCategory = (name) => (
+    PROFILE_TOOLS_SKILLS.has(String(name || "").trim().toLowerCase()) ? "tools" : ""
+);
+
+const collectProfileRecordIds = (profile) => ({
+    education: new Set((profile?.education || []).map((entry) => String(entry._id))),
+    experience: new Set((profile?.pastWork || []).map((entry) => String(entry._id))),
+});
+
+const normalizeSkillAssociations = (value, profile) => {
+    if (value === undefined || value === null) return { ok: true, value: [] };
+    if (!Array.isArray(value)) return { ok: false, message: "Skill associations must be an array" };
+    const ids = collectProfileRecordIds(profile);
+    const seen = new Set();
+    const next = [];
+    for (const item of value) {
+        if (!item || typeof item !== "object" || Array.isArray(item)) continue;
+        const kind = asTrimmedString(item.kind);
+        const refId = asTrimmedString(item.refId);
+        if (!kind || !refId || !PROFILE_SKILL_ASSOCIATION_KINDS.has(kind)) continue;
+        if (kind === "education" && !ids.education.has(refId)) continue;
+        if (kind === "experience" && !ids.experience.has(refId)) continue;
+        const key = `${kind}:${refId}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        next.push({ kind, refId });
+    }
+    return { ok: true, value: next };
+};
+
+const normalizeProfileSkills = (value, profile) => {
+    if (value === undefined || value === null) return { ok: true, value: [] };
+    if (!Array.isArray(value)) return { ok: false, message: "skills must be an array" };
+    const seen = new Set();
+    const next = [];
+    for (const item of value) {
+        if (!item || typeof item !== "object" || Array.isArray(item)) {
+            return { ok: false, message: "Each skill must be an object" };
+        }
+        const name = asTrimmedString(item.name);
+        if (name === null) return { ok: false, message: "Skill names must be strings" };
+        if (!name) continue;
+        if (name.length > PROFILE_SKILL_NAME_MAX) {
+            return { ok: false, message: `Skill names must be under ${PROFILE_SKILL_NAME_MAX} characters` };
+        }
+        const key = name.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const categoryRaw = asTrimmedString(item.category, "");
+        const category = PROFILE_SKILL_CATEGORIES.has(categoryRaw)
+            ? categoryRaw
+            : inferProfileSkillCategory(name);
+        const associations = normalizeSkillAssociations(item.associations, profile);
+        if (!associations.ok) return associations;
+        const skill = { name, category, associations: associations.value };
+        if (item._id) skill._id = item._id;
+        next.push(skill);
+    }
+    return { ok: true, value: next };
+};
+
+const pruneProfileSkillAssociations = (profile) => {
+    if (!profile?.skills?.length) return;
+    const ids = collectProfileRecordIds(profile);
+    profile.skills.forEach((skill) => {
+        skill.associations = (skill.associations || []).filter((item) => {
+            if (item.kind === "education") return ids.education.has(String(item.refId));
+            if (item.kind === "experience") return ids.experience.has(String(item.refId));
+            return false;
+        });
+    });
+};
+
+const findProfileByToken = async (token) => {
+    if (!token || typeof token !== "string") return { error: { status: 401, message: "Unauthorized" } };
+    const user = await User.findOne({ token });
+    if (!user) return { error: { status: 401, message: "Unauthorized" } };
+    const profile = await Profile.findOne({ userId: user._id });
+    if (!profile) return { error: { status: 404, message: "Profile not found" } };
+    return { user, profile };
 };
 
 const normalizeOpenToWork = (value) => {
@@ -797,6 +891,14 @@ export const updateProfileData = async (req, res) => {
             }
             profile_to_update.education = normalizedEducation.value;
         }
+        if (rest.skills !== undefined) {
+            const normalizedSkills = normalizeProfileSkills(rest.skills, profile_to_update);
+            if (!normalizedSkills.ok) {
+                return res.status(400).json({ message: normalizedSkills.message });
+            }
+            profile_to_update.skills = normalizedSkills.value;
+        }
+        pruneProfileSkillAssociations(profile_to_update);
 
         const educationLength = (profile_to_update.education || []).length;
         const normalizedIntro = normalizeIntro(intro, educationLength);
@@ -1042,4 +1144,90 @@ export const acceptConnectionRequest = async (req, res) => {
         return res.status(500).json({ message: error.message});
     }
 }
+
+export const addProfileSkill = async (req, res) => {
+    try {
+        const { token, name, category } = req.body;
+        const found = await findProfileByToken(token);
+        if (found.error) return res.status(found.error.status).json({ message: found.error.message });
+
+        const skillName = asTrimmedString(name);
+        if (!skillName) return res.status(400).json({ message: "Skill is required" });
+        if (skillName.length > PROFILE_SKILL_NAME_MAX) {
+            return res.status(400).json({ message: `Skill names must be under ${PROFILE_SKILL_NAME_MAX} characters` });
+        }
+
+        const exists = (found.profile.skills || []).some(
+            (item) => String(item.name || "").trim().toLowerCase() === skillName.toLowerCase()
+        );
+        if (exists) return res.status(400).json({ message: "That skill is already added" });
+
+        let nextCategory = inferProfileSkillCategory(skillName);
+        if (category !== undefined) {
+            const requestedCategory = asTrimmedString(category, "");
+            if (!PROFILE_SKILL_CATEGORIES.has(requestedCategory)) {
+                return res.status(400).json({ message: "Invalid skill category" });
+            }
+            nextCategory = requestedCategory;
+        }
+
+        found.profile.skills.push({
+            name: skillName,
+            category: nextCategory,
+            associations: [],
+        });
+        await found.profile.save();
+        const skill = found.profile.skills[found.profile.skills.length - 1];
+        return res.json({ message: "Skill added", skill, skills: found.profile.skills });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const updateProfileSkill = async (req, res) => {
+    try {
+        const { token, skillId, associations, category } = req.body;
+        const found = await findProfileByToken(token);
+        if (found.error) return res.status(found.error.status).json({ message: found.error.message });
+
+        const skill = (found.profile.skills || []).id(skillId);
+        if (!skill) return res.status(404).json({ message: "Skill not found" });
+
+        if (associations !== undefined) {
+            const normalized = normalizeSkillAssociations(associations, found.profile);
+            if (!normalized.ok) return res.status(400).json({ message: normalized.message });
+            skill.associations = normalized.value;
+        }
+        if (category !== undefined) {
+            const nextCategory = asTrimmedString(category, "");
+            if (!PROFILE_SKILL_CATEGORIES.has(nextCategory)) {
+                return res.status(400).json({ message: "Invalid skill category" });
+            }
+            skill.category = nextCategory;
+        }
+
+        pruneProfileSkillAssociations(found.profile);
+        await found.profile.save();
+        return res.json({ message: "Skill updated", skill, skills: found.profile.skills });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const deleteProfileSkill = async (req, res) => {
+    try {
+        const { token, skillId } = req.body;
+        const found = await findProfileByToken(token);
+        if (found.error) return res.status(found.error.status).json({ message: found.error.message });
+
+        const skill = (found.profile.skills || []).id(skillId);
+        if (!skill) return res.status(404).json({ message: "Skill not found" });
+
+        skill.deleteOne();
+        await found.profile.save();
+        return res.json({ message: "Skill deleted", skills: found.profile.skills });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
 

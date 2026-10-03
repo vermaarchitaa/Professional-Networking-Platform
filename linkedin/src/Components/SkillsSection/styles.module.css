@@ -1,0 +1,137 @@
+.section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.section h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #191919;
+}
+
+.intro {
+  margin: 0.85rem 0 1.15rem;
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.emptyRow,
+.emptyRowLast {
+  padding: 0.95rem 0;
+  color: #9b9b9b;
+  font-weight: 500;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.emptyRowLast {
+  border-bottom: none;
+  margin-bottom: 0.85rem;
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #0a66c2;
+  background: white;
+  color: #0a66c2;
+  border-radius: 24px;
+  padding: 0.45rem 1.05rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background: #edf3f8;
+  border-color: #004182;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.05rem;
+}
+
+.iconBtn:hover {
+  background: #f3f2ef;
+  color: #191919;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item {
+  padding: 0.95rem 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.listWithMore .item:last-child {
+  border-bottom: 1px solid #e8e8e8;
+  padding-bottom: 0.95rem;
+}
+
+.showAll {
+  display: block;
+  width: 100%;
+  margin-top: 0.15rem;
+  padding: 0.9rem 0 0;
+  border: none;
+  background: none;
+  color: #00488b;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+
+.showAll:hover {
+  text-decoration: underline;
+}
+
+.name {
+  margin: 0;
+  font-weight: 700;
+  color: #191919;
+  word-break: break-word;
+}
+
+.meta {
+  margin: 0.3rem 0 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  word-break: break-word;
+}

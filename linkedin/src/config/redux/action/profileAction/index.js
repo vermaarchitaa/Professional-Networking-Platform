@@ -131,6 +131,47 @@ export const deleteCoverPicture = createAsyncThunk("profile/deleteCover", async 
   }
 });
 
+export const addProfileSkill = createAsyncThunk("profile/addSkill", async (name, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/add_profile_skill", {
+      token: getToken(),
+      name,
+    });
+    thunkAPI.dispatch(fetchUserProfile());
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to add skill" });
+  }
+});
+
+export const updateProfileSkill = createAsyncThunk("profile/updateSkill", async ({ skillId, associations, category }, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/update_profile_skill", {
+      token: getToken(),
+      skillId,
+      associations,
+      category,
+    });
+    thunkAPI.dispatch(fetchUserProfile());
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to update skill" });
+  }
+});
+
+export const deleteProfileSkill = createAsyncThunk("profile/deleteSkill", async (skillId, thunkAPI) => {
+  try {
+    const response = await clientServer.post("/delete_profile_skill", {
+      token: getToken(),
+      skillId,
+    });
+    thunkAPI.dispatch(fetchUserProfile());
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to delete skill" });
+  }
+});
+
 export const uploadEducationMedia = createAsyncThunk("profile/uploadEducationMedia", async (file, thunkAPI) => {
   try {
     const formData = new FormData();

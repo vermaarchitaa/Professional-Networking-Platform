@@ -10,6 +10,9 @@ import {
   updateProfilePictureFrame,
   uploadCoverPicture,
   deleteCoverPicture,
+  addProfileSkill,
+  updateProfileSkill,
+  deleteProfileSkill,
 } from "@/config/redux/action/profileAction";
 
 const initialState = {
@@ -111,6 +114,30 @@ const profileSlice = createSlice({
       .addCase(deleteCoverPicture.rejected, (state, action) => {
         state.isError = true;
         state.message = action.payload?.message || "Failed to delete cover photo";
+      })
+      .addCase(addProfileSkill.fulfilled, (state, action) => {
+        state.message = action.payload?.message || "Skill added";
+        if (action.payload?.skills && state.profile) state.profile.skills = action.payload.skills;
+      })
+      .addCase(addProfileSkill.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload?.message || "Failed to add skill";
+      })
+      .addCase(updateProfileSkill.fulfilled, (state, action) => {
+        state.message = action.payload?.message || "Skill updated";
+        if (action.payload?.skills && state.profile) state.profile.skills = action.payload.skills;
+      })
+      .addCase(updateProfileSkill.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload?.message || "Failed to update skill";
+      })
+      .addCase(deleteProfileSkill.fulfilled, (state, action) => {
+        state.message = action.payload?.message || "Skill deleted";
+        if (action.payload?.skills && state.profile) state.profile.skills = action.payload.skills;
+      })
+      .addCase(deleteProfileSkill.rejected, (state, action) => {
+        state.isError = true;
+        state.message = action.payload?.message || "Failed to delete skill";
       });
   },
 });
