@@ -16,7 +16,11 @@ import { ProfileFormSkeleton, PostSkeleton } from "@/Components/Skeleton";
 import EducationRecordForm, {
   emptyEducation,
   formatEducationDates,
+  cleanEducation,
 } from "@/Components/EducationRecordForm";
+import EditAboutModal, { ABOUT_MAX_LENGTH } from "@/Components/EditAboutModal";
+import EditEducationModal from "@/Components/EditEducationModal";
+import EducationMediaViewer from "@/Components/EducationMediaViewer";
 import { validateProfile } from "@/config/validation";
 import useAuthGuard from "@/hooks/useAuth";
 import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
@@ -53,6 +57,14 @@ export default function ProfilePage({ publicUsername = "" }) {
   const [fieldErrors, setFieldErrors] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [aboutSaving, setAboutSaving] = useState(false);
+  const [aboutError, setAboutError] = useState("");
+  const [educationOpen, setEducationOpen] = useState(false);
+  const [educationSaving, setEducationSaving] = useState(false);
+  const [educationError, setEducationError] = useState("");
+  const [educationTarget, setEducationTarget] = useState(null);
+  const [educationMediaViewer, setEducationMediaViewer] = useState(null);
   const [activityTab, setActivityTab] = useState("posts");
   const [previewTile, setPreviewTile] = useState(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -185,12 +197,120 @@ export default function ProfilePage({ publicUsername = "" }) {
     setIsEditing(false);
   };
 
+  const openAboutEditor = () => {
+    if (!isOwner) return;
+    setAboutError("");
+    setAboutOpen(true);
+  };
+
+  const closeAboutEditor = () => {
+    if (aboutSaving) return;
+    setAboutError("");
+    setAboutOpen(false);
+  };
+
+  const handleSaveAbout = async (text) => {
+    const nextBio = String(text || "").trim().slice(0, ABOUT_MAX_LENGTH);
+    setAboutSaving(true);
+    setAboutError("");
+    const result = await dispatch(updateProfileData({ bio: nextBio }));
+    setAboutSaving(false);
+    if (updateProfileData.fulfilled.match(result)) {
+      setAboutOpen(false);
+      return;
+    }
+    setAboutError(result.payload?.message || "Failed to save About");
+  };
+
   const openEditor = () => {
     if (!isOwner) return;
     setIsEditing(true);
     setTimeout(() => {
       editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
+  };
+
+  const serializeEducationList = (list) =>
+    (list || []).map((entry) => {
+      const cleaned = cleanEducation(entry);
+      if (entry?._id) return { ...cleaned, _id: entry._id };
+      return cleaned;
+    });
+
+  const openAddEducation = () => {
+    if (!isOwner) return;
+    setEducationError("");
+    setEducationTarget(null);
+    setEducationOpen(true);
+  };
+
+  const openEditEducation = (entry) => {
+    if (!isOwner) return;
+    const list = profile?.education || [];
+    const index = entry?._id
+      ? list.findIndex((item) => String(item._id) === String(entry._id))
+      : list.indexOf(entry);
+    setEducationError("");
+    setEducationTarget({
+      _id: entry?._id ? String(entry._id) : "",
+      index: index >= 0 ? index : 0,
+    });
+    setEducationOpen(true);
+  };
+
+  const closeEducationEditor = () => {
+    if (educationSaving) return;
+    setEducationError("");
+    setEducationOpen(false);
+    setEducationTarget(null);
+  };
+
+  const handleSaveEducation = async (cleaned) => {
+    const current = serializeEducationList(profile?.education);
+    let next;
+    if (!educationTarget) {
+      next = [...current, cleaned];
+    } else {
+      const byId = educationTarget._id
+        ? current.findIndex((entry) => String(entry._id) === educationTarget._id)
+        : -1;
+      const index = byId >= 0 ? byId : educationTarget.index;
+      next = current.map((entry, i) => (
+        i === index
+          ? { ...cleaned, ...(entry._id ? { _id: entry._id } : {}) }
+          : entry
+      ));
+    }
+
+    setEducationSaving(true);
+    setEducationError("");
+    const result = await dispatch(updateProfileData({ education: next }));
+    setEducationSaving(false);
+    if (updateProfileData.fulfilled.match(result)) {
+      setEducationOpen(false);
+      setEducationTarget(null);
+      return;
+    }
+    setEducationError(result.payload?.message || "Failed to save education");
+  };
+
+  const handleDeleteEducation = async () => {
+    if (!educationTarget) return;
+    const current = serializeEducationList(profile?.education);
+    const next = educationTarget._id
+      ? current.filter((entry) => String(entry._id) !== educationTarget._id)
+      : current.filter((_, index) => index !== educationTarget.index);
+
+    setEducationSaving(true);
+    setEducationError("");
+    const result = await dispatch(updateProfileData({ education: next }));
+    setEducationSaving(false);
+    if (updateProfileData.fulfilled.match(result)) {
+      setEducationOpen(false);
+      setEducationTarget(null);
+      return;
+    }
+    setEducationError(result.payload?.message || "Failed to delete education");
   };
 
   const openEducationSection = () => {
@@ -236,7 +356,23 @@ export default function ProfilePage({ publicUsername = "" }) {
   }
 
   const visibleWork = (profile?.pastWork || []).filter((w) => w.company || w.position || w.years);
-  const visibleEdu = (profile?.education || []).filter((e) => e.school || e.degree || e.fieldOfStudy);
+  const visibleEdu = (profile?.education || []).filter((e) => String(e?.school || "").trim());
+  const openEducationDetails = () => {
+    router.push(isPublicRoute ? `/in/${encodeURIComponent(publicUsername)}/education` : "/profile/education");
+  };
+  const viewerEducation = educationMediaViewer
+    ? visibleEdu.find((edu, index) => (edu._id ? String(edu._id) : `idx-${index}`) === educationMediaViewer.eduKey)
+    : null;
+  const viewerMediaItems = (viewerEducation?.media || []).filter((item) => item?.url);
+  const educationInitial = educationTarget
+    ? (
+      (educationTarget._id
+        ? (profile?.education || []).find((entry) => String(entry._id) === educationTarget._id)
+        : null)
+      || (profile?.education || [])[educationTarget.index]
+      || null
+    )
+    : null;
 
   return (
     <DashboardLayout>
@@ -246,6 +382,8 @@ export default function ProfilePage({ publicUsername = "" }) {
           isOwner={isOwner}
           onEditProfile={openEditor}
           onOpenEducation={openEducationSection}
+          onAddAbout={openAboutEditor}
+          onAddEducation={openAddEducation}
         />
         <div id="profile-edit" ref={editRef} />
 
@@ -253,13 +391,24 @@ export default function ProfilePage({ publicUsername = "" }) {
 
         {!(isOwner && isEditing) ? (
           <>
-            <section className={styles.section}>
-              <h2>About</h2>
-              <p className={styles.displayText}>{profile?.bio || "No bio added yet."}</p>
-              {isOwner && ownProfile?.userId?.email && (
-                <p className={styles.displayMeta}>{ownProfile.userId.email}</p>
-              )}
-            </section>
+            {String(profile?.bio || "").trim() ? (
+              <section className={styles.section}>
+                <div className={styles.sectionHeader}>
+                  <h2>About</h2>
+                  {isOwner ? (
+                    <button
+                      type="button"
+                      className={styles.sectionEdit}
+                      onClick={openAboutEditor}
+                      aria-label="Edit about"
+                    >
+                      ✎
+                    </button>
+                  ) : null}
+                </div>
+                <p className={`${styles.displayText} ${styles.aboutText}`}>{profile.bio}</p>
+              </section>
+            ) : null}
 
             <section className={styles.section}>
               <h2>Work Experience</h2>
@@ -277,32 +426,107 @@ export default function ProfilePage({ publicUsername = "" }) {
               )}
             </section>
 
-            <section
-              id="education"
-              ref={educationRef}
-              className={`${styles.section} ${highlightEducation ? styles.eduHighlight : ""}`}
-            >
-              <h2>Education</h2>
-              {visibleEdu.length === 0 ? (
-                <p className={styles.displayText}>No education added yet.</p>
-              ) : (
-                (profile?.education || []).map((edu, i) => {
-                  if (!edu.school && !edu.degree && !edu.fieldOfStudy) return null;
+            {visibleEdu.length > 0 ? (
+              <section
+                id="education"
+                ref={educationRef}
+                className={`${styles.section} ${highlightEducation ? styles.eduHighlight : ""}`}
+              >
+                <div className={styles.sectionHeader}>
+                  <h2>Education</h2>
+                  {isOwner ? (
+                    <div className={styles.sectionActions}>
+                      <button
+                        type="button"
+                        className={styles.sectionEdit}
+                        onClick={openAddEducation}
+                        aria-label="Add education"
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.sectionEdit}
+                        onClick={openEducationDetails}
+                        aria-label="Manage education"
+                      >
+                        ✎
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                {visibleEdu.slice(0, 2).map((edu, i) => {
+                  const skillNames = (edu.skills || []).map((item) => item?.name).filter(Boolean);
+                  const mediaItems = (edu.media || []).filter((item) => item?.url);
+                  const schoolLetter = (String(edu.school || "").trim()[0] || "?").toUpperCase();
+                  const eduKey = edu._id ? String(edu._id) : `idx-${i}`;
                   return (
                     <div
-                      key={i}
-                      className={`${styles.displayEntry} ${highlightEducation ? styles.eduItemHighlight : ""}`}
+                      key={edu._id || i}
+                      className={`${styles.displayEntry} ${styles.eduRecord} ${highlightEducation ? styles.eduItemHighlight : ""}`}
                     >
-                      <p className={styles.displayEntryTitle}>{edu.school || "School"}</p>
-                      <p className={styles.displayMeta}>
-                        {[edu.degree, edu.fieldOfStudy, formatEducationDates(edu)].filter(Boolean).join(" · ")}
-                      </p>
-                      {edu.description ? <p className={styles.displayText}>{edu.description}</p> : null}
+                      <span className={styles.eduAvatar} aria-hidden="true">{schoolLetter}</span>
+                      <div className={styles.eduBody}>
+                        <p className={styles.displayEntryTitle}>{edu.school}</p>
+                        {edu.degree ? <p className={styles.displayMeta}>{edu.degree}</p> : null}
+                        {edu.fieldOfStudy ? <p className={styles.displayMeta}>{edu.fieldOfStudy}</p> : null}
+                        {formatEducationDates(edu) ? <p className={styles.displayMeta}>{formatEducationDates(edu)}</p> : null}
+                        {edu.grade ? <p className={styles.displayMeta}>Grade: {edu.grade}</p> : null}
+                        {edu.activitiesAndSocieties ? (
+                          <p className={styles.displayText}>
+                            <strong>Activities and societies: </strong>
+                            {edu.activitiesAndSocieties}
+                          </p>
+                        ) : null}
+                        {edu.description ? <p className={`${styles.displayText} ${styles.aboutText}`}>{edu.description}</p> : null}
+                        {skillNames.length > 0 ? (
+                          <p className={styles.displayText}><strong>Skills: </strong>{skillNames.join(", ")}</p>
+                        ) : null}
+                        {mediaItems.length > 0 ? (
+                          <div className={styles.eduMediaGrid}>
+                            {mediaItems.map((item, mediaIndex) => (
+                              item.type === "image" ? (
+                                <button
+                                  key={`${item.url}-${mediaIndex}`}
+                                  type="button"
+                                  className={styles.eduMediaImageBtn}
+                                  onClick={() => setEducationMediaViewer({ eduKey, mediaIndex })}
+                                  aria-label={item.name || "Open education media"}
+                                >
+                                  <img
+                                    src={getMediaUrl(item.url)}
+                                    alt={item.name || "Education media"}
+                                    className={styles.eduMediaImage}
+                                  />
+                                </button>
+                              ) : (
+                                <button
+                                  key={`${item.url}-${mediaIndex}`}
+                                  type="button"
+                                  className={styles.eduMediaLink}
+                                  onClick={() => setEducationMediaViewer({ eduKey, mediaIndex })}
+                                >
+                                  {item.name || (item.type === "document" ? "Document" : item.url)}
+                                </button>
+                              )
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   );
-                })
-              )}
-            </section>
+                })}
+                {visibleEdu.length > 2 ? (
+                  <button
+                    type="button"
+                    className={styles.showAll}
+                    onClick={openEducationDetails}
+                  >
+                    Show all {visibleEdu.length} educations →
+                  </button>
+                ) : null}
+              </section>
+            ) : null}
           </>
         ) : (
           <>
@@ -551,6 +775,37 @@ export default function ProfilePage({ publicUsername = "" }) {
             isOpen={showComposer}
             onClose={() => setShowComposer(false)}
             user={ownProfile?.userId}
+          />
+        ) : null}
+        {isOwner ? (
+          <EditAboutModal
+            isOpen={aboutOpen}
+            initialValue={profile?.bio || ""}
+            isSaving={aboutSaving}
+            error={aboutError}
+            onClose={closeAboutEditor}
+            onSave={handleSaveAbout}
+          />
+        ) : null}
+        {viewerMediaItems.length > 0 ? (
+          <EducationMediaViewer
+            items={viewerMediaItems}
+            index={Math.min(educationMediaViewer.mediaIndex, viewerMediaItems.length - 1)}
+            onClose={() => setEducationMediaViewer(null)}
+            onIndexChange={(nextIndex) => setEducationMediaViewer((current) => (
+              current ? { ...current, mediaIndex: nextIndex } : current
+            ))}
+          />
+        ) : null}
+        {isOwner ? (
+          <EditEducationModal
+            isOpen={educationOpen}
+            initialValue={educationInitial}
+            isSaving={educationSaving}
+            error={educationError}
+            onClose={closeEducationEditor}
+            onSave={handleSaveEducation}
+            onDelete={handleDeleteEducation}
           />
         ) : null}
       </div>

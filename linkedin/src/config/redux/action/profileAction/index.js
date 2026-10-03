@@ -131,6 +131,20 @@ export const deleteCoverPicture = createAsyncThunk("profile/deleteCover", async 
   }
 });
 
+export const uploadEducationMedia = createAsyncThunk("profile/uploadEducationMedia", async (file, thunkAPI) => {
+  try {
+    const formData = new FormData();
+    formData.append("token", getToken());
+    formData.append("media", file);
+    const response = await clientServer.post("/upload_education_media", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to upload media" });
+  }
+});
+
 export const downloadResume = createAsyncThunk("profile/downloadResume", async (userId, thunkAPI) => {
   try {
     const response = await clientServer.get("/user/download_resume", {

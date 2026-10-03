@@ -18,8 +18,15 @@ const VIDEO_TYPES = {
   "video/webm": ".webm",
 };
 
+const DOCUMENT_TYPES = {
+  "application/pdf": ".pdf",
+  "application/msword": ".doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+};
+
 const PROFILE_TYPES = IMAGE_TYPES;
 const POST_MEDIA_TYPES = { ...IMAGE_TYPES, ...VIDEO_TYPES };
+const EDUCATION_MEDIA_TYPES = { ...IMAGE_TYPES, ...DOCUMENT_TYPES };
 
 export const ensureUploadsDir = () => {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -68,6 +75,7 @@ export const profilePictureUpload = createUploader(PROFILE_TYPES, 2 * 1024 * 102
 export const coverPhotoUpload = createUploader(IMAGE_TYPES, 5 * 1024 * 1024);
 export const postMediaUpload = createUploader(POST_MEDIA_TYPES, 10 * 1024 * 1024);
 export const commentImageUpload = createUploader(IMAGE_TYPES, 5 * 1024 * 1024);
+export const educationMediaUpload = createUploader(EDUCATION_MEDIA_TYPES, 10 * 1024 * 1024);
 
 export const isPdfEmbeddableImage = (filename) => {
   const ext = path.extname(filename || "").toLowerCase();
@@ -79,7 +87,7 @@ export const removeUploadedFile = (filename) => {
 
   const basename = path.basename(filename);
   if (basename !== filename) return;
-  if (!/^[a-f0-9]{64}\.(jpg|jpeg|png|gif|webp)$/i.test(basename)) return;
+  if (!/^[a-f0-9]{64}\.(jpg|jpeg|png|gif|webp|pdf|doc|docx)$/i.test(basename)) return;
 
   const uploadsRoot = path.resolve(UPLOADS_DIR);
   const target = path.resolve(UPLOADS_DIR, basename);

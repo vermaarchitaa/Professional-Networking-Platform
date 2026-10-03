@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { register, login, uploadProfilePicture, deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadCoverPicture, deleteCoverPicture, updateUserProfile, getUserAndProfile, getProfileByUsername, updateProfileData, getAllUserProfile, downloadProfile, sendConnectionRequest, acceptConnectionRequest, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
-import { profilePictureUpload, coverPhotoUpload } from "../utils/uploads.js";
+import { register, login, uploadProfilePicture, deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadCoverPicture, deleteCoverPicture, uploadEducationMedia, updateUserProfile, getUserAndProfile, getProfileByUsername, updateProfileData, getAllUserProfile, downloadProfile, sendConnectionRequest, acceptConnectionRequest, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
+import { profilePictureUpload, coverPhotoUpload, educationMediaUpload } from "../utils/uploads.js";
 const router = Router();
 
 router.route("/update_profile_picture")
@@ -15,6 +15,8 @@ router.route("/update_cover_picture")
 .post(coverPhotoUpload.single('cover_picture'), uploadCoverPicture);
 router.route("/delete_cover_picture")
 .post(deleteCoverPicture);
+router.route("/upload_education_media")
+.post(educationMediaUpload.single("media"), uploadEducationMedia);
 
 router.route('/register').post(register);
 router.route('/login').post(login);

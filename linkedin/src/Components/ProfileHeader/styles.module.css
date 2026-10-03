@@ -431,6 +431,48 @@
   padding: 0;
 }
 
+.addSectionDialog {
+  width: min(520px, 100%);
+  max-height: min(640px, calc(100vh - 3rem));
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+}
+
+.addSectionList {
+  overflow: auto;
+  flex: 1;
+}
+
+.addSectionItem {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e8e8e8;
+  background: none;
+  text-align: left;
+  padding: 0.95rem 1.2rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #191919;
+}
+
+.addSectionItem:last-child {
+  border-bottom: none;
+}
+
+.addSectionItem:hover {
+  background: #f3f2ef;
+}
+
+.addSectionItem:focus-visible {
+  outline: 2px solid #0a66c2;
+  outline-offset: -2px;
+}
+
 .aboutClose {
   width: 36px;
   height: 36px;

@@ -1,6 +1,13 @@
 import React from "react";
 import styles from "./styles.module.css";
 
+export const EDUCATION_DESCRIPTION_MAX = 1000;
+export const EDUCATION_GRADE_MAX = 80;
+export const EDUCATION_ACTIVITIES_MAX = 500;
+export const EDUCATION_SKILLS_LIMIT = 5;
+export const EDUCATION_MEDIA_NAME_MAX = 200;
+export const EDUCATION_MEDIA_DESCRIPTION_MAX = 2000;
+
 export const emptyEducation = {
   school: "",
   degree: "",
@@ -8,7 +15,11 @@ export const emptyEducation = {
   startDate: "",
   endDate: "",
   current: false,
+  grade: "",
+  activitiesAndSocieties: "",
   description: "",
+  skills: [],
+  media: [],
 };
 
 const MONTHS = [
@@ -48,11 +59,7 @@ function formatYearMonth(value) {
 }
 
 export function isFilledEducation(entry) {
-  return Boolean(
-    String(entry?.school || "").trim()
-    || String(entry?.degree || "").trim()
-    || String(entry?.fieldOfStudy || "").trim()
-  );
+  return Boolean(String(entry?.school || "").trim());
 }
 
 export function educationLabel(entry) {
@@ -67,6 +74,28 @@ export function formatEducationDates(entry) {
   return [start, end].filter(Boolean).join(" – ");
 }
 
+const cleanSkills = (skills) => {
+  const seen = new Set();
+  const next = [];
+  (Array.isArray(skills) ? skills : []).forEach((item) => {
+    const name = String(item?.name || item || "").trim();
+    const key = name.toLowerCase();
+    if (!name || seen.has(key) || next.length >= EDUCATION_SKILLS_LIMIT) return;
+    seen.add(key);
+    next.push({ name: name.slice(0, 80) });
+  });
+  return next;
+};
+
+const cleanMedia = (media) => (
+  (Array.isArray(media) ? media : []).map((item) => ({
+    type: ["link", "image", "document"].includes(item?.type) ? item.type : "link",
+    url: String(item?.url || "").trim(),
+    name: String(item?.name || "").trim().slice(0, EDUCATION_MEDIA_NAME_MAX),
+    description: String(item?.description || "").trim().slice(0, EDUCATION_MEDIA_DESCRIPTION_MAX),
+  })).filter((item) => item.url)
+);
+
 export function cleanEducation(entry) {
   const current = Boolean(entry?.current);
   return {
@@ -76,7 +105,11 @@ export function cleanEducation(entry) {
     startDate: String(entry?.startDate || "").trim(),
     endDate: current ? "" : String(entry?.endDate || "").trim(),
     current,
-    description: String(entry?.description || "").trim(),
+    grade: String(entry?.grade || "").trim().slice(0, EDUCATION_GRADE_MAX),
+    activitiesAndSocieties: String(entry?.activitiesAndSocieties || "").trim().slice(0, EDUCATION_ACTIVITIES_MAX),
+    description: String(entry?.description || "").trim().slice(0, EDUCATION_DESCRIPTION_MAX),
+    skills: cleanSkills(entry?.skills),
+    media: cleanMedia(entry?.media),
   };
 }
 
@@ -84,11 +117,13 @@ export default function EducationRecordForm({ value, onChange, error }) {
   const start = splitYearMonth(value.startDate);
   const end = splitYearMonth(value.endDate);
   const patch = (field, next) => onChange({ ...value, [field]: next });
+  const description = value.description || "";
+  const activities = value.activitiesAndSocieties || "";
 
   return (
     <div className={styles.form}>
       <label className={styles.field}>
-        School/institution*
+        School*
         <input
           value={value.school || ""}
           onChange={(event) => patch("school", event.target.value)}
@@ -182,13 +217,37 @@ export default function EducationRecordForm({ value, onChange, error }) {
       )}
 
       <label className={styles.field}>
-        Description
+        Grade
+        <input
+          value={value.grade || ""}
+          maxLength={EDUCATION_GRADE_MAX}
+          onChange={(event) => patch("grade", event.target.value.slice(0, EDUCATION_GRADE_MAX))}
+          placeholder="Ex: 8.5 CGPA"
+        />
+      </label>
+
+      <label className={styles.field}>
+        Activities and societies
         <textarea
           rows={3}
-          value={value.description || ""}
-          onChange={(event) => patch("description", event.target.value)}
-          placeholder="Activities, societies, or details"
+          value={activities}
+          maxLength={EDUCATION_ACTIVITIES_MAX}
+          onChange={(event) => patch("activitiesAndSocieties", event.target.value.slice(0, EDUCATION_ACTIVITIES_MAX))}
+          placeholder="Ex: Alpha Phi Omega, Marching Band, Volleyball"
         />
+        <span className={styles.counter}>{activities.length.toLocaleString("en-US")}/{EDUCATION_ACTIVITIES_MAX.toLocaleString("en-US")}</span>
+      </label>
+
+      <label className={styles.field}>
+        Description
+        <textarea
+          rows={4}
+          value={description}
+          maxLength={EDUCATION_DESCRIPTION_MAX}
+          onChange={(event) => patch("description", event.target.value.slice(0, EDUCATION_DESCRIPTION_MAX))}
+          placeholder="Describe your experience, achievements, or activities"
+        />
+        <span className={styles.counter}>{description.length.toLocaleString("en-US")}/{EDUCATION_DESCRIPTION_MAX.toLocaleString("en-US")}</span>
       </label>
       {error ? <p className={styles.error}>{error}</p> : null}
     </div>

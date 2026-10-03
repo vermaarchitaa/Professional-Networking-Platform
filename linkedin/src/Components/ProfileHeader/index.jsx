@@ -32,6 +32,17 @@ const VISIBILITY_LABELS = {
   "only-me": "Only me",
 };
 
+const ADD_PROFILE_SECTIONS = [
+  "Add about",
+  "Add education",
+  "Add position",
+  "Add skills",
+  "Add featured",
+  "Add licenses and certifications",
+  "Add languages",
+  "Add volunteer experience",
+];
+
 function formatBirthdayDisplay(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
   if (!match) return "";
@@ -154,7 +165,7 @@ function ContactIcon({ name }) {
   );
 }
 
-export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, isOwner = true }) {
+export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, onAddAbout, onAddEducation, isOwner = true }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const { message, isError } = useSelector((state) => state.profile);
@@ -396,7 +407,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
               <button type="button" className={styles.primaryBtn} onClick={() => setOpenPanel("openTo")}>
                 Open to
               </button>
-              <button type="button" className={styles.secondaryBtn} onClick={onEditProfile}>
+              <button type="button" className={styles.secondaryBtn} onClick={() => setOpenPanel("addSection")}>
                 Add section
               </button>
             </>
@@ -506,6 +517,52 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
           </div>
         )}
       </div>
+
+      {openPanel === "addSection" && (
+        <div className={styles.overlay} onClick={() => setOpenPanel(null)} role="presentation">
+          <div
+            className={`${styles.dialog} ${styles.addSectionDialog}`}
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-section-title"
+          >
+            <div className={styles.contactDialogHeader}>
+              <h3 id="add-section-title">Add to profile</h3>
+              <button
+                type="button"
+                className={styles.aboutClose}
+                onClick={() => setOpenPanel(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className={styles.addSectionList}>
+              {ADD_PROFILE_SECTIONS.map((label) => (
+                <button
+                  type="button"
+                  key={label}
+                  className={styles.addSectionItem}
+                  onClick={() => {
+                    if (label === "Add about") {
+                      setOpenPanel(null);
+                      onAddAbout?.();
+                      return;
+                    }
+                    if (label === "Add education") {
+                      setOpenPanel(null);
+                      onAddEducation?.();
+                    }
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {openPanel === "contact" && (
         <div className={styles.overlay} onClick={() => setOpenPanel(null)} role="presentation">

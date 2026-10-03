@@ -29,6 +29,44 @@ const educationSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    grade: {
+        type: String,
+        default: '',
+    },
+    activitiesAndSocieties: {
+        type: String,
+        default: '',
+    },
+    skills: {
+        type: [{
+            name: {
+                type: String,
+                default: '',
+            },
+        }],
+        default: [],
+    },
+    media: {
+        type: [{
+            type: {
+                type: String,
+                default: 'link',
+            },
+            url: {
+                type: String,
+                default: '',
+            },
+            name: {
+                type: String,
+                default: '',
+            },
+            description: {
+                type: String,
+                default: '',
+            },
+        }],
+        default: [],
+    },
 });
 
 const workSchema = new mongoose.Schema({

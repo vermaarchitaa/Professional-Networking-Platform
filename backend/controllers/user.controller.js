@@ -179,6 +179,40 @@ export const uploadCoverPicture = async (req, res) => {
     }
 }
 
+export const uploadEducationMedia = async (req, res) => {
+    const { token } = req.body;
+    const uploaded = req.file?.filename;
+
+    try {
+        if (!token || typeof token !== "string") {
+            if (uploaded) removeUploadedFile(uploaded);
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const user = await User.findOne({ token }).select("_id");
+        if (!user) {
+            if (uploaded) removeUploadedFile(uploaded);
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (!uploaded) {
+            return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const mime = req.file.mimetype || "";
+        const type = mime.startsWith("image/") ? "image" : "document";
+        const original = String(req.file.originalname || uploaded).slice(0, 200);
+
+        return res.json({
+            filename: uploaded,
+            name: original,
+            type,
+        });
+    } catch (error) {
+        if (uploaded) removeUploadedFile(uploaded);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
 export const deleteCoverPicture = async (req, res) => {
     const { token } = req.body;
 
@@ -432,6 +466,155 @@ const asTrimmedString = (value, fallback = "") => {
 
 const joinLocation = (city, country) => [city, country].filter(Boolean).join(", ");
 
+const EDUCATION_DESCRIPTION_MAX = 1000;
+const EDUCATION_GRADE_MAX = 80;
+const EDUCATION_ACTIVITIES_MAX = 500;
+const EDUCATION_SKILL_MAX = 80;
+const EDUCATION_SKILLS_LIMIT = 5;
+const EDUCATION_MEDIA_NAME_MAX = 200;
+const EDUCATION_MEDIA_DESCRIPTION_MAX = 2000;
+const YYYY_MM = /^\d{4}-(0[1-9]|1[0-2])$/;
+const STORED_MEDIA_FILE = /^[a-f0-9]{64}\.(jpg|jpeg|png|gif|webp|pdf|doc|docx)$/i;
+
+const isValidHttpUrl = (value) => {
+    try {
+        const parsed = new URL(value);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+        return false;
+    }
+};
+
+const normalizeEducationSkills = (value) => {
+    if (value === undefined || value === null) return { ok: true, value: [] };
+    if (!Array.isArray(value)) return { ok: false, message: "Education skills must be an array" };
+    const seen = new Set();
+    const next = [];
+    for (const item of value) {
+        const raw = typeof item === "string" ? item : item?.name;
+        const name = asTrimmedString(raw);
+        if (name === null) return { ok: false, message: "Education skill names must be strings" };
+        if (!name) continue;
+        if (name.length > EDUCATION_SKILL_MAX) {
+            return { ok: false, message: `Education skill names must be under ${EDUCATION_SKILL_MAX} characters` };
+        }
+        const key = name.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        next.push({ name });
+        if (next.length === EDUCATION_SKILLS_LIMIT) break;
+    }
+    return { ok: true, value: next };
+};
+
+const normalizeEducationMedia = (value) => {
+    if (value === undefined || value === null) return { ok: true, value: [] };
+    if (!Array.isArray(value)) return { ok: false, message: "Education media must be an array" };
+    const next = [];
+    for (const item of value) {
+        if (item === null || typeof item !== "object" || Array.isArray(item)) continue;
+        const type = asTrimmedString(item.type);
+        const url = asTrimmedString(item.url);
+        const name = asTrimmedString(item.name);
+        const description = typeof item.description === "string"
+            ? item.description.trim().slice(0, EDUCATION_MEDIA_DESCRIPTION_MAX)
+            : "";
+        if ([type, url, name].includes(null) || !url) continue;
+        if (type === "link") {
+            if (!isValidHttpUrl(url)) continue;
+            next.push({
+                type: "link",
+                url,
+                name: (name || url).slice(0, EDUCATION_MEDIA_NAME_MAX),
+                description,
+            });
+            continue;
+        }
+        if ((type === "image" || type === "document") && STORED_MEDIA_FILE.test(url)) {
+            next.push({
+                type,
+                url,
+                name: (name || url).slice(0, EDUCATION_MEDIA_NAME_MAX),
+                description,
+            });
+        }
+    }
+    return { ok: true, value: next };
+};
+
+const normalizeEducationArray = (value) => {
+    if (!Array.isArray(value)) {
+        return { ok: false, message: "education must be an array" };
+    }
+
+    const next = [];
+    for (const entry of value) {
+        if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+            return { ok: false, message: "Each education entry must be an object" };
+        }
+
+        const school = asTrimmedString(entry.school);
+        const degree = asTrimmedString(entry.degree);
+        const fieldOfStudy = asTrimmedString(entry.fieldOfStudy);
+        const startDate = asTrimmedString(entry.startDate);
+        const endDateRaw = asTrimmedString(entry.endDate);
+        const description = asTrimmedString(entry.description);
+        const grade = asTrimmedString(entry.grade);
+        const activitiesAndSocieties = asTrimmedString(entry.activitiesAndSocieties);
+        if ([school, degree, fieldOfStudy, startDate, endDateRaw, description, grade, activitiesAndSocieties].includes(null)) {
+            return { ok: false, message: "Education fields must be strings" };
+        }
+
+        const current = Boolean(entry.current);
+        const endDate = current ? "" : (endDateRaw || "");
+        const skillsResult = normalizeEducationSkills(entry.skills);
+        if (!skillsResult.ok) return skillsResult;
+        const mediaResult = normalizeEducationMedia(entry.media);
+        if (!mediaResult.ok) return mediaResult;
+
+        const isEmpty = !school && !degree && !fieldOfStudy && !startDate && !endDate && !current
+            && !description && !grade && !activitiesAndSocieties
+            && skillsResult.value.length === 0 && mediaResult.value.length === 0;
+        if (isEmpty) continue;
+        if (!school) {
+            return { ok: false, message: "School is required" };
+        }
+        if (description.length > EDUCATION_DESCRIPTION_MAX) {
+            return { ok: false, message: `Education description must be under ${EDUCATION_DESCRIPTION_MAX} characters` };
+        }
+        if (grade.length > EDUCATION_GRADE_MAX) {
+            return { ok: false, message: `Grade must be under ${EDUCATION_GRADE_MAX} characters` };
+        }
+        if (activitiesAndSocieties.length > EDUCATION_ACTIVITIES_MAX) {
+            return { ok: false, message: `Activities and societies must be under ${EDUCATION_ACTIVITIES_MAX} characters` };
+        }
+        if (startDate && !YYYY_MM.test(startDate)) {
+            return { ok: false, message: "Education start date must be YYYY-MM" };
+        }
+        if (endDate && !YYYY_MM.test(endDate)) {
+            return { ok: false, message: "Education end date must be YYYY-MM" };
+        }
+
+        const item = {
+            school,
+            degree: degree || "",
+            fieldOfStudy: fieldOfStudy || "",
+            startDate: startDate || "",
+            endDate,
+            current,
+            grade: grade || "",
+            activitiesAndSocieties: activitiesAndSocieties || "",
+            description: description || "",
+            skills: skillsResult.value,
+            media: mediaResult.value,
+        };
+        if (entry._id) item._id = entry._id;
+        next.push(item);
+    }
+
+    return { ok: true, value: next };
+};
+
 const normalizeOpenToWork = (value) => {
     if (value === undefined) return { ok: true };
     if (value === null || typeof value !== "object" || Array.isArray(value)) {
@@ -590,6 +773,14 @@ export const updateProfileData = async (req, res) => {
             if (typeof rest[key] !== "string") {
                 return res.status(400).json({ message: `${key} must be a string` });
             }
+            if (key === "bio") {
+                const nextBio = rest[key].trim();
+                if (nextBio.length > 2600) {
+                    return res.status(400).json({ message: "About must be under 2600 characters" });
+                }
+                profile_to_update.bio = nextBio;
+                continue;
+            }
             profile_to_update[key] = rest[key];
         }
 
@@ -600,10 +791,11 @@ export const updateProfileData = async (req, res) => {
             profile_to_update.pastWork = rest.pastWork;
         }
         if (rest.education !== undefined) {
-            if (!Array.isArray(rest.education)) {
-                return res.status(400).json({ message: "education must be an array" });
+            const normalizedEducation = normalizeEducationArray(rest.education);
+            if (!normalizedEducation.ok) {
+                return res.status(400).json({ message: normalizedEducation.message });
             }
-            profile_to_update.education = rest.education;
+            profile_to_update.education = normalizedEducation.value;
         }
 
         const educationLength = (profile_to_update.education || []).length;

@@ -1,0 +1,203 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1500;
+  padding: 1.25rem;
+}
+
+.dialog {
+  width: min(1040px, 100%);
+  max-height: min(88vh, 820px);
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #191919;
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #666;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  background: #f3f2ef;
+  color: #191919;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.8fr);
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.mediaPane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 1.25rem;
+  background: #f3f2ef;
+  overflow: hidden;
+}
+
+.image {
+  max-width: 100%;
+  max-height: min(64vh, 600px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.fileCard {
+  width: min(360px, 100%);
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.fileName {
+  margin: 0 0 0.7rem;
+  font-weight: 600;
+  color: #191919;
+  word-break: break-word;
+}
+
+.fileCard a {
+  color: #0a66c2;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.fileCard a:hover {
+  text-decoration: underline;
+}
+
+.sidePane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #fff;
+  border-left: 1px solid #eee;
+  overflow: hidden;
+}
+
+.sideCopy {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 1.15rem 1.15rem 0.5rem;
+}
+
+.title {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #191919;
+  word-break: break-word;
+}
+
+.description {
+  margin: 0;
+  color: #191919;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+  padding: 0.85rem 1.15rem 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.navBtn {
+  border: none;
+  background: none;
+  color: #0a66c2;
+  font-weight: 700;
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 0.35rem 0.15rem;
+}
+
+.navBtn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.navBtn:disabled {
+  color: #bfbfbf;
+  cursor: default;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .overlay {
+    padding: 0.75rem;
+  }
+
+  .dialog {
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .mediaPane {
+    min-height: 220px;
+    max-height: 42vh;
+  }
+
+  .image {
+    max-height: 36vh;
+  }
+
+  .sidePane {
+    border-left: none;
+    border-top: 1px solid #eee;
+    min-height: 160px;
+  }
+}

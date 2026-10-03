@@ -1,0 +1,140 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+  padding: 1rem;
+}
+
+.dialog {
+  width: min(720px, 100%);
+  max-height: min(720px, calc(100vh - 3rem));
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #191919;
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #666;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closeBtn:hover:not(:disabled) {
+  background: #f3f2ef;
+  color: #191919;
+}
+
+.closeBtn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.body {
+  padding: 1rem 1.15rem 0.5rem;
+  overflow: auto;
+  flex: 1;
+}
+
+.help {
+  margin: 0 0 0.85rem;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #191919;
+  outline: none;
+}
+
+.textarea:focus {
+  border-color: #0a66c2;
+  box-shadow: 0 0 0 1px #0a66c2;
+}
+
+.counter {
+  margin: 0.55rem 0 0;
+  text-align: right;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.error {
+  margin: 0.55rem 0 0;
+  color: #cc1016;
+  font-size: 0.85rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1.15rem 1rem;
+  border-top: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+
+.saveBtn {
+  border: none;
+  border-radius: 24px;
+  background: #0a66c2;
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.55rem 1.2rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: #004182;
+}
+
+.saveBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .textarea {
+    min-height: 160px;
+  }
+}
