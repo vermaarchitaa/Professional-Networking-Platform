@@ -24,6 +24,12 @@ import EditEducationModal from "@/Components/EditEducationModal";
 import EducationMediaViewer from "@/Components/EducationMediaViewer";
 import SkillsSection from "@/Components/SkillsSection";
 import AddSkillModal from "@/Components/AddSkillModal";
+import ExperienceSection from "@/Components/ExperienceSection";
+import EditExperienceModal from "@/Components/EditExperienceModal";
+import {
+  cleanExperience,
+  syncProfileSkillsForExperience,
+} from "@/Components/ExperienceRecordForm";
 import { listProfileSkills } from "@/Components/SkillsSection/skillUtils";
 import { validateProfile } from "@/config/validation";
 import useAuthGuard from "@/hooks/useAuth";
@@ -83,6 +89,11 @@ export default function ProfilePage({ publicUsername = "" }) {
   const [skillModalOpen, setSkillModalOpen] = useState(false);
   const [skillSaving, setSkillSaving] = useState(false);
   const [skillError, setSkillError] = useState("");
+  const [experienceOpen, setExperienceOpen] = useState(false);
+  const [experienceSaving, setExperienceSaving] = useState(false);
+  const [experienceError, setExperienceError] = useState("");
+  const [experienceTarget, setExperienceTarget] = useState(null);
+  const [experienceMediaViewer, setExperienceMediaViewer] = useState(null);
   const [activityTab, setActivityTab] = useState("posts");
   const [previewTile, setPreviewTile] = useState(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -198,7 +209,11 @@ export default function ProfilePage({ publicUsername = "" }) {
     }
     setFieldErrors({});
     dispatch(updateUserInfo({ name, username, email }));
-    dispatch(updateProfileData({ bio, currentPost, pastWork, education, location }));
+    const mergedWork = pastWork.map((work, index) => {
+      const existing = (profile?.pastWork || [])[index] || {};
+      return { ...existing, company: work.company, position: work.position, years: work.years };
+    });
+    dispatch(updateProfileData({ bio, currentPost, pastWork: mergedWork, education, location }));
     setIsEditing(false);
   };
 
@@ -264,6 +279,78 @@ export default function ProfilePage({ publicUsername = "" }) {
     setEducationError("");
     setEducationTarget(null);
     setEducationOpen(true);
+  };
+
+  const serializeExperienceList = (list) =>
+    (list || []).map((entry) => {
+      const cleaned = cleanExperience(entry);
+      if (entry?._id) return { ...cleaned, _id: entry._id };
+      return cleaned;
+    });
+
+  const persistExperience = async (cleaned, target) => {
+    const current = serializeExperienceList(profile?.pastWork);
+    const next = !target
+      ? [...current, cleaned]
+      : current.map((entry, index) => {
+        const match = target._id
+          ? String(entry._id) === target._id
+          : index === target.index;
+        return match ? { ...cleaned, ...(entry._id ? { _id: entry._id } : {}) } : entry;
+      });
+    setExperienceSaving(true);
+    setExperienceError("");
+    const result = await dispatch(updateProfileData({ pastWork: next }));
+    if (updateProfileData.rejected.match(result)) {
+      setExperienceSaving(false);
+      setExperienceError(result.payload?.message || "Failed to save experience");
+      return;
+    }
+    const refreshed = await dispatch(fetchUserProfile());
+    const latest = refreshed.payload || {};
+    const saved = target?._id
+      ? (latest.pastWork || []).find((entry) => String(entry._id) === target._id)
+      : (latest.pastWork || []).find((entry) => (
+        entry.company === cleaned.company
+        && entry.position === cleaned.position
+        && entry.startDate === cleaned.startDate
+      ));
+    if (saved?._id) {
+      const skills = syncProfileSkillsForExperience(
+        latest.skills,
+        saved._id,
+        (cleaned.skills || []).map((item) => item.name)
+      );
+      await dispatch(updateProfileData({ skills }));
+    }
+    setExperienceSaving(false);
+    setExperienceOpen(false);
+    setExperienceTarget(null);
+  };
+
+  const openAddExperience = () => {
+    if (!isOwner) return;
+    setExperienceError("");
+    setExperienceTarget(null);
+    setExperienceOpen(true);
+  };
+
+  const handleDeleteExperience = async () => {
+    if (!experienceTarget) return;
+    const current = serializeExperienceList(profile?.pastWork);
+    const next = experienceTarget._id
+      ? current.filter((entry) => String(entry._id) !== experienceTarget._id)
+      : current.filter((_, index) => index !== experienceTarget.index);
+    setExperienceSaving(true);
+    setExperienceError("");
+    const result = await dispatch(updateProfileData({ pastWork: next }));
+    setExperienceSaving(false);
+    if (updateProfileData.fulfilled.match(result)) {
+      setExperienceOpen(false);
+      setExperienceTarget(null);
+      return;
+    }
+    setExperienceError(result.payload?.message || "Failed to delete experience");
   };
 
   const openAddSkill = () => {
@@ -406,6 +493,19 @@ export default function ProfilePage({ publicUsername = "" }) {
     ? visibleEdu.find((edu, index) => (edu._id ? String(edu._id) : `idx-${index}`) === educationMediaViewer.eduKey)
     : null;
   const viewerMediaItems = (viewerEducation?.media || []).filter((item) => item?.url);
+  const viewerExperience = experienceMediaViewer
+    ? visibleWork.find((entry, index) => (entry._id ? String(entry._id) : `idx-${index}`) === experienceMediaViewer.workKey)
+    : null;
+  const experienceViewerItems = (viewerExperience?.media || []).filter((item) => item?.url);
+  const experienceInitial = experienceTarget
+    ? (
+      (experienceTarget._id
+        ? (profile?.pastWork || []).find((entry) => String(entry._id) === experienceTarget._id)
+        : null)
+      || (profile?.pastWork || [])[experienceTarget.index]
+      || null
+    )
+    : null;
   const educationInitial = educationTarget
     ? (
       (educationTarget._id
@@ -426,6 +526,7 @@ export default function ProfilePage({ publicUsername = "" }) {
           onOpenEducation={openEducationSection}
           onAddAbout={openAboutEditor}
           onAddEducation={openAddEducation}
+          onAddExperience={openAddExperience}
           onAddSkill={openAddSkill}
         />
         <div id="profile-edit" ref={editRef} />
@@ -464,21 +565,13 @@ export default function ProfilePage({ publicUsername = "" }) {
               </section>
             ) : null}
 
-            <section className={styles.section}>
-              <h2>Work Experience</h2>
-              {visibleWork.length === 0 ? (
-                <p className={styles.displayText}>No work experience added yet.</p>
-              ) : (
-                visibleWork.map((work, i) => (
-                  <div key={i} className={styles.displayEntry}>
-                    <p className={styles.displayEntryTitle}>{work.position || "Position"}</p>
-                    <p className={styles.displayMeta}>
-                      {[work.company, work.years].filter(Boolean).join(" · ")}
-                    </p>
-                  </div>
-                ))
-              )}
-            </section>
+            <ExperienceSection
+              profile={profile}
+              isOwner={isOwner}
+              onAdd={openAddExperience}
+              onOpenDetails={() => router.push(isPublicRoute ? `/in/${encodeURIComponent(publicUsername)}/experience` : "/profile/experience")}
+              onOpenMedia={setExperienceMediaViewer}
+            />
 
             {visibleEdu.length > 0 ? (
               <section
@@ -867,6 +960,28 @@ export default function ProfilePage({ publicUsername = "" }) {
             onClose={closeEducationEditor}
             onSave={handleSaveEducation}
             onDelete={handleDeleteEducation}
+          />
+        ) : null}
+        {experienceViewerItems.length > 0 ? (
+          <EducationMediaViewer
+            items={experienceViewerItems}
+            index={Math.min(experienceMediaViewer.mediaIndex, experienceViewerItems.length - 1)}
+            onClose={() => setExperienceMediaViewer(null)}
+            onIndexChange={(nextIndex) => setExperienceMediaViewer((current) => (
+              current ? { ...current, mediaIndex: nextIndex } : current
+            ))}
+          />
+        ) : null}
+        {isOwner ? (
+          <EditExperienceModal
+            isOpen={experienceOpen}
+            initialValue={experienceInitial}
+            profile={profile}
+            isSaving={experienceSaving}
+            error={experienceError}
+            onClose={() => !experienceSaving && setExperienceOpen(false)}
+            onSave={(cleaned) => persistExperience(cleaned, experienceTarget)}
+            onDelete={handleDeleteExperience}
           />
         ) : null}
         {isOwner ? (

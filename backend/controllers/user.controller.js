@@ -627,6 +627,98 @@ const normalizeEducationArray = (value) => {
     return { ok: true, value: next };
 };
 
+const EXPERIENCE_DESCRIPTION_MAX = 2000;
+const EXPERIENCE_LOCATION_TYPES = new Set(["", "On-site", "Hybrid", "Remote"]);
+const EXPERIENCE_EMPLOYMENT_TYPES = new Set([
+    "", "Full-time", "Part-time", "Self-employed", "Freelance", "Contract", "Internship", "Apprenticeship", "Seasonal",
+]);
+const EXPERIENCE_JOB_SOURCES = new Set(["", "LinkedIn", "Company website", "Referral", "Recruiter", "Other"]);
+
+const deriveExperienceYears = (entry) => {
+    const start = asTrimmedString(entry.startDate, "") || "";
+    const end = asTrimmedString(entry.endDate, "") || "";
+    const current = Boolean(entry.current);
+    const startLabel = /^\d{4}-\d{2}$/.test(start) ? start.slice(0, 4) : start;
+    const endLabel = /^\d{4}-\d{2}$/.test(end) ? end.slice(0, 4) : end;
+    if (current && startLabel) return `${startLabel} – Present`;
+    if (startLabel && endLabel) return `${startLabel} – ${endLabel}`;
+    if (startLabel) return startLabel;
+    return asTrimmedString(entry.years, "") || "";
+};
+
+const normalizePastWorkArray = (value) => {
+    if (!Array.isArray(value)) {
+        return { ok: false, message: "pastWork must be an array" };
+    }
+    const next = [];
+    for (const entry of value) {
+        if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+            return { ok: false, message: "Each experience entry must be an object" };
+        }
+        const company = asTrimmedString(entry.company);
+        const position = asTrimmedString(entry.position);
+        const years = asTrimmedString(entry.years, "");
+        const location = asTrimmedString(entry.location, "");
+        const locationType = asTrimmedString(entry.locationType, "");
+        const employmentType = asTrimmedString(entry.employmentType, "");
+        const jobSource = asTrimmedString(entry.jobSource, "");
+        const startDate = asTrimmedString(entry.startDate, "");
+        const endDateRaw = asTrimmedString(entry.endDate, "");
+        const description = asTrimmedString(entry.description, "");
+        if ([company, position].includes(null)) {
+            return { ok: false, message: "Experience company and position must be strings" };
+        }
+        if ([location, locationType, employmentType, jobSource, startDate, endDateRaw, description, years].includes(null)) {
+            return { ok: false, message: "Experience fields must be strings" };
+        }
+        if (!EXPERIENCE_LOCATION_TYPES.has(locationType)) {
+            return { ok: false, message: "Invalid experience location type" };
+        }
+        if (!EXPERIENCE_EMPLOYMENT_TYPES.has(employmentType)) {
+            return { ok: false, message: "Invalid experience employment type" };
+        }
+        if (!EXPERIENCE_JOB_SOURCES.has(jobSource)) {
+            return { ok: false, message: "Invalid experience job source" };
+        }
+        if (startDate && !YYYY_MM.test(startDate)) {
+            return { ok: false, message: "Experience startDate must be YYYY-MM" };
+        }
+        const current = Boolean(entry.current);
+        const endDate = current ? "" : endDateRaw;
+        if (endDate && !YYYY_MM.test(endDate)) {
+            return { ok: false, message: "Experience endDate must be YYYY-MM" };
+        }
+        if (description && description.length > EXPERIENCE_DESCRIPTION_MAX) {
+            return { ok: false, message: `Experience description must be under ${EXPERIENCE_DESCRIPTION_MAX} characters` };
+        }
+        const skillsResult = normalizeEducationSkills(entry.skills);
+        if (!skillsResult.ok) return { ok: false, message: skillsResult.message.replace("Education", "Experience") };
+        const mediaResult = normalizeEducationMedia(entry.media);
+        if (!mediaResult.ok) return mediaResult;
+        const empty = !company && !position && !years && !location && !startDate && !endDate && !description
+            && skillsResult.value.length === 0 && mediaResult.value.length === 0;
+        if (empty) continue;
+        const item = {
+            company: company || "",
+            position: position || "",
+            location: location || "",
+            locationType,
+            employmentType,
+            jobSource,
+            current,
+            startDate: startDate || "",
+            endDate,
+            description: description || "",
+            years: deriveExperienceYears({ ...entry, startDate, endDate, current, years }),
+            skills: skillsResult.value,
+            media: mediaResult.value,
+        };
+        if (entry._id) item._id = entry._id;
+        next.push(item);
+    }
+    return { ok: true, value: next };
+};
+
 const inferProfileSkillCategory = (name) => (
     PROFILE_TOOLS_SKILLS.has(String(name || "").trim().toLowerCase()) ? "tools" : ""
 );
@@ -879,10 +971,11 @@ export const updateProfileData = async (req, res) => {
         }
 
         if (rest.pastWork !== undefined) {
-            if (!Array.isArray(rest.pastWork)) {
-                return res.status(400).json({ message: "pastWork must be an array" });
+            const normalizedWork = normalizePastWorkArray(rest.pastWork);
+            if (!normalizedWork.ok) {
+                return res.status(400).json({ message: normalizedWork.message });
             }
-            profile_to_update.pastWork = rest.pastWork;
+            profile_to_update.pastWork = normalizedWork.value;
         }
         if (rest.education !== undefined) {
             const normalizedEducation = normalizeEducationArray(rest.education);

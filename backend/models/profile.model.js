@@ -108,6 +108,68 @@ const workSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    location: {
+        type: String,
+        default: '',
+    },
+    locationType: {
+        type: String,
+        default: '',
+    },
+    employmentType: {
+        type: String,
+        default: '',
+    },
+    jobSource: {
+        type: String,
+        default: '',
+    },
+    current: {
+        type: Boolean,
+        default: false,
+    },
+    startDate: {
+        type: String,
+        default: '',
+    },
+    endDate: {
+        type: String,
+        default: '',
+    },
+    description: {
+        type: String,
+        default: '',
+    },
+    skills: {
+        type: [{
+            name: {
+                type: String,
+                default: '',
+            },
+        }],
+        default: [],
+    },
+    media: {
+        type: [{
+            type: {
+                type: String,
+                default: 'link',
+            },
+            url: {
+                type: String,
+                default: '',
+            },
+            name: {
+                type: String,
+                default: '',
+            },
+            description: {
+                type: String,
+                default: '',
+            },
+        }],
+        default: [],
+    },
 });
 
 const ProfileSchema = new mongoose.Schema({
