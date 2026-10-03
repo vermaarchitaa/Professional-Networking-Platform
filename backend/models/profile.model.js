@@ -172,6 +172,17 @@ const workSchema = new mongoose.Schema({
     },
 });
 
+const languageSchema = new mongoose.Schema({
+    language: {
+        type: String,
+        default: '',
+    },
+    proficiency: {
+        type: String,
+        default: '',
+    },
+});
+
 const ProfileSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -195,6 +206,10 @@ const ProfileSchema = new mongoose.Schema({
     },
     skills: {
         type: [profileSkillSchema],
+        default: [],
+    },
+    languages: {
+        type: [languageSchema],
         default: [],
     },
     location: {

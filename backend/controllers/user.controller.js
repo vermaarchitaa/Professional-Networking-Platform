@@ -719,6 +719,44 @@ const normalizePastWorkArray = (value) => {
     return { ok: true, value: next };
 };
 
+const LANGUAGE_NAME_MAX = 80;
+const LANGUAGE_PROFICIENCIES = new Set([
+    "",
+    "Elementary proficiency",
+    "Limited working proficiency",
+    "Professional working proficiency",
+    "Full professional proficiency",
+    "Native or bilingual proficiency",
+]);
+
+const normalizeLanguagesArray = (value) => {
+    if (!Array.isArray(value)) {
+        return { ok: false, message: "languages must be an array" };
+    }
+    const next = [];
+    for (const entry of value) {
+        if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+            return { ok: false, message: "Each language entry must be an object" };
+        }
+        const language = asTrimmedString(entry.language);
+        const proficiency = asTrimmedString(entry.proficiency, "");
+        if (language === null || proficiency === null) {
+            return { ok: false, message: "Language fields must be strings" };
+        }
+        if (!language) continue;
+        if (language.length > LANGUAGE_NAME_MAX) {
+            return { ok: false, message: `Language must be under ${LANGUAGE_NAME_MAX} characters` };
+        }
+        if (!LANGUAGE_PROFICIENCIES.has(proficiency)) {
+            return { ok: false, message: "Invalid language proficiency" };
+        }
+        const item = { language, proficiency };
+        if (entry._id) item._id = entry._id;
+        next.push(item);
+    }
+    return { ok: true, value: next };
+};
+
 const inferProfileSkillCategory = (name) => (
     PROFILE_TOOLS_SKILLS.has(String(name || "").trim().toLowerCase()) ? "tools" : ""
 );
@@ -990,6 +1028,13 @@ export const updateProfileData = async (req, res) => {
                 return res.status(400).json({ message: normalizedSkills.message });
             }
             profile_to_update.skills = normalizedSkills.value;
+        }
+        if (rest.languages !== undefined) {
+            const normalizedLanguages = normalizeLanguagesArray(rest.languages);
+            if (!normalizedLanguages.ok) {
+                return res.status(400).json({ message: normalizedLanguages.message });
+            }
+            profile_to_update.languages = normalizedLanguages.value;
         }
         pruneProfileSkillAssociations(profile_to_update);
 

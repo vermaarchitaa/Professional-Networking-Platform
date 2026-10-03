@@ -165,7 +165,7 @@ function ContactIcon({ name }) {
   );
 }
 
-export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, onAddAbout, onAddEducation, onAddExperience, onAddSkill, isOwner = true }) {
+export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, onAddAbout, onAddEducation, onAddExperience, onAddSkill, onAddLanguage, isOwner = true }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const { message, isError } = useSelector((state) => state.profile);
@@ -563,6 +563,11 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                     if (label === "Add skill" || label === "Add skills") {
                       setOpenPanel(null);
                       onAddSkill?.();
+                      return;
+                    }
+                    if (label === "Add languages") {
+                      setOpenPanel(null);
+                      onAddLanguage?.();
                     }
                   }}
                 >
