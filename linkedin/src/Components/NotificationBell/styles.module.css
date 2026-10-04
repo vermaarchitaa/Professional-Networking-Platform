@@ -1,5 +1,7 @@
 .wrapper {
   position: relative;
+  display: flex;
+  align-items: stretch;
 }
 
 .bellBtn {
@@ -18,8 +20,8 @@
 
 .badge {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -6px;
+  right: -8px;
   background: #e53935;
   color: white;
   font-size: 0.65rem;

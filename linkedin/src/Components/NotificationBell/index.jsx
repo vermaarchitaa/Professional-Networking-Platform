@@ -14,6 +14,8 @@ import {
 import useNotificationPoll, { useFetchNotificationsOnOpen } from "@/hooks/useNotificationPoll";
 import { formatDate } from "@/config/utils";
 import { useI18n } from "@/i18n";
+import { BellIcon } from "@/Components/Navbar/icons";
+import navStyles from "@/Components/Navbar/styles.module.css";
 import styles from "./styles.module.css";
 
 export default function NotificationBell({ isLoggedIn }) {
@@ -57,13 +59,23 @@ export default function NotificationBell({ isLoggedIn }) {
 
   if (!isLoggedIn) return null;
 
+  const isActive = isOpen || router.pathname === "/notifications" || router.pathname.startsWith("/notifications/");
+
   return (
     <div className={styles.wrapper} ref={panelRef}>
-      <button className={styles.bellBtn} onClick={handleToggle} aria-label={t("notifications")}>
-        🔔
-        {unreadCount > 0 && (
-          <span className={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</span>
-        )}
+      <button
+        type="button"
+        className={`${navStyles.navItem} ${isActive ? navStyles.navItemActive : ""}`}
+        onClick={handleToggle}
+        aria-label={t("notifications")}
+      >
+        <span className={navStyles.iconSlot}>
+          <BellIcon />
+          {unreadCount > 0 && (
+            <span className={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</span>
+          )}
+        </span>
+        <span className={navStyles.label}>{t("notifications")}</span>
       </button>
 
       {isOpen && (
