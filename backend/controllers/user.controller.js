@@ -443,10 +443,19 @@ export const getProfileByUsername = async (req, res) => {
             };
         }
 
+        const isConnected = !isOwner && Boolean(await ConnectionRequest.exists({
+            status_accepted: true,
+            $or: [
+                { userId: viewer._id, connectionId: user._id },
+                { userId: user._id, connectionId: viewer._id },
+            ],
+        }));
+
         return res.json({
             ...data,
             connectionsCount,
             isOwner,
+            isConnected,
         });
     } catch (error) {
         return res.status(500).json({ message: error.message });
@@ -1072,6 +1081,81 @@ export const updateProfileData = async (req, res) => {
     }
 }
 
+const escapeRegex = (value) => String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const publicSearchPerson = (user, profile, score) => {
+    const introLocation = [profile?.intro?.city, profile?.intro?.country].filter(Boolean).join(", ");
+    return {
+        _id: user._id,
+        username: user.username,
+        name: user.name,
+        profilePicture: user.profilePicture,
+        headline: String(profile?.currentPost || "").trim(),
+        location: introLocation || String(profile?.location || "").trim(),
+        score,
+    };
+};
+
+export const searchPeople = async (req, res) => {
+    try {
+        const token = req.body.token || req.query.token;
+        const query = String(req.query.query || req.body.query || "").trim();
+        const limit = Math.min(50, Math.max(1, Number(req.query.limit || req.body.limit || 8) || 8));
+
+        const viewer = await User.findOne({ token });
+        if (!viewer) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        if (query.length < 3) {
+            return res.json({ people: [] });
+        }
+
+        const regex = new RegExp(escapeRegex(query), "i");
+        const matchedUsers = await User.find({
+            _id: { $ne: viewer._id },
+            $or: [{ name: regex }, { username: regex }],
+        }).select("name username profilePicture").lean();
+
+        const headlineProfiles = await Profile.find({
+            userId: { $ne: viewer._id },
+            currentPost: regex,
+        }).select("userId currentPost location intro").populate("userId", "name username profilePicture").lean();
+
+        const userIds = matchedUsers.map((user) => user._id);
+        const matchedProfiles = await Profile.find({ userId: { $in: userIds } })
+            .select("userId currentPost location intro")
+            .lean();
+
+        const profileByUserId = new Map(
+            matchedProfiles.map((profile) => [String(profile.userId), profile])
+        );
+        const peopleMap = new Map();
+
+        matchedUsers.forEach((user) => {
+            const nameMatch = regex.test(String(user.name || ""));
+            peopleMap.set(String(user._id), publicSearchPerson(user, profileByUserId.get(String(user._id)), nameMatch ? 0 : 1));
+        });
+
+        headlineProfiles.forEach((profile) => {
+            const user = profile.userId;
+            if (!user?._id || String(user._id) === String(viewer._id)) return;
+            const id = String(user._id);
+            if (!peopleMap.has(id)) {
+                peopleMap.set(id, publicSearchPerson(user, profile, 2));
+            }
+        });
+
+        const people = [...peopleMap.values()]
+            .sort((a, b) => a.score - b.score || String(a.name || "").localeCompare(String(b.name || "")))
+            .slice(0, limit)
+            .map(({ score, ...person }) => person);
+
+        return res.json({ people });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
 export const getAllUserProfile = async (req, res) => {
 
     try {
@@ -1083,7 +1167,7 @@ export const getAllUserProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found"})
         }
 
-        const profiles = await Profile.find().populate('userId', 'name username email profilePicture');
+        const profiles = await Profile.find().populate('userId', 'name username email profilePicture coverPicture');
 
         return res.json({ profiles });
     } catch(error){
@@ -1103,11 +1187,11 @@ export const downloadProfile = async (req, res) => {
             return res.status(404).json({ message: "User not found"})
         }
 
-        if(!user_id || String(user._id) !== String(user_id)){
-            return res.status(401).json({ message: "Unauthorized" });
+        if (!user_id) {
+            return res.status(400).json({ message: "User id is required" });
         }
 
-        const userProfile = await Profile.findOne({ userId: user._id })
+        const userProfile = await Profile.findOne({ userId: user_id })
         .populate('userId', 'name username email profilePicture');
 
         if(!userProfile){
@@ -1264,6 +1348,7 @@ export const acceptConnectionRequest = async (req, res) => {
 
         if(action_type === "accept") {
             connection.status_accepted = true;
+            connection.acceptedAt = new Date();
             await createNotification({
                 recipientId: connection.userId,
                 senderId: user._id,
@@ -1273,6 +1358,7 @@ export const acceptConnectionRequest = async (req, res) => {
             });
         } else {
             connection.status_accepted = false;
+            connection.acceptedAt = null;
         }
 
         await connection.save();
@@ -1282,6 +1368,112 @@ export const acceptConnectionRequest = async (req, res) => {
         return res.status(500).json({ message: error.message});
     }
 }
+
+export const removeConnection = async (req, res) => {
+    const { token, userId } = req.body;
+
+    try {
+        const user = await User.findOne({ token });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        if (!userId) {
+            return res.status(400).json({ message: "User id is required" });
+        }
+        if (String(user._id) === String(userId)) {
+            return res.status(400).json({ message: "Cannot remove yourself" });
+        }
+
+        const connection = await ConnectionRequest.findOne({
+            status_accepted: true,
+            $or: [
+                { userId: user._id, connectionId: userId },
+                { userId: userId, connectionId: user._id },
+            ],
+        });
+
+        if (!connection) {
+            return res.status(404).json({ message: "Connection not found" });
+        }
+
+        await ConnectionRequest.deleteOne({ _id: connection._id });
+        return res.json({ message: "Connection removed", userId });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+export const getProfileConnectionSuggestions = async (req, res) => {
+    const { token, username } = req.body;
+
+    try {
+        const viewer = await User.findOne({ token });
+        if (!viewer) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const slug = String(username || "").trim();
+        if (!slug) {
+            return res.status(400).json({ message: "Username is required" });
+        }
+
+        const owner = await User.findOne({ username: slug });
+        if (!owner) {
+            return res.status(404).json({ message: "Profile not found" });
+        }
+
+        const viewerIsOwner = String(viewer._id) === String(owner._id);
+        const viewerConnected = viewerIsOwner || Boolean(await ConnectionRequest.exists({
+            status_accepted: true,
+            $or: [
+                { userId: viewer._id, connectionId: owner._id },
+                { userId: owner._id, connectionId: viewer._id },
+            ],
+        }));
+
+        if (!viewerConnected) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const ownerRows = await ConnectionRequest.find({
+            status_accepted: true,
+            $or: [{ userId: owner._id }, { connectionId: owner._id }],
+        });
+
+        const ownerPeerIds = ownerRows.map((row) => (
+            String(row.userId) === String(owner._id) ? String(row.connectionId) : String(row.userId)
+        ));
+
+        const viewerRows = await ConnectionRequest.find({
+            $or: [{ userId: viewer._id }, { connectionId: viewer._id }],
+        });
+
+        const viewerAccepted = new Set();
+        const viewerPending = new Set();
+        viewerRows.forEach((row) => {
+            const peer = String(row.userId) === String(viewer._id) ? String(row.connectionId) : String(row.userId);
+            if (row.status_accepted === true) viewerAccepted.add(peer);
+            if (row.status_accepted == null) viewerPending.add(peer);
+        });
+
+        const suggestIds = [...new Set(ownerPeerIds)].filter((id) => (
+            id
+            && id !== String(viewer._id)
+            && !viewerAccepted.has(id)
+            && !viewerPending.has(id)
+        ));
+
+        const profiles = await Profile.find({ userId: { $in: suggestIds } })
+            .populate("userId", "name username profilePicture coverPicture");
+
+        return res.json({
+            profiles,
+            ownerName: owner.name,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
 
 export const addProfileSkill = async (req, res) => {
     try {

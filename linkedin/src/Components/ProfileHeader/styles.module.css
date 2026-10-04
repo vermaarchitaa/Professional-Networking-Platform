@@ -222,10 +222,31 @@
   font-size: 0.9rem;
 }
 
-.stats {
+.stats,
+.statsLink {
   color: #0a66c2;
   font-weight: 600;
   margin-top: 0.35rem;
+}
+
+.statsLink {
+  display: inline-block;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.statsLink:hover {
+  text-decoration: underline;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 .linkBtn {
@@ -336,7 +357,7 @@
   border: none;
 }
 
-.primaryBtn:hover {
+.primaryBtn:hover:not(:disabled) {
   background: #004182;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
@@ -347,9 +368,38 @@
   border: 1px solid #0a66c2;
 }
 
-.secondaryBtn:hover {
+.secondaryBtn:hover:not(:disabled) {
   background: #eef3f8;
   box-shadow: 0 1px 4px rgba(10, 102, 194, 0.12);
+}
+
+.secondaryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.rejectBtn {
+  background: white;
+  color: #666;
+  border: 1px solid #b2b2b2;
+  border-radius: 24px;
+  padding: 0.45rem 1rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.rejectBtn:hover:not(:disabled) {
+  background: #f3f2ef;
+  border-color: #191919;
+  color: #191919;
+}
+
+.rejectBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .ghostBtn {

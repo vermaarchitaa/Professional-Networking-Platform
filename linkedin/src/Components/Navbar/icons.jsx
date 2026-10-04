@@ -87,6 +87,15 @@ export function LogOutIcon(props) {
   );
 }
 
+export function SearchIcon(props) {
+  return (
+    <Icon {...props}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </Icon>
+  );
+}
+
 export function ChevronDownIcon({ size = 12 }) {
   return (
     <Icon size={size}>

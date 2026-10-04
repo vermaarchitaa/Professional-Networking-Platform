@@ -1,0 +1,134 @@
+.wrap {
+  position: relative;
+  flex: 1 1 220px;
+  max-width: 280px;
+  min-width: 160px;
+  margin-left: 1rem;
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 34px;
+  padding: 0 0.7rem;
+  background: #fff;
+  border: 1px solid #8f8f8f;
+  border-radius: 999px;
+}
+
+.field:focus-within {
+  background: #ffffff;
+  border-color: #0a66c2;
+}
+
+.icon {
+  display: flex;
+  color: #666666;
+  flex-shrink: 0;
+}
+
+.input {
+  width: 100%;
+  border: none;
+  background: #fff;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  color: #1d2226;
+}
+
+.input::placeholder {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: normal;
+  color: #8f918d;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: min(360px, calc(100vw - 1.5rem));
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 400;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.row:hover {
+  background: #f3f2ef;
+}
+
+.info {
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: #191919;
+}
+
+.headline {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #666666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  margin: 0;
+  padding: 0.85rem;
+  color: #666666;
+  font-size: 0.86rem;
+}
+
+.seeAll {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: none;
+  border-top: 1px solid #eef0f2;
+  background: #ffffff;
+  color: #0a66c2;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: center;
+}
+
+.seeAll:hover {
+  background: #eef3f8;
+}
+
+@media (max-width: 768px) {
+  .wrap {
+    max-width: 180px;
+    min-width: 120px;
+  }
+}

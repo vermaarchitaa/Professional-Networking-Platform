@@ -61,9 +61,32 @@ export const respondToRequest = createAsyncThunk(
       });
       thunkAPI.dispatch(fetchIncomingRequests());
       thunkAPI.dispatch(fetchSentRequests());
-      return requestId;
+      const incoming = thunkAPI.getState().connections.incomingRequests || [];
+      const row = incoming.find((item) => String(item._id) === String(requestId));
+      return {
+        requestId,
+        action_type,
+        userId: row?.userId?._id || row?.userId || "",
+      };
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to respond to request" });
+    }
+  }
+);
+
+export const removeConnection = createAsyncThunk(
+  "connections/remove",
+  async (userId, thunkAPI) => {
+    try {
+      const response = await clientServer.post("/user/remove_connection", {
+        token: getToken(),
+        userId,
+      });
+      thunkAPI.dispatch(fetchSentRequests());
+      thunkAPI.dispatch(fetchIncomingRequests());
+      return { userId, message: response.data.message };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to remove connection" });
     }
   }
 );

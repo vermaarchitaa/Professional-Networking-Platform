@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login, uploadProfilePicture, deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadCoverPicture, deleteCoverPicture, uploadEducationMedia, updateUserProfile, getUserAndProfile, getProfileByUsername, updateProfileData, addProfileSkill, updateProfileSkill, deleteProfileSkill, getAllUserProfile, downloadProfile, sendConnectionRequest, acceptConnectionRequest, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
+import { register, login, uploadProfilePicture, deleteProfilePicture, updateProfilePhotoVisibility, updateProfilePictureFrame, uploadCoverPicture, deleteCoverPicture, uploadEducationMedia, updateUserProfile, getUserAndProfile, getProfileByUsername, updateProfileData, addProfileSkill, updateProfileSkill, deleteProfileSkill, getAllUserProfile, searchPeople, downloadProfile, sendConnectionRequest, acceptConnectionRequest, removeConnection, getProfileConnectionSuggestions, whatAreMyConnections, getMyConnectionsRequests } from "../controllers/user.controller.js";
 import { profilePictureUpload, coverPhotoUpload, educationMediaUpload } from "../utils/uploads.js";
 const router = Router();
 
@@ -28,11 +28,14 @@ router.route("/add_profile_skill").post(addProfileSkill);
 router.route("/update_profile_skill").post(updateProfileSkill);
 router.route("/delete_profile_skill").post(deleteProfileSkill);
 router.route("/user/get_all_users").get(getAllUserProfile);
+router.route("/user/search_people").get(searchPeople);
 router.route("/user/download_resume").get(downloadProfile);
 router.route("/user/send_connection_request").post(sendConnectionRequest);
 router.route("/user/getConnectionRequests").post(getMyConnectionsRequests);
 router.route("/user/user_connection_request").get(whatAreMyConnections);
 router.route("/user/accept_connection_request").post(acceptConnectionRequest);
+router.route("/user/remove_connection").post(removeConnection);
+router.route("/user/get_profile_connection_suggestions").post(getProfileConnectionSuggestions);
 
 export default router;
 

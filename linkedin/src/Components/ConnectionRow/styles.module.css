@@ -1,0 +1,138 @@
+.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid #eef0f2;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.profileBtn {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+  flex: 1;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.info {
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  color: #191919;
+}
+
+.headline {
+  margin: 0.2rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: #191919;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.date {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #666666;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.messageBtn {
+  padding: 0.35rem 1rem;
+  border: 1px solid #0a66c2;
+  border-radius: 24px;
+  background: #ffffff;
+  color: #0a66c2;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.menuWrap {
+  position: relative;
+}
+
+.moreBtn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #666666;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.moreBtn:hover {
+  background: #f3f2ef;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 210px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 0.3rem 0;
+  z-index: 5;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border: none;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: 0.9rem;
+  color: #191919;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background: #f3f2ef;
+}
+
+@media (max-width: 640px) {
+  .row {
+    flex-wrap: wrap;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

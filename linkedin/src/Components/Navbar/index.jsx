@@ -7,6 +7,7 @@ import { clearConnections } from "@/config/redux/reducer/connectionReducer";
 import { clearNotifications } from "@/config/redux/reducer/notificationReducer";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import NotificationBell from "@/Components/NotificationBell";
+import PeopleSearch from "@/Components/PeopleSearch";
 import Avatar from "@/Components/Avatar";
 import { getToken } from "@/config/utils";
 import { useAuthCheck } from "@/hooks/useAuth";
@@ -104,6 +105,8 @@ export default function NavbarComponent() {
         <h1 className={styles.logo} onClick={() => navigate(isLoggedIn ? "/dashboard" : "/")}>
           Pro Connect
         </h1>
+
+        {isLoggedIn ? <PeopleSearch /> : null}
 
         {isLoggedIn ? (
           <div className={styles.navbarOptionContainer}>

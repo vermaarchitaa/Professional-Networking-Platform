@@ -14,6 +14,19 @@ import {
   updateProfileSkill,
   deleteProfileSkill,
 } from "@/config/redux/action/profileAction";
+import { removeConnection, respondToRequest } from "@/config/redux/action/connectionAction";
+
+function viewedUserId(profile) {
+  return String(profile?.userId?._id || "");
+}
+
+function applyViewedRelationship(state, userId, { connected, countDelta = 0 }) {
+  if (!state.viewedProfile || !userId) return;
+  if (viewedUserId(state.viewedProfile) !== String(userId)) return;
+  state.viewedProfile.isConnected = connected;
+  const current = Number(state.viewedProfile.connectionsCount || 0);
+  state.viewedProfile.connectionsCount = Math.max(0, current + countDelta);
+}
 
 const initialState = {
   profile: null,
@@ -138,6 +151,16 @@ const profileSlice = createSlice({
       .addCase(deleteProfileSkill.rejected, (state, action) => {
         state.isError = true;
         state.message = action.payload?.message || "Failed to delete skill";
+      })
+      .addCase(respondToRequest.fulfilled, (state, action) => {
+        if (action.payload?.action_type === "accept") {
+          applyViewedRelationship(state, action.payload.userId, { connected: true, countDelta: 1 });
+        } else {
+          applyViewedRelationship(state, action.payload.userId, { connected: false });
+        }
+      })
+      .addCase(removeConnection.fulfilled, (state, action) => {
+        applyViewedRelationship(state, action.payload.userId, { connected: false, countDelta: -1 });
       });
   },
 });

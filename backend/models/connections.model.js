@@ -12,8 +12,12 @@ const connectionRequest = new mongoose.Schema({
     status_accepted: {
         type: Boolean,
         default: null
+    },
+    acceptedAt: {
+        type: Date,
+        default: null
     }
-});
+}, { timestamps: true });
 
 const ConnectionRequest = mongoose.model("connectionRequest", connectionRequest);
 

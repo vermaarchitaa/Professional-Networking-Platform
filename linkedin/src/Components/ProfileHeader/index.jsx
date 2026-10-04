@@ -13,8 +13,17 @@ import {
 } from "@/Components/ProfilePhotoFlow/photoUtils";
 import {
   downloadResume,
+  fetchProfileByUsername,
   updateProfileData,
 } from "@/config/redux/action/profileAction";
+import {
+  fetchIncomingRequests,
+  fetchSentRequests,
+  removeConnection,
+  respondToRequest,
+  sendConnectionRequest,
+} from "@/config/redux/action/connectionAction";
+import { getRelationship } from "@/config/connectionRelationship";
 import { getMediaUrl, getPublicProfileHref, getPublicProfilePath } from "@/config/utils";
 import { formatMonthName, tEnum, toIntlLocale, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
@@ -94,6 +103,13 @@ function ResourceIcon({ name }) {
       </svg>
     );
   }
+  if (name === "remove") {
+    return (
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+      </svg>
+    );
+  }
   if (name === "activity") {
     return (
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -169,6 +185,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   const router = useRouter();
   const { t, language } = useI18n();
   const { message, isError } = useSelector((state) => state.profile);
+  const { pendingIds, sentRequests, incomingRequests, sentReady, incomingReady } = useSelector((state) => state.connections);
   const resourcesRef = useRef(null);
   const resourcesMenuRef = useRef(null);
   const [openPanel, setOpenPanel] = useState(null);
@@ -184,6 +201,8 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
     workTypes: "",
   });
   const [showOpenToDetails, setShowOpenToDetails] = useState(false);
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
+  const [isResponding, setIsResponding] = useState(false);
 
   const user = profile?.userId;
   const hasCover = Boolean(user?.coverPicture);
@@ -193,6 +212,16 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   const photoFrame = normalizeProfileFrame(user?.profilePictureFrame);
   const photoVisibility = normalizePhotoVisibility(user?.profilePhotoVisibility);
   const connectionsCount = Number(profile?.connectionsCount || 0);
+  const { isConnected, isOutgoingPending, incomingRequest } = isOwner
+    ? { isConnected: false, isOutgoingPending: false, incomingRequest: null }
+    : getRelationship(user?._id, {
+      pendingIds,
+      sentRequests,
+      incomingRequests,
+      profileConnected: profile?.isConnected,
+      connectionsHydrated: Boolean(sentReady && incomingReady),
+    });
+  const isPending = isOutgoingPending;
   const openToWork = profile?.openToWork || {};
   const openToEnabled = Boolean(openToWork.enabled);
   const introLocation = [profile?.intro?.city, profile?.intro?.country].filter(Boolean).join(", ");
@@ -208,6 +237,13 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
     || hasSavedValue(profile?.contactInfo?.website)
     || hasSavedValue(profile?.contactInfo?.instantMessaging)
   );
+
+  useEffect(() => {
+    if (!isOwner) {
+      dispatch(fetchSentRequests());
+      dispatch(fetchIncomingRequests());
+    }
+  }, [dispatch, isOwner]);
 
   useEffect(() => {
     setOpenToDraft({
@@ -380,9 +416,27 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 {t("contactInfo")}
               </button>
             </p>
-            <p className={styles.stats}>
-              {t(connectionsCount === 1 ? "connectionOne" : "connectionsMany", { count: connectionsCount })}
-            </p>
+            {isOwner ? (
+              <button
+                type="button"
+                className={styles.statsLink}
+                onClick={() => router.push("/connections?tab=connections")}
+              >
+                {t(connectionsCount === 1 ? "connectionOne" : "connectionsMany", { count: connectionsCount })}
+              </button>
+            ) : isConnected && user?.username ? (
+              <button
+                type="button"
+                className={styles.statsLink}
+                onClick={() => router.push(`/in/${encodeURIComponent(user.username)}/network`)}
+              >
+                {t(connectionsCount === 1 ? "connectionOne" : "connectionsMany", { count: connectionsCount })}
+              </button>
+            ) : (
+              <p className={styles.stats}>
+                {t(connectionsCount === 1 ? "connectionOne" : "connectionsMany", { count: connectionsCount })}
+              </p>
+            )}
           </div>
 
           {headerSchool ? (
@@ -412,13 +466,65 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
               </button>
             </>
           ) : null}
+          {!isOwner && incomingRequest ? (
+            <>
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                disabled={isResponding}
+                onClick={() => {
+                  setIsResponding(true);
+                  dispatch(respondToRequest({ requestId: incomingRequest._id, action_type: "accept" }))
+                    .then((result) => {
+                      if (respondToRequest.fulfilled.match(result) && user?.username) {
+                        dispatch(fetchProfileByUsername(user.username));
+                      }
+                    })
+                    .finally(() => setIsResponding(false));
+                }}
+              >
+                {t("accept")}
+              </button>
+              <button
+                type="button"
+                className={styles.rejectBtn}
+                disabled={isResponding}
+                onClick={() => {
+                  setIsResponding(true);
+                  dispatch(respondToRequest({ requestId: incomingRequest._id, action_type: "reject" }))
+                    .finally(() => setIsResponding(false));
+                }}
+              >
+                {t("decline")}
+              </button>
+            </>
+          ) : null}
+          {!isOwner && !isConnected && !incomingRequest ? (
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              disabled={!user?._id || isPending || isSendingRequest}
+              onClick={() => {
+                if (!user?._id || isPending || isSendingRequest) return;
+                setIsSendingRequest(true);
+                dispatch(sendConnectionRequest(user._id)).finally(() => setIsSendingRequest(false));
+              }}
+            >
+              {isPending ? t("pending") : t("connect")}
+            </button>
+          ) : null}
+          {!isOwner && isConnected ? (
+            <button type="button" className={styles.primaryBtn} disabled>
+              {t("messageAction")}
+            </button>
+          ) : null}
           <div className={styles.resourcesWrap} ref={resourcesRef}>
             <button
               type="button"
               className={styles.ghostBtn}
               onClick={() => setOpenPanel((current) => (current === "resources" ? null : "resources"))}
             >
-              {t("resources")}
+              {!isOwner ? t("moreBtn") : t("resources")}
             </button>
             {openPanel === "resources" && (
               <div
@@ -430,43 +536,62 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                   type="button"
                   className={styles.resourcesItemDisabled}
                   disabled
-                  // Messaging will be enabled later when a messaging system is implemented.
                 >
                   <ResourceIcon name="message" />
                   <span>{t("sendProfileMessage")}</span>
                 </button>
                 <button
                   type="button"
-                  disabled={!isOwner}
                   onClick={() => {
-                    if (!isOwner) return;
+                    if (!user?._id) return;
                     setOpenPanel(null);
-                    dispatch(downloadResume(user?._id));
+                    dispatch(downloadResume(user._id));
                   }}
                 >
                   <ResourceIcon name="pdf" />
                   <span>{t("saveToPdf")}</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpenPanel(null);
-                    router.push("/saved");
-                  }}
-                >
-                  <ResourceIcon name="saved" />
-                  <span>{t("savedItems")}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpenPanel(null);
-                    router.push("/profile/activity");
-                  }}
-                >
-                  <ResourceIcon name="activity" />
-                  <span>{t("activity")}</span>
-                </button>
+                {isConnected && !isOwner ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!user?._id) return;
+                      setOpenPanel(null);
+                      dispatch(removeConnection(user._id)).then((result) => {
+                        if (removeConnection.fulfilled.match(result) && user?.username) {
+                          dispatch(fetchProfileByUsername(user.username));
+                        }
+                      });
+                    }}
+                  >
+                    <ResourceIcon name="remove" />
+                    <span>{t("removeConnection")}</span>
+                  </button>
+                ) : null}
+                {isOwner ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenPanel(null);
+                        router.push("/saved");
+                      }}
+                    >
+                      <ResourceIcon name="saved" />
+                      <span>{t("savedItems")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenPanel(null);
+                        router.push("/profile/activity");
+                      }}
+                    >
+                      <ResourceIcon name="activity" />
+                      <span>{t("activity")}</span>
+                    </button>
+                  </>
+                ) : null}
                 <button type="button" onClick={() => setOpenPanel("aboutMember")}>
                   <ResourceIcon name="about" />
                   <span>{t("aboutThisMember")}</span>
