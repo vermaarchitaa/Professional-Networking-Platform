@@ -68,6 +68,42 @@
                     gap: 0.3rem;
                 }
 
+                .passwordWrapper {
+                    position: relative;
+                    width: 100%;
+                }
+
+                .passwordWrapper .inputField {
+                    padding-right: 2.75rem;
+                }
+
+                .passwordToggle {
+                    position: absolute;
+                    top: 50%;
+                    right: 0.45rem;
+                    transform: translateY(-50%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 2rem;
+                    height: 2rem;
+                    padding: 0;
+                    border: none;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: #8a8a8a;
+                    cursor: pointer;
+                }
+
+                .passwordToggle:hover {
+                    color: #555555;
+                }
+
+                .passwordToggle:focus-visible {
+                    outline: 2px solid #00488b;
+                    outline-offset: 1px;
+                }
+
                 .fieldError {
                     color: #e53935;
                     font-size: 0.75rem;
