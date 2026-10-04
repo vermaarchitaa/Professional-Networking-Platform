@@ -1,8 +1,10 @@
 import React from "react";
 import { CloseIcon } from "@/Components/CoverPhotoFlow/icons";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function ProfilePhotoDeleteDialog({ error, deleting, onCancel, onConfirm }) {
+  const { t } = useI18n();
   return (
     <div className={styles.overlay} onClick={onCancel} role="presentation">
       <div
@@ -13,21 +15,21 @@ export default function ProfilePhotoDeleteDialog({ error, deleting, onCancel, on
         aria-labelledby="delete-profile-photo-title"
       >
         <header className={styles.header}>
-          <h2 id="delete-profile-photo-title">Delete Photo?</h2>
-          <button type="button" className={styles.closeBtn} onClick={onCancel} aria-label="Close">
+          <h2 id="delete-profile-photo-title">{t("deletePhotoQuestion")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onCancel} aria-label={t("close")}>
             <CloseIcon />
           </button>
         </header>
         <p className={styles.message}>
-          Members with profile photos get up to 21x more profile views.
+          {t("deletePhotoHelp")}
         </p>
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
         <div className={styles.actions}>
           <button type="button" className={styles.cancelBtn} onClick={onCancel} disabled={deleting}>
-            No thanks
+            {t("noThanks")}
           </button>
           <button type="button" className={styles.deleteBtn} onClick={onConfirm} disabled={deleting}>
-            {deleting ? "Deleting..." : "Delete"}
+            {deleting ? t("deleting") : t("delete")}
           </button>
         </div>
       </div>

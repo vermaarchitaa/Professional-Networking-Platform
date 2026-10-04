@@ -1,8 +1,10 @@
 import React from "react";
 import { CloseIcon } from "@/Components/CoverPhotoFlow/icons";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function CoverDeleteDialog({ error, deleting, onCancel, onConfirm }) {
+  const { t } = useI18n();
   return (
     <div className={styles.overlay} onClick={onCancel} role="presentation">
       <div
@@ -13,21 +15,21 @@ export default function CoverDeleteDialog({ error, deleting, onCancel, onConfirm
         aria-labelledby="delete-photo-title"
       >
         <header className={styles.header}>
-          <h2 id="delete-photo-title">Delete Photo</h2>
-          <button type="button" className={styles.closeBtn} onClick={onCancel} aria-label="Close">
+          <h2 id="delete-photo-title">{t("deletePhotoTitle")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onCancel} aria-label={t("close")}>
             <CloseIcon />
           </button>
         </header>
         <p className={styles.message}>
-          You&apos;re about to delete this background photo. Your profile will show the default cover until you add a new one.
+          {t("deleteCoverHelp")}
         </p>
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
         <div className={styles.actions}>
           <button type="button" className={styles.cancelBtn} onClick={onCancel} disabled={deleting}>
-            No thanks
+            {t("noThanks")}
           </button>
           <button type="button" className={styles.deleteBtn} onClick={onConfirm} disabled={deleting}>
-            {deleting ? "Deleting..." : "Delete"}
+            {deleting ? t("deleting") : t("delete")}
           </button>
         </div>
       </div>

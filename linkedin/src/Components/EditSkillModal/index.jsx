@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getAssociableRecords } from "@/Components/SkillsSection/skillUtils";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const associationKey = (item) => `${item.kind}:${item.refId}`;
@@ -37,6 +38,7 @@ export default function EditSkillModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [confirmDelete, isOpen, isSaving, onClose]);
 
+  const { t } = useI18n();
   if (!isOpen || !skill) return null;
 
   const records = getAssociableRecords(profile);
@@ -69,23 +71,23 @@ export default function EditSkillModal({
         aria-labelledby="edit-skill-title"
       >
         <header className={styles.header}>
-          <h2 id="edit-skill-title">Edit {skill.name}</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close" disabled={isSaving}>
+          <h2 id="edit-skill-title">{t("editNamed", { name: skill.name })}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")} disabled={isSaving}>
             ×
           </button>
         </header>
         <div className={styles.body}>
           {confirmDelete ? (
             <div className={styles.confirm}>
-              <p>Are you sure you want to delete this skill?</p>
+              <p>{t("confirmDeleteSkill")}</p>
             </div>
           ) : (
             <>
-              <h3>Tell us where you put this skill to use</h3>
-              <p className={styles.help}>Select any item where this skill applies</p>
+              <h3>{t("skillWhereUsed")}</h3>
+              <p className={styles.help}>{t("skillSelectApplies")}</p>
               {records.education.length > 0 ? (
                 <section className={styles.group}>
-                  <h4>Education</h4>
+                  <h4>{t("education")}</h4>
                   {records.education.map((item) => (
                     <label key={associationKey(item)} className={styles.checkRow}>
                       <input
@@ -100,7 +102,7 @@ export default function EditSkillModal({
               ) : null}
               {records.experience.length > 0 ? (
                 <section className={styles.group}>
-                  <h4>Experience</h4>
+                  <h4>{t("experience")}</h4>
                   {records.experience.map((item) => (
                     <label key={associationKey(item)} className={styles.checkRow}>
                       <input
@@ -114,9 +116,9 @@ export default function EditSkillModal({
                 </section>
               ) : null}
               {!hasRecords ? (
-                <p className={styles.empty}>Add education or experience to associate this skill.</p>
+                <p className={styles.empty}>{t("associateSkillEmpty")}</p>
               ) : null}
-              {error ? <p className={styles.error}>{error}</p> : null}
+              {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
             </>
           )}
         </div>
@@ -124,19 +126,19 @@ export default function EditSkillModal({
           {confirmDelete ? (
             <>
               <button type="button" className={styles.cancelBtn} onClick={() => setConfirmDelete(false)} disabled={isSaving}>
-                Cancel
+                {t("cancel")}
               </button>
               <button type="button" className={styles.deleteSolid} onClick={() => !isSaving && onDelete?.()} disabled={isSaving}>
-                {isSaving ? "Deleting..." : "Delete"}
+                {isSaving ? t("deleting") : t("delete")}
               </button>
             </>
           ) : (
             <>
               <button type="button" className={styles.deleteBtn} onClick={() => setConfirmDelete(true)} disabled={isSaving}>
-                Delete skill
+                {t("deleteSkill")}
               </button>
               <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? t("saving") : t("save")}
               </button>
             </>
           )}

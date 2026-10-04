@@ -7,12 +7,14 @@ import { PostSkeleton } from "@/Components/Skeleton";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import { fetchSavedPosts } from "@/config/redux/action/postAction";
 import useAuthGuard from "@/hooks/useAuth";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 export default function SavedPostsPage() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { savedPosts, savedPostsLoading, savedPostsError } = useSelector((state) => state.posts);
+  const { t } = useI18n();
 
   useAuthGuard();
 
@@ -26,20 +28,20 @@ export default function SavedPostsPage() {
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
           <section className={styles.navCard}>
-            <h2>My items</h2>
+            <h2>{t("myItems")}</h2>
             <button type="button" className={styles.navItemActive} aria-current="page">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                 <path d="M7 4h10a1 1 0 0 1 1 1v16l-6-3.5L6 21V5a1 1 0 0 1 1-1Z" />
               </svg>
-              Saved posts
+              {t("savedPosts")}
             </button>
           </section>
         </aside>
 
         <section className={styles.main}>
           <header className={styles.header}>
-            <h1>Saved Posts</h1>
-            <p>Posts you save are stored here so you can come back to them later.</p>
+            <h1>{t("savedPostsTitle")}</h1>
+            <p>{t("savedPostsIntro")}</p>
           </header>
 
           {savedPostsLoading ? (
@@ -49,10 +51,10 @@ export default function SavedPostsPage() {
             </div>
           ) : savedPostsError ? (
             <div className={styles.errorCard} role="alert">
-              <h2>Couldn't load saved posts</h2>
-              <p>{savedPostsError}</p>
+              <h2>{t("couldntLoadSaved")}</h2>
+              <p>{tMessage(t, savedPostsError)}</p>
               <button type="button" className={styles.retryBtn} onClick={() => dispatch(fetchSavedPosts())}>
-                Try again
+                {t("tryAgain")}
               </button>
             </div>
           ) : savedPosts.length === 0 ? (
@@ -66,10 +68,10 @@ export default function SavedPostsPage() {
                   <path d="M118 18h16a4 4 0 0 1 4 4v42l-12-7-12 7V22a4 4 0 0 1 4-4Z" fill="#0a66c2" />
                 </svg>
               </div>
-              <h2>Start saving posts</h2>
-              <p>Saved posts will show up here so you can revisit the ones that matter to you.</p>
+              <h2>{t("startSavingPosts")}</h2>
+              <p>{t("startSavingPostsHint")}</p>
               <button type="button" className={styles.feedBtn} onClick={() => router.push("/dashboard")}>
-                Go to Feed
+                {t("goToFeed")}
               </button>
             </div>
           ) : (

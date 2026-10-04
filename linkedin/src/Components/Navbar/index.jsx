@@ -7,11 +7,13 @@ import { clearConnections } from "@/config/redux/reducer/connectionReducer";
 import { clearNotifications } from "@/config/redux/reducer/notificationReducer";
 import NotificationBell from "@/Components/NotificationBell";
 import { useAuthCheck } from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function NavbarComponent() {
   const router = useRouter();
   const dispatch = useDispatch();
+  const { t } = useI18n();
   const { loggedIn } = useSelector((state) => state.auth);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -49,7 +51,7 @@ export default function NavbarComponent() {
         <button
           className={styles.menuToggle}
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
+          aria-label={t("toggleMenu")}
         >
           {menuOpen ? "✕" : "☰"}
         </button>
@@ -58,28 +60,28 @@ export default function NavbarComponent() {
           {isLoggedIn ? (
             <>
               <button className={styles.navLink} onClick={() => navigate("/dashboard")}>
-                Feed
+                {t("feed")}
               </button>
               <button className={styles.navLink} onClick={() => navigate("/connections")}>
-                Network
+                {t("network")}
               </button>
               <button className={styles.navLink} onClick={() => navigate("/profile")}>
-                Profile
+                {t("profile")}
               </button>
               <button className={styles.navLink} onClick={() => navigate("/blog")}>
-                Blog
+                {t("blog")}
               </button>
               <button className={styles.buttonJoin} onClick={handleLogout}>
-                Logout
+                {t("logout")}
               </button>
             </>
           ) : (
             <>
               <button className={styles.navLink} onClick={() => navigate("/blog")}>
-                Blog
+                {t("blog")}
               </button>
               <div onClick={() => navigate("/login")} className={styles.buttonJoin}>
-                <p>Be a part</p>
+                <p>{t("beAPart")}</p>
               </div>
             </>
           )}

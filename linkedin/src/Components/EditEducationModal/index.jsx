@@ -11,6 +11,7 @@ import { uploadEducationMedia } from "@/config/redux/action/profileAction";
 import AddMediaMenu from "@/Components/RecordMedia/AddMediaMenu";
 import EditMediaModal from "@/Components/RecordMedia/EditMediaModal";
 import MediaItems from "@/Components/RecordMedia/MediaItems";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const isValidHttpUrl = (value) => {
@@ -32,6 +33,7 @@ export default function EditEducationModal({
   onDelete,
 }) {
   const dispatch = useDispatch();
+  const { t } = useI18n();
   const isEditing = initialValue != null;
   const imageInputRef = useRef(null);
   const documentInputRef = useRef(null);
@@ -124,7 +126,7 @@ export default function EditEducationModal({
     if (busy) return;
     const cleaned = cleanEducation(draft);
     if (!cleaned.school) {
-      setFormError("School is required");
+      setFormError("schoolRequired");
       return;
     }
     setFormError("");
@@ -134,15 +136,15 @@ export default function EditEducationModal({
   const addSkill = () => {
     const name = skillName.trim().slice(0, 80);
     if (!name) {
-      setSkillError("Enter a skill");
+      setSkillError("enterSkill");
       return;
     }
     if (skills.length >= EDUCATION_SKILLS_LIMIT) {
-      setSkillError("You can add up to 5 skills");
+      setSkillError("skillsLimit");
       return;
     }
     if (skills.some((item) => String(item.name || "").toLowerCase() === name.toLowerCase())) {
-      setSkillError("That skill is already added");
+      setSkillError("skillAlreadyAdded");
       return;
     }
     patchDraft({ ...draft, skills: [...skills, { name }] });
@@ -174,11 +176,11 @@ export default function EditEducationModal({
   const addLink = () => {
     const url = linkValue.trim();
     if (!url) {
-      setLinkError("Enter a URL");
+      setLinkError("enterUrl");
       return;
     }
     if (!isValidHttpUrl(url)) {
-      setLinkError("Enter a valid URL");
+      setLinkError("enterValidUrl");
       return;
     }
     let name = url;
@@ -258,8 +260,8 @@ export default function EditEducationModal({
         aria-labelledby="edit-education-title"
       >
         <header className={styles.header}>
-          <h2 id="edit-education-title">{isEditing ? "Edit education" : "Add education"}</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close" disabled={busy}>
+          <h2 id="edit-education-title">{isEditing ? t("editEducation") : t("addEducationTitle")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")} disabled={busy}>
             ×
           </button>
         </header>
@@ -267,7 +269,7 @@ export default function EditEducationModal({
         <div className={styles.body}>
           {confirmDelete ? (
             <div className={styles.confirm}>
-              <p>Are you sure you want to delete this education?</p>
+              <p>{t("confirmDeleteEducation")}</p>
             </div>
           ) : (
             <>
@@ -278,9 +280,9 @@ export default function EditEducationModal({
               />
 
               <section className={styles.block}>
-                <h3>Skills</h3>
+                <h3>{t("skills")}</h3>
                 <p className={styles.help}>
-                  We recommend adding your top 5 skills used in this experience. They&apos;ll also appear in your Skills section.
+                  {t("educationSkillsHelp")}
                 </p>
                 <ul className={styles.skillList}>
                   {skills.map((skill, index) => (
@@ -298,7 +300,7 @@ export default function EditEducationModal({
                     >
                       <span className={styles.dragHandle} aria-hidden="true">⋮⋮</span>
                       <span className={styles.skillName}>{skill.name}</span>
-                      <button type="button" className={styles.iconBtn} onClick={() => removeSkill(index)} aria-label={`Remove ${skill.name}`}>
+                      <button type="button" className={styles.iconBtn} onClick={() => removeSkill(index)} aria-label={t("removeNamed", { name: skill.name })}>
                         ×
                       </button>
                     </li>
@@ -306,14 +308,14 @@ export default function EditEducationModal({
                 </ul>
                 {skills.length < EDUCATION_SKILLS_LIMIT ? (
                   <button type="button" className={styles.addLink} onClick={() => { setSkillOpen(true); setSkillError(""); }}>
-                    + Add skill
+                    {t("addSkillPlus")}
                   </button>
                 ) : null}
               </section>
 
               <section className={styles.block}>
-                <h3>Media</h3>
-                <p className={styles.help}>Add media like images, documents, sites or presentations. Learn more</p>
+                <h3>{t("media")}</h3>
+                <p className={styles.help}>{t("mediaHelpEducation")}</p>
                 <MediaItems items={media} onEdit={openMediaEditor} onRemove={removeMedia} />
                 <AddMediaMenu
                   menuRef={mediaMenuRef}
@@ -333,7 +335,7 @@ export default function EditEducationModal({
                     documentInputRef.current?.click();
                   }}
                 />
-                {uploading ? <p className={styles.help}>Uploading...</p> : null}
+                {uploading ? <p className={styles.help}>{t("uploading")}</p> : null}
               </section>
             </>
           )}
@@ -343,27 +345,27 @@ export default function EditEducationModal({
           {confirmDelete ? (
             <>
               <button type="button" className={styles.cancelBtn} onClick={() => setConfirmDelete(false)} disabled={busy}>
-                Cancel
+                {t("cancel")}
               </button>
               <button type="button" className={styles.deleteSolid} onClick={() => !busy && onDelete?.()} disabled={busy}>
-                {isSaving ? "Deleting..." : "Delete"}
+                {isSaving ? t("deleting") : t("delete")}
               </button>
             </>
           ) : (
             <>
               {isEditing ? (
                 <button type="button" className={styles.deleteBtn} onClick={() => setConfirmDelete(true)} disabled={busy}>
-                  Delete education
+                  {t("deleteEducation")}
                 </button>
               ) : (
                 <span />
               )}
               <div className={styles.footerRight}>
                 <button type="button" className={styles.cancelBtn} onClick={onClose} disabled={busy}>
-                  Cancel
+                  {t("cancel")}
                 </button>
                 <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={busy}>
-                  {isSaving ? "Saving..." : "Save"}
+                  {isSaving ? t("saving") : t("save")}
                 </button>
               </div>
             </>
@@ -398,12 +400,12 @@ export default function EditEducationModal({
         <div className={styles.nestedOverlay} onClick={() => setSkillOpen(false)} role="presentation">
           <div className={styles.nestedDialog} onClick={(event) => event.stopPropagation()} role="dialog" aria-labelledby="add-skill-title">
             <header className={styles.header}>
-              <h2 id="add-skill-title">Add skill</h2>
-              <button type="button" className={styles.closeBtn} onClick={() => setSkillOpen(false)} aria-label="Close">×</button>
+              <h2 id="add-skill-title">{t("addSkill")}</h2>
+              <button type="button" className={styles.closeBtn} onClick={() => setSkillOpen(false)} aria-label={t("close")}>×</button>
             </header>
             <div className={styles.nestedBody}>
               <label className={styles.nestedLabel}>
-                Skill
+                {t("skill")}
                 <input
                   autoFocus
                   value={skillName}
@@ -417,14 +419,14 @@ export default function EditEducationModal({
                       addSkill();
                     }
                   }}
-                  placeholder="Skill (ex: Project Management)"
+                  placeholder={t("skillPlaceholder")}
                 />
               </label>
-              {skillError ? <p className={styles.nestedError}>{skillError}</p> : null}
+              {skillError ? <p className={styles.nestedError}>{tMessage(t, skillError)}</p> : null}
             </div>
             <footer className={styles.footer}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setSkillOpen(false)}>Cancel</button>
-              <button type="button" className={styles.saveBtn} onClick={addSkill}>Add</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setSkillOpen(false)}>{t("cancel")}</button>
+              <button type="button" className={styles.saveBtn} onClick={addSkill}>{t("add")}</button>
             </footer>
           </div>
         </div>
@@ -447,13 +449,13 @@ export default function EditEducationModal({
         <div className={styles.nestedOverlay} onClick={() => setLinkOpen(false)} role="presentation">
           <div className={styles.nestedDialog} onClick={(event) => event.stopPropagation()} role="dialog" aria-labelledby="add-media-title">
             <header className={styles.header}>
-              <h2 id="add-media-title">Add media</h2>
-              <button type="button" className={styles.closeBtn} onClick={() => setLinkOpen(false)} aria-label="Close">×</button>
+              <h2 id="add-media-title">{t("addMediaTitle")}</h2>
+              <button type="button" className={styles.closeBtn} onClick={() => setLinkOpen(false)} aria-label={t("close")}>×</button>
             </header>
             <div className={styles.nestedBody}>
-              <p className={styles.help}>Paste or type a link to an article, file or video.</p>
+              <p className={styles.help}>{t("pasteLinkHelp")}</p>
               <label className={styles.nestedLabel}>
-                URL
+                {t("url")}
                 <input
                   autoFocus
                   value={linkValue}
@@ -470,11 +472,11 @@ export default function EditEducationModal({
                   placeholder="https://"
                 />
               </label>
-              {linkError ? <p className={styles.nestedError}>{linkError}</p> : null}
+              {linkError ? <p className={styles.nestedError}>{tMessage(t, linkError)}</p> : null}
             </div>
             <footer className={styles.footer}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setLinkOpen(false)}>Back</button>
-              <button type="button" className={styles.saveBtn} onClick={addLink}>Save</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setLinkOpen(false)}>{t("back")}</button>
+              <button type="button" className={styles.saveBtn} onClick={addLink}>{t("save")}</button>
             </footer>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { getPublicProfileHref, getPublicProfilePath } from "@/config/utils";
 import { validateUsername } from "@/config/validation";
 import useAuthGuard from "@/hooks/useAuth";
 import { ProfileFormSkeleton } from "@/Components/Skeleton";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 export default function ProfileUrlPage() {
@@ -18,6 +19,7 @@ export default function ProfileUrlPage() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { t } = useI18n();
 
   useAuthGuard();
 
@@ -74,17 +76,17 @@ export default function ProfileUrlPage() {
     <DashboardLayout>
       <div className={styles.container}>
         <button type="button" className={styles.backBtn} onClick={() => router.push("/profile")}>
-          ← Back to profile
+          {t("backToProfile")}
         </button>
 
         <section className={styles.card}>
-          <h1>Profile URL</h1>
+          <h1>{t("profileUrl")}</h1>
           <p className={styles.lead}>
-            Choose a custom public URL for your profile. This uses your existing username.
+            {t("profileUrlLead")}
           </p>
 
           <div className={styles.preview}>
-            <p className={styles.previewLabel}>Current profile URL</p>
+            <p className={styles.previewLabel}>{t("currentProfileUrl")}</p>
             {currentUsername ? (
               <a
                 className={styles.previewLink}
@@ -95,12 +97,12 @@ export default function ProfileUrlPage() {
                 {getPublicProfileHref(currentUsername)}
               </a>
             ) : (
-              <p className={styles.previewEmpty}>No profile URL yet.</p>
+              <p className={styles.previewEmpty}>{t("noProfileUrlYet")}</p>
             )}
           </div>
 
           <label className={styles.field}>
-            Custom profile URL
+            {t("customProfileUrl")}
             <div className={styles.urlRow}>
               <span className={styles.urlPrefix}>
                 {typeof window !== "undefined" ? `${window.location.origin}/in/` : "/in/"}
@@ -119,22 +121,22 @@ export default function ProfileUrlPage() {
           </label>
 
           <div className={styles.preview}>
-            <p className={styles.previewLabel}>Profile URL preview</p>
+            <p className={styles.previewLabel}>{t("profileUrlPreview")}</p>
             {previewHref ? (
               <a className={styles.previewLink} href={previewPath} target="_blank" rel="noreferrer">
                 {previewHref}
               </a>
             ) : (
-              <p className={styles.previewEmpty}>Enter a username to preview your profile URL.</p>
+              <p className={styles.previewEmpty}>{t("enterUsernamePreview")}</p>
             )}
           </div>
 
-          {error ? <p className={styles.error}>{error}</p> : null}
-          {saved && !isError ? <p className={styles.success}>{message || "Profile URL updated"}</p> : null}
+          {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
+          {saved && !isError ? <p className={styles.success}>{tMessage(t, message) || t("profileUrlUpdated")}</p> : null}
 
           <div className={styles.actions}>
             <button type="button" className={styles.cancelBtn} onClick={() => router.push("/profile")}>
-              Cancel
+              {t("cancel")}
             </button>
             <button
               type="button"
@@ -143,7 +145,7 @@ export default function ProfileUrlPage() {
               disabled={saving || username.trim() === currentUsername}
               aria-busy={saving}
             >
-              {saving ? "Saving..." : "Save"}
+              {saving ? t("saving") : t("save")}
             </button>
           </div>
         </section>

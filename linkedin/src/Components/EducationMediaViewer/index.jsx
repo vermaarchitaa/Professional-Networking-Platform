@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { getMediaUrl } from "@/config/utils";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function EducationMediaViewer({
@@ -8,6 +9,7 @@ export default function EducationMediaViewer({
   onClose,
   onIndexChange,
 }) {
+  const { t } = useI18n();
   const total = items.length;
   const current = items[index];
   const canPrev = index > 0;
@@ -47,8 +49,8 @@ export default function EducationMediaViewer({
         aria-labelledby="education-media-title"
       >
         <header className={styles.header}>
-          <h2 id="education-media-title">Media</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <h2 id="education-media-title">{t("media")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
             ×
           </button>
         </header>
@@ -57,7 +59,7 @@ export default function EducationMediaViewer({
             {current.type === "image" ? (
               <img
                 src={mediaHref}
-                alt={title || "Education media"}
+                alt={title || t("educationMedia")}
                 className={styles.image}
               />
             ) : (

@@ -13,6 +13,7 @@ import {
   PHOTO_VISIBILITY_OPTIONS,
   normalizePhotoVisibility,
 } from "@/Components/ProfilePhotoFlow/photoUtils";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function ProfilePhotoMenu({
@@ -29,6 +30,7 @@ export default function ProfilePhotoMenu({
   onDelete,
   onVisibilityChange,
 }) {
+  const { t } = useI18n();
   const [panelOpen, setPanelOpen] = useState(false);
   const [savingVisibility, setSavingVisibility] = useState(false);
   const wrapRef = useRef(null);
@@ -83,8 +85,8 @@ export default function ProfilePhotoMenu({
         aria-labelledby="profile-photo-title"
       >
         <header className={styles.header}>
-          <h2 id="profile-photo-title">Profile photo</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <h2 id="profile-photo-title">{t("profilePhoto")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
             <CloseIcon />
           </button>
         </header>
@@ -97,15 +99,20 @@ export default function ProfilePhotoMenu({
               className={styles.visibility}
               aria-haspopup="listbox"
               aria-expanded={panelOpen}
-              aria-label="Profile photo visibility"
+              aria-label={t("photoVisibility")}
               onClick={() => setPanelOpen((openPanel) => !openPanel)}
             >
               <EyeIcon />
-              {selectedOption.button}
+              {t({
+                connections: "firstDegree",
+                network: "yourNetwork",
+                members: "allMembers",
+                anyone: "anyone",
+              }[selectedOption.id] || "anyone")}
               <ChevronDownIcon />
             </button>
             {panelOpen ? (
-              <div className={styles.visibilityPanel} role="listbox" aria-label="Visibility options">
+              <div className={styles.visibilityPanel} role="listbox" aria-label={t("visibilityOptions")}>
                 {PHOTO_VISIBILITY_OPTIONS.map((option) => (
                   <button
                     type="button"
@@ -116,8 +123,18 @@ export default function ProfilePhotoMenu({
                     disabled={savingVisibility}
                     onClick={() => handleVisibilitySelect(option.id)}
                   >
-                    <span className={styles.visibilityLabel}>{option.label}</span>
-                    <span className={styles.visibilityHint}>{option.description}</span>
+                    <span className={styles.visibilityLabel}>{t({
+                      connections: "firstDegreeOnly",
+                      network: "yourNetwork",
+                      members: "allLinkedInMembers",
+                      anyone: "anyone",
+                    }[option.id])}</span>
+                    <span className={styles.visibilityHint}>{t({
+                      connections: "firstDegreeDesc",
+                      network: "yourNetworkDesc",
+                      members: "allMembersSignedIn",
+                      anyone: "anyoneOnOrOff",
+                    }[option.id])}</span>
                   </button>
                 ))}
               </div>
@@ -125,24 +142,24 @@ export default function ProfilePhotoMenu({
           </div>
         </div>
 
-        {(error || visibilityError) ? <p className={styles.error}>{visibilityError || error}</p> : null}
+        {(error || visibilityError) ? <p className={styles.error}>{tMessage(t, visibilityError || error)}</p> : null}
 
         <div className={styles.actions}>
           <button type="button" className={styles.actionBtn} onClick={onEdit}>
             <PencilIcon />
-            Edit
+            {t("edit")}
           </button>
           <button type="button" className={styles.actionBtn} onClick={onUpdate}>
             <ImageIcon />
-            Update
+            {t("update")}
           </button>
           <button type="button" className={styles.actionBtn} onClick={onFrames}>
             <FrameIcon />
-            Frames
+            {t("frames")}
           </button>
           <button type="button" className={styles.actionBtn} onClick={onDelete}>
             <TrashIcon />
-            Delete
+            {t("delete")}
           </button>
         </div>
       </div>

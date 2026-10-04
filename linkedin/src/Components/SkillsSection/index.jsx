@@ -1,5 +1,6 @@
 import React from "react";
 import { listProfileSkills, resolveSkillAssociations } from "./skillUtils";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function SkillsSection({
@@ -8,6 +9,7 @@ export default function SkillsSection({
   onAdd,
   onOpenDetails,
 }) {
+  const { t } = useI18n();
   const skills = listProfileSkills(profile);
 
   if (!isOwner && skills.length === 0) return null;
@@ -16,28 +18,28 @@ export default function SkillsSection({
     <section id="skills" className={styles.section}>
       {skills.length === 0 ? (
         <>
-          <h2>Skills</h2>
+          <h2>{t("skills")}</h2>
           <p className={styles.intro}>
-            Communicate your fit for new opportunities – 50% of hirers use skills data to fill their roles.
+            {t("skillsIntro")}
           </p>
-          <div className={styles.emptyRow}>Soft skills</div>
-          <div className={styles.emptyRowLast}>Technical Skills</div>
+          <div className={styles.emptyRow}>{t("softSkills")}</div>
+          <div className={styles.emptyRowLast}>{t("technicalSkills")}</div>
           {isOwner ? (
             <button type="button" className={styles.addBtn} onClick={onAdd}>
-              Add skills
+              {t("addSkills")}
             </button>
           ) : null}
         </>
       ) : (
         <>
           <div className={styles.header}>
-            <h2>Skills ({skills.length})</h2>
+            <h2>{t("skillsCount", { count: skills.length })}</h2>
             {isOwner ? (
               <div className={styles.actions}>
-                <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label="Add skill">
+                <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label={t("addSkill")}>
                   +
                 </button>
-                <button type="button" className={styles.iconBtn} onClick={onOpenDetails} aria-label="Manage skills">
+                <button type="button" className={styles.iconBtn} onClick={onOpenDetails} aria-label={t("manageSkills")}>
                   ✎
                 </button>
               </div>
@@ -58,7 +60,7 @@ export default function SkillsSection({
           </ul>
           {skills.length > 2 ? (
             <button type="button" className={styles.showAll} onClick={onOpenDetails}>
-              Show all →
+              {t("showAll")}
             </button>
           ) : null}
         </>

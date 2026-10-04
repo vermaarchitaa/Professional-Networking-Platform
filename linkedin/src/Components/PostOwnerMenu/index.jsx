@@ -4,13 +4,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { deletePost, savePost, unsavePost, updatePost } from "@/config/redux/action/postAction";
 import { COMMENT_EMOJIS } from "@/config/reactions";
 import { validatePostBody } from "@/config/validation";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const MENU_EVENT = "postcard-menu-open";
 const COMMENT_OPTIONS = [
-  { value: "anyone", label: "Anyone" },
-  { value: "connections", label: "Connections only" },
-  { value: "off", label: "Off" },
+  { value: "anyone", key: "anyone" },
+  { value: "connections", key: "connectionsOnly" },
+  { value: "off", key: "off" },
 ];
 
 const Icon = ({ children }) => (
@@ -52,6 +53,7 @@ const BookmarkIcon = ({ filled }) => (
 
 export default function PostOwnerMenu({ post }) {
   const dispatch = useDispatch();
+  const { t } = useI18n();
   const { savedPostIds } = useSelector((state) => state.posts);
   const { profile } = useSelector((state) => state.profile);
   const wrapRef = useRef(null);
@@ -232,25 +234,25 @@ export default function PostOwnerMenu({ post }) {
       >
         <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={handleToggleSave}>
           <BookmarkIcon filled={isSaved} />
-          {isSaved ? "Unsave post" : "Save post"}
+          {isSaved ? t("unsavePost") : t("savePost")}
         </button>
         {isOwner && (
           <>
             <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("edit")}>
               <EditIcon />
-              Edit post
+              {t("editPost")}
             </button>
             <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("delete")}>
               <DeleteIcon />
-              Delete post
+              {t("deletePost")}
             </button>
             <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={() => openPanel("comments")}>
               <CommentIcon />
-              Who can comment on this post?
+              {t("whoCanComment")}
             </button>
             <button type="button" className={styles.menuItem} onMouseDown={preventMenuFocusScroll} onClick={handleFeature}>
               <FeatureIcon />
-              {featured ? "Remove from featured" : "Feature on top of my profile"}
+              {featured ? t("removeFromFeatured") : t("featureOnProfile")}
             </button>
           </>
         )}
@@ -270,7 +272,7 @@ export default function PostOwnerMenu({ post }) {
         >
           {panel === "edit" && (
             <>
-              <h3>Edit post</h3>
+              <h3>{t("editPost")}</h3>
               <textarea
                 ref={editAreaRef}
                 className={styles.editArea}
@@ -281,13 +283,13 @@ export default function PostOwnerMenu({ post }) {
                 }}
                 maxLength={5000}
               />
-              {editError && <p className={styles.error}>{editError}</p>}
+              {editError && <p className={styles.error}>{tMessage(t, editError)}</p>}
               <div className={styles.editFooter}>
                 <div className={styles.emojiWrap} ref={emojiWrapRef}>
                   <button
                     type="button"
                     className={styles.emojiTrigger}
-                    aria-label="Emoji"
+                    aria-label={t("emoji")}
                     onClick={() => setShowEmoji((open) => !open)}
                   >
                     😊
@@ -308,9 +310,9 @@ export default function PostOwnerMenu({ post }) {
                   )}
                 </div>
                 <div className={styles.dialogActions}>
-                  <button type="button" className={styles.secondaryBtn} onClick={closeAll}>Cancel</button>
+                  <button type="button" className={styles.secondaryBtn} onClick={closeAll}>{t("cancel")}</button>
                   <button type="button" className={styles.primaryBtn} onClick={handleSaveEdit} disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save"}
+                    {isSaving ? t("saving") : t("save")}
                   </button>
                 </div>
               </div>
@@ -318,19 +320,19 @@ export default function PostOwnerMenu({ post }) {
           )}
           {panel === "delete" && (
             <>
-              <h3>Delete post?</h3>
-              <p className={styles.dialogCopy}>Are you sure you want to delete this post?</p>
+              <h3>{t("deletePostQuestion")}</h3>
+              <p className={styles.dialogCopy}>{t("confirmDeletePost")}</p>
               <div className={styles.dialogActions}>
-                <button type="button" className={styles.secondaryBtn} onClick={closeAll}>Cancel</button>
+                <button type="button" className={styles.secondaryBtn} onClick={closeAll}>{t("cancel")}</button>
                 <button type="button" className={styles.dangerBtn} onClick={handleDelete} disabled={isSaving}>
-                  {isSaving ? "Deleting..." : "Delete"}
+                  {isSaving ? t("deleting") : t("delete")}
                 </button>
               </div>
             </>
           )}
           {panel === "comments" && (
             <>
-              <h3>Who can comment on this post?</h3>
+              <h3>{t("whoCanComment")}</h3>
               <div className={styles.optionList}>
                 {COMMENT_OPTIONS.map((option) => (
                   <button
@@ -340,7 +342,7 @@ export default function PostOwnerMenu({ post }) {
                     onClick={() => handleCommentPermission(option.value)}
                     disabled={isSaving}
                   >
-                    <span>{option.label}</span>
+                    <span>{t(option.key)}</span>
                     <span className={commentPermission === option.value ? styles.radioOn : styles.radioOff} />
                   </button>
                 ))}
@@ -361,7 +363,7 @@ export default function PostOwnerMenu({ post }) {
         className={styles.menuBtn}
         aria-haspopup="menu"
         aria-expanded={menuOpen}
-        aria-label="Post actions"
+        aria-label={t("postActions")}
         onClick={() => {
           if (menuOpen) closeMenu();
           else openMenu();

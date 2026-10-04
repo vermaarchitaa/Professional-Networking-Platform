@@ -1,4 +1,5 @@
 import React from "react";
+import { tEnum, tMessage, useI18n } from "@/i18n";
 import styles from "@/Components/EducationRecordForm/styles.module.css";
 
 export const LANGUAGE_NAME_MAX = 80;
@@ -44,6 +45,7 @@ export default function LanguageRecordForm({
   onChange,
   error = "",
 }) {
+  const { t } = useI18n();
   const language = value?.language || "";
   const proficiency = value?.proficiency || "";
 
@@ -54,28 +56,28 @@ export default function LanguageRecordForm({
   return (
     <div className={styles.form}>
       <label className={styles.field}>
-        Language*
+        {t("languageField")}
         <input
           autoFocus
           value={language}
           maxLength={LANGUAGE_NAME_MAX}
           onChange={(event) => patch("language", event.target.value.slice(0, LANGUAGE_NAME_MAX))}
-          placeholder="Ex: English"
+          placeholder={t("languageEx")}
         />
       </label>
       <label className={styles.field}>
-        Proficiency level
+        {t("proficiencyLevel")}
         <select
           value={proficiency}
           onChange={(event) => patch("proficiency", event.target.value)}
         >
-          <option value="">Select proficiency</option>
+          <option value="">{t("selectProficiency")}</option>
           {LANGUAGE_PROFICIENCY_OPTIONS.map((option) => (
-            <option key={option} value={option}>{option}</option>
+            <option key={option} value={option}>{tEnum(t, option)}</option>
           ))}
         </select>
       </label>
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
     </div>
   );
 }

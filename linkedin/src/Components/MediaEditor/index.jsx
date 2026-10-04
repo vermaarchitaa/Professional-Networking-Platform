@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function MediaEditor({
@@ -12,6 +13,7 @@ export default function MediaEditor({
   onNext,
   onClose,
 }) {
+  const { t } = useI18n();
   const fileInputRef = useRef(null);
   const [panel, setPanel] = useState(null);
   const [altDraft, setAltDraft] = useState("");
@@ -41,11 +43,11 @@ export default function MediaEditor({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Media editor"
+        aria-label={t("editor")}
       >
         <header className={styles.header}>
-          <h2>Editor</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close editor">
+          <h2>{t("editor")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("closeEditor")}>
             ✕
           </button>
         </header>
@@ -59,11 +61,11 @@ export default function MediaEditor({
                 <img src={selected.previewUrl} alt={selected.alt || ""} className={styles.previewMedia} />
               )
             ) : (
-              <p className={styles.emptyPreview}>Select media to preview</p>
+              <p className={styles.emptyPreview}>{t("selectMediaPreview")}</p>
             )}
             {total > 0 && (
               <p className={styles.counter}>
-                {selectedIndex + 1} of {total}
+                {t("ofTotal", { current: selectedIndex + 1, total })}
               </p>
             )}
           </div>
@@ -75,7 +77,7 @@ export default function MediaEditor({
                 key={item.id}
                 className={index === selectedIndex ? styles.thumbActive : styles.thumb}
                 onClick={() => onSelect(index)}
-                aria-label={`Select media ${index + 1}`}
+                aria-label={t("selectMediaN", { n: index + 1 })}
               >
                 {item.kind === "video" ? (
                   <video src={item.previewUrl} muted />
@@ -88,7 +90,7 @@ export default function MediaEditor({
               type="button"
               className={styles.addThumb}
               onClick={() => fileInputRef.current?.click()}
-              aria-label="Add more media"
+              aria-label={t("addMoreMedia")}
               disabled={items.length >= 10}
             >
               +
@@ -97,7 +99,7 @@ export default function MediaEditor({
 
           <div className={styles.controls}>
             <button type="button" className={styles.controlBtn} onClick={() => setPanel(panel === "edit" ? null : "edit")}>
-              Edit
+              {t("edit")}
             </button>
             <button type="button" className={styles.controlBtn} onClick={() => setPanel(panel === "alt" ? null : "alt")}>
               ALT
@@ -108,16 +110,16 @@ export default function MediaEditor({
               onClick={onRemoveSelected}
               disabled={!selected}
             >
-              Delete
+              {t("delete")}
             </button>
           </div>
 
           {panel === "edit" && (
-            <p className={styles.panelNote}>Image editing tools are not available yet.</p>
+            <p className={styles.panelNote}>{t("imageEditingUnavailable")}</p>
           )}
           {panel === "alt" && selected && (
             <label className={styles.altField}>
-              Alt text
+              {t("altText")}
               <input
                 type="text"
                 value={altDraft}
@@ -125,7 +127,7 @@ export default function MediaEditor({
                   setAltDraft(e.target.value);
                   selected.alt = e.target.value;
                 }}
-                placeholder="Describe this media"
+                placeholder={t("describeMedia")}
               />
             </label>
           )}
@@ -133,10 +135,10 @@ export default function MediaEditor({
 
         <footer className={styles.footer}>
           <button type="button" className={styles.backBtn} onClick={onBack}>
-            Back
+            {t("back")}
           </button>
           <button type="button" className={styles.nextBtn} onClick={onNext}>
-            Next
+            {t("next")}
           </button>
         </footer>
 

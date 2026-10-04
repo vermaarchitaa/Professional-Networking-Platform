@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { searchGifs } from "@/config/redux/action/postAction";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function GifPicker({ onSelect, onClose }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [gifs, setGifs] = useState([]);
   const [error, setError] = useState("");
@@ -16,7 +18,7 @@ export default function GifPicker({ onSelect, onClose }) {
       setGifs(data.gifs || []);
     } catch (err) {
       setGifs([]);
-      setError(err.response?.data?.message || "GIF search is unavailable.");
+      setError(err.response?.data?.message || "gifSearchUnavailable");
     } finally {
       setLoading(false);
     }
@@ -34,20 +36,20 @@ export default function GifPicker({ onSelect, onClose }) {
   }, [query]);
 
   return (
-    <div className={styles.picker} role="dialog" aria-label="GIF picker">
+    <div className={styles.picker} role="dialog" aria-label={t("gifPicker")}>
       <div className={styles.header}>
         <input
           type="search"
-          placeholder="Search GIFs..."
+          placeholder={t("searchGifs")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button type="button" onClick={onClose} aria-label="Close GIF picker">
+        <button type="button" onClick={onClose} aria-label={t("closeGifPicker")}>
           ✕
         </button>
       </div>
-      {loading && <p className={styles.status}>Loading GIFs...</p>}
-      {error && <p className={styles.status}>{error}</p>}
+      {loading && <p className={styles.status}>{t("loadingGifs")}</p>}
+      {error && <p className={styles.status}>{tMessage(t, error)}</p>}
       <div className={styles.grid}>
         {gifs.map((gif) => (
           <button
@@ -56,11 +58,11 @@ export default function GifPicker({ onSelect, onClose }) {
             className={styles.gifBtn}
             onClick={() => onSelect(gif.url)}
           >
-            <img src={gif.preview || gif.url} alt={gif.description || "GIF"} />
+            <img src={gif.preview || gif.url} alt={gif.description || t("gif")} />
           </button>
         ))}
       </div>
-      <p className={styles.attribution}>Powered by GIPHY</p>
+      <p className={styles.attribution}>{t("poweredByGiphy")}</p>
     </div>
   );
 }

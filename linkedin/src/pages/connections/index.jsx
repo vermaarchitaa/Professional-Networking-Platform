@@ -13,6 +13,7 @@ import {
 } from "@/config/redux/action/connectionAction";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import useAuthGuard from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 export default function ConnectionsPage() {
@@ -22,6 +23,7 @@ export default function ConnectionsPage() {
   );
   const { profile } = useSelector((state) => state.profile);
   const [tab, setTab] = useState("discover");
+  const { t } = useI18n();
 
   useAuthGuard();
 
@@ -54,26 +56,26 @@ export default function ConnectionsPage() {
   return (
     <DashboardLayout>
       <div className={styles.container}>
-        <h1 className={styles.title}>My Network</h1>
+        <h1 className={styles.title}>{t("myNetwork")}</h1>
 
         <div className={styles.tabs}>
           <button
             className={tab === "discover" ? styles.tabActive : styles.tab}
             onClick={() => setTab("discover")}
           >
-            Discover
+            {t("discover")}
           </button>
           <button
             className={tab === "incoming" ? styles.tabActive : styles.tab}
             onClick={() => setTab("incoming")}
           >
-            Requests ({pendingIncoming.length})
+            {t("requests", { count: pendingIncoming.length })}
           </button>
           <button
             className={tab === "sent" ? styles.tabActive : styles.tab}
             onClick={() => setTab("sent")}
           >
-            Sent ({sentRequests.length})
+            {t("sent", { count: sentRequests.length })}
           </button>
         </div>
 
@@ -88,7 +90,7 @@ export default function ConnectionsPage() {
                 <UserCardSkeleton />
               </>
             ) : otherUsers.length === 0 ? (
-              <p className={styles.loading}>No users found</p>
+              <p className={styles.loading}>{t("noUsersFound")}</p>
             ) : (
               otherUsers.map((u) => {
                 const id = u.userId?._id;
@@ -110,7 +112,7 @@ export default function ConnectionsPage() {
         {tab === "incoming" && (
           <div className={styles.list}>
             {pendingIncoming.length === 0 ? (
-              <p className={styles.loading}>No pending requests</p>
+              <p className={styles.loading}>{t("noPendingRequests")}</p>
             ) : (
               pendingIncoming.map((req) => (
                 <div key={req._id} className={styles.requestCard}>
@@ -126,7 +128,7 @@ export default function ConnectionsPage() {
                         dispatch(respondToRequest({ requestId: req._id, action_type: "accept" }))
                       }
                     >
-                      Accept
+                      {t("accept")}
                     </button>
                     <button
                       className={styles.rejectBtn}
@@ -134,7 +136,7 @@ export default function ConnectionsPage() {
                         dispatch(respondToRequest({ requestId: req._id, action_type: "reject" }))
                       }
                     >
-                      Decline
+                      {t("decline")}
                     </button>
                   </div>
                 </div>
@@ -146,7 +148,7 @@ export default function ConnectionsPage() {
         {tab === "sent" && (
           <div className={styles.list}>
             {sentRequests.length === 0 ? (
-              <p className={styles.loading}>No sent requests</p>
+              <p className={styles.loading}>{t("noSentRequests")}</p>
             ) : (
               sentRequests.map((req) => (
                 <div key={req._id} className={styles.requestCard}>
@@ -165,10 +167,10 @@ export default function ConnectionsPage() {
                     }
                   >
                     {req.status_accepted === true
-                      ? "Accepted"
+                      ? t("accepted")
                       : req.status_accepted === false
-                        ? "Declined"
-                        : "Pending"}
+                        ? t("declined")
+                        : t("pending")}
                   </span>
                 </div>
               ))

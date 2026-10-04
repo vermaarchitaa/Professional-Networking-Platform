@@ -6,6 +6,7 @@ import { PostSkeleton } from "@/Components/Skeleton";
 import { blogArticles } from "@/config/blogArticles";
 import { fetchTrendingPosts } from "@/config/redux/action/postAction";
 import { getMediaUrl, getPostMediaItems, isImageMedia } from "@/config/utils";
+import { useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 export default function BlogPage() {
@@ -13,6 +14,7 @@ export default function BlogPage() {
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [trendingPosts, setTrendingPosts] = useState([]);
   const [loadingTrending, setLoadingTrending] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
     const loadTrending = async () => {
@@ -30,13 +32,13 @@ export default function BlogPage() {
     <UserLayout>
       <div className={styles.container}>
         <header className={styles.hero}>
-          <h1>Pro Connect Blog</h1>
-          <p>Insights on networking, careers, and building authentic professional relationships.</p>
+          <h1>{t("blogTitle")}</h1>
+          <p>{t("blogSubtitle")}</p>
         </header>
 
         <div className={styles.layout}>
           <section className={styles.articles}>
-            <h2>Latest Articles</h2>
+            <h2>{t("latestArticles")}</h2>
             <div className={styles.articleGrid}>
               {blogArticles.map((article) => (
                 <article
@@ -58,7 +60,7 @@ export default function BlogPage() {
             {selectedArticle && (
               <div className={styles.articleDetail}>
                 <button className={styles.backBtn} onClick={() => setSelectedArticle(null)}>
-                  ← Back to articles
+                  {t("backToArticles")}
                 </button>
                 <span className={styles.category}>{selectedArticle.category}</span>
                 <h2>{selectedArticle.title}</h2>
@@ -71,11 +73,11 @@ export default function BlogPage() {
           </section>
 
           <aside className={styles.sidebar}>
-            <h2>Trending from the Community</h2>
+            <h2>{t("trendingCommunity")}</h2>
             {loadingTrending ? (
               <PostSkeleton />
             ) : trendingPosts.length === 0 ? (
-              <p className={styles.emptyTrending}>No trending posts yet. Start posting on the feed!</p>
+              <p className={styles.emptyTrending}>{t("noTrending")}</p>
             ) : (
               trendingPosts.map((post) => {
                 const firstImage = getPostMediaItems(post).find(isImageMedia);
@@ -85,7 +87,7 @@ export default function BlogPage() {
                       <Avatar user={post.userId} size={36} />
                       <div>
                         <p className={styles.trendingAuthor}>{post.userId?.name}</p>
-                        <p className={styles.trendingLikes}>❤️ {post.likes} likes</p>
+                        <p className={styles.trendingLikes}>❤️ {t("likesCount", { count: post.likes })}</p>
                       </div>
                     </div>
                     <p className={styles.trendingBody}>{post.body.slice(0, 120)}{post.body.length > 120 ? "..." : ""}</p>

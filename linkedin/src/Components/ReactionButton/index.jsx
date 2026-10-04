@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getReactionMeta, REACTIONS } from "@/config/reactions";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function ReactionButton({ myReaction, count = 0, onSelect, compact = false }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const hideTimer = useRef(null);
@@ -64,27 +66,27 @@ export default function ReactionButton({ myReaction, count = 0, onSelect, compac
         onTouchEnd={() => {
           if (touchTimer.current) clearTimeout(touchTimer.current);
         }}
-        aria-label={selected ? selected.label : "Like"}
+        aria-label={selected ? t(selected.type) : t("like")}
       >
         {selected ? selected.emoji : "👍"}
         {count > 0 ? ` ${count}` : ""}
       </button>
 
       {open && (
-        <div className={styles.picker} role="listbox" aria-label="Reactions">
+        <div className={styles.picker} role="listbox" aria-label={t("reactions")}>
           {REACTIONS.map((reaction) => (
             <button
               type="button"
               key={reaction.type}
               className={`${styles.option} ${myReaction === reaction.type ? styles.optionActive : ""}`}
-              title={reaction.label}
+              title={t(reaction.type)}
               onClick={() => {
                 onSelect(reaction.type);
                 setOpen(false);
               }}
             >
               <span>{reaction.emoji}</span>
-              <span className={styles.optionLabel}>{reaction.label}</span>
+              <span className={styles.optionLabel}>{t(reaction.type)}</span>
             </button>
           ))}
         </div>

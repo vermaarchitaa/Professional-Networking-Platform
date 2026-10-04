@@ -13,6 +13,7 @@ import {
 } from "@/config/redux/reducer/notificationReducer";
 import useNotificationPoll, { useFetchNotificationsOnOpen } from "@/hooks/useNotificationPoll";
 import { formatDate } from "@/config/utils";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function NotificationBell({ isLoggedIn }) {
@@ -20,6 +21,7 @@ export default function NotificationBell({ isLoggedIn }) {
   const router = useRouter();
   const panelRef = useRef(null);
   const { items, unreadCount, isOpen, isLoading } = useSelector((state) => state.notifications);
+  const { t, language } = useI18n();
 
   useNotificationPoll(isLoggedIn);
   useFetchNotificationsOnOpen(isOpen, isLoggedIn);
@@ -57,7 +59,7 @@ export default function NotificationBell({ isLoggedIn }) {
 
   return (
     <div className={styles.wrapper} ref={panelRef}>
-      <button className={styles.bellBtn} onClick={handleToggle} aria-label="Notifications">
+      <button className={styles.bellBtn} onClick={handleToggle} aria-label={t("notifications")}>
         🔔
         {unreadCount > 0 && (
           <span className={styles.badge}>{unreadCount > 9 ? "9+" : unreadCount}</span>
@@ -67,17 +69,17 @@ export default function NotificationBell({ isLoggedIn }) {
       {isOpen && (
         <div className={styles.panel}>
           <div className={styles.panelHeader}>
-            <h3>Notifications</h3>
+            <h3>{t("notifications")}</h3>
             {unreadCount > 0 && (
-              <button onClick={() => dispatch(markAllNotificationsRead())}>Mark all read</button>
+              <button onClick={() => dispatch(markAllNotificationsRead())}>{t("markAllRead")}</button>
             )}
           </div>
 
           <div className={styles.panelBody}>
             {isLoading ? (
-              <p className={styles.empty}>Loading...</p>
+              <p className={styles.empty}>{t("loading")}</p>
             ) : items.length === 0 ? (
-              <p className={styles.empty}>No notifications yet</p>
+              <p className={styles.empty}>{t("noNotifications")}</p>
             ) : (
               items.map((n) => (
                 <div
@@ -88,7 +90,7 @@ export default function NotificationBell({ isLoggedIn }) {
                   <Avatar user={n.senderId} size={36} />
                   <div className={styles.itemText}>
                     <p>{n.message}</p>
-                    <span>{formatDate(n.createdAt)}</span>
+                    <span>{formatDate(n.createdAt, language)}</span>
                   </div>
                   {!n.read && <span className={styles.dot} />}
                 </div>

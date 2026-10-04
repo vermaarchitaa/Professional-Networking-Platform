@@ -1,4 +1,5 @@
 import React from "react";
+import { getMonthOptions, tMessage, toIntlLocale, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export const EDUCATION_DESCRIPTION_MAX = 1000;
@@ -51,10 +52,13 @@ function joinYearMonth(year, month) {
   return `${year}-${month}`;
 }
 
-function formatYearMonth(value) {
+function formatYearMonth(value, language = "en") {
   const { year, month } = splitYearMonth(value);
-  const monthLabel = MONTHS.find((item) => item.value === month)?.label;
-  if (monthLabel && year) return `${monthLabel} ${year}`;
+  if (month && year) {
+    const monthIndex = Number(month) - 1;
+    const monthLabel = new Intl.DateTimeFormat(toIntlLocale(language), { month: "long" }).format(new Date(2000, monthIndex, 1));
+    return `${monthLabel} ${year}`;
+  }
   return year || "";
 }
 
@@ -62,14 +66,14 @@ export function isFilledEducation(entry) {
   return Boolean(String(entry?.school || "").trim());
 }
 
-export function educationLabel(entry) {
-  return [entry?.school, entry?.degree, entry?.fieldOfStudy].filter(Boolean).join(" · ") || "Education";
+export function educationLabel(entry, fallback = "Education") {
+  return [entry?.school, entry?.degree, entry?.fieldOfStudy].filter(Boolean).join(" · ") || fallback;
 }
 
-export function formatEducationDates(entry) {
-  const start = formatYearMonth(entry?.startDate);
-  if (entry?.current) return start ? `${start} – Present` : "Present";
-  const end = formatYearMonth(entry?.endDate);
+export function formatEducationDates(entry, language = "en", presentLabel = "Present") {
+  const start = formatYearMonth(entry?.startDate, language);
+  if (entry?.current) return start ? `${start} – ${presentLabel}` : presentLabel;
+  const end = formatYearMonth(entry?.endDate, language);
   if (!start && !end) return "";
   return [start, end].filter(Boolean).join(" – ");
 }
@@ -114,6 +118,8 @@ export function cleanEducation(entry) {
 }
 
 export default function EducationRecordForm({ value, onChange, error }) {
+  const { t, language } = useI18n();
+  const months = getMonthOptions(language);
   const start = splitYearMonth(value.startDate);
   const end = splitYearMonth(value.endDate);
   const patch = (field, next) => onChange({ ...value, [field]: next });
@@ -123,50 +129,50 @@ export default function EducationRecordForm({ value, onChange, error }) {
   return (
     <div className={styles.form}>
       <label className={styles.field}>
-        School*
+        {t("school")}
         <input
           value={value.school || ""}
           onChange={(event) => patch("school", event.target.value)}
-          placeholder="Ex: Boston University"
+          placeholder={t("schoolEx")}
         />
       </label>
       <label className={styles.field}>
-        Degree
+        {t("degree")}
         <input
           value={value.degree || ""}
           onChange={(event) => patch("degree", event.target.value)}
-          placeholder="Ex: Bachelor’s"
+          placeholder={t("degreeEx")}
         />
       </label>
       <label className={styles.field}>
-        Field of study
+        {t("fieldOfStudy")}
         <input
           value={value.fieldOfStudy || ""}
           onChange={(event) => patch("fieldOfStudy", event.target.value)}
-          placeholder="Ex: Business"
+          placeholder={t("fieldEx")}
         />
       </label>
 
       <div className={styles.row}>
         <label className={styles.field}>
-          Start month
+          {t("startMonth")}
           <select
             value={start.month}
             onChange={(event) => patch("startDate", joinYearMonth(start.year || String(currentYear), event.target.value))}
           >
-            <option value="">Month</option>
-            {MONTHS.map((month) => (
+            <option value="">{t("month")}</option>
+            {months.map((month) => (
               <option key={month.value} value={month.value}>{month.label}</option>
             ))}
           </select>
         </label>
         <label className={styles.field}>
-          Start year
+          {t("startYear")}
           <select
             value={start.year}
             onChange={(event) => patch("startDate", joinYearMonth(event.target.value, start.month || "01"))}
           >
-            <option value="">Year</option>
+            <option value="">{t("year")}</option>
             {YEARS.map((year) => (
               <option key={year} value={year}>{year}</option>
             ))}
@@ -184,30 +190,30 @@ export default function EducationRecordForm({ value, onChange, error }) {
             endDate: event.target.checked ? "" : value.endDate,
           })}
         />
-        I am currently studying here
+        {t("currentlyStudying")}
       </label>
 
       {value.current ? null : (
         <div className={styles.row}>
           <label className={styles.field}>
-            End month
+            {t("endMonth")}
             <select
               value={end.month}
               onChange={(event) => patch("endDate", joinYearMonth(end.year || String(currentYear), event.target.value))}
             >
-              <option value="">Month</option>
-              {MONTHS.map((month) => (
+              <option value="">{t("month")}</option>
+              {months.map((month) => (
                 <option key={month.value} value={month.value}>{month.label}</option>
               ))}
             </select>
           </label>
           <label className={styles.field}>
-            End year
+            {t("endYear")}
             <select
               value={end.year}
               onChange={(event) => patch("endDate", joinYearMonth(event.target.value, end.month || "01"))}
             >
-              <option value="">Year</option>
+              <option value="">{t("year")}</option>
               {YEARS.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -217,39 +223,39 @@ export default function EducationRecordForm({ value, onChange, error }) {
       )}
 
       <label className={styles.field}>
-        Grade
+        {t("grade")}
         <input
           value={value.grade || ""}
           maxLength={EDUCATION_GRADE_MAX}
           onChange={(event) => patch("grade", event.target.value.slice(0, EDUCATION_GRADE_MAX))}
-          placeholder="Ex: 8.5 CGPA"
+          placeholder={t("gradeEx")}
         />
       </label>
 
       <label className={styles.field}>
-        Activities and societies
+        {t("activitiesAndSocieties")}
         <textarea
           rows={3}
           value={activities}
           maxLength={EDUCATION_ACTIVITIES_MAX}
           onChange={(event) => patch("activitiesAndSocieties", event.target.value.slice(0, EDUCATION_ACTIVITIES_MAX))}
-          placeholder="Ex: Alpha Phi Omega, Marching Band, Volleyball"
+          placeholder={t("activitiesEx")}
         />
-        <span className={styles.counter}>{activities.length.toLocaleString("en-US")}/{EDUCATION_ACTIVITIES_MAX.toLocaleString("en-US")}</span>
+        <span className={styles.counter}>{activities.length.toLocaleString(toIntlLocale(language))}/{EDUCATION_ACTIVITIES_MAX.toLocaleString(toIntlLocale(language))}</span>
       </label>
 
       <label className={styles.field}>
-        Description
+        {t("description")}
         <textarea
           rows={4}
           value={description}
           maxLength={EDUCATION_DESCRIPTION_MAX}
           onChange={(event) => patch("description", event.target.value.slice(0, EDUCATION_DESCRIPTION_MAX))}
-          placeholder="Describe your experience, achievements, or activities"
+          placeholder={t("educationDescEx")}
         />
-        <span className={styles.counter}>{description.length.toLocaleString("en-US")}/{EDUCATION_DESCRIPTION_MAX.toLocaleString("en-US")}</span>
+        <span className={styles.counter}>{description.length.toLocaleString(toIntlLocale(language))}/{EDUCATION_DESCRIPTION_MAX.toLocaleString(toIntlLocale(language))}</span>
       </label>
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
     </div>
   );
 }

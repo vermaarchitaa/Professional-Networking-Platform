@@ -59,9 +59,12 @@ export const isVideoMedia = (item) => {
   return VIDEO_TYPES.has(type) || VIDEO_TYPES.has(ext);
 };
 
-export const formatDate = (dateString) => {
+export const formatDate = (dateString, locale = "en") => {
   if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString("en-US", {
+  const locales = {
+    en: "en", hi: "hi", es: "es", fr: "fr", de: "de", ja: "ja", zh: "zh-CN", pt: "pt",
+  };
+  return new Date(dateString).toLocaleDateString(locales[locale] || locale || "en", {
     month: "short",
     day: "numeric",
     year: "numeric",

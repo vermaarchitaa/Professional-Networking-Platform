@@ -4,12 +4,14 @@ import { Inter } from "next/font/google";
 import styles from "@/styles/Home.module.css";
 import { useRouter } from "next/router";
 import UserLayout from "@/layout/UserLayout";
+import { useI18n } from "@/i18n";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
 
   const router = useRouter();
+  const { t } = useI18n();
 
   return (
     <UserLayout>
@@ -20,14 +22,14 @@ export default function Home() {
 
           <div className={styles.mainContainer_left}>
 
-            <p>Connect with Friends without Exaggeration</p>
+            <p>{t("connectFriends")}</p>
  
-            <p>A True social media platform, with stories no blufs !</p>
+            <p>{t("trueSocial")}</p>
 
             <div onClick ={() => {
               router.push("/login");
             }} className={styles.buttonJoin}>
-              <p>Join Now</p>
+              <p>{t("joinNow")}</p>
             </div>
 
           </div>

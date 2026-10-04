@@ -16,45 +16,43 @@ import {
   updateProfileData,
 } from "@/config/redux/action/profileAction";
 import { getMediaUrl, getPublicProfileHref, getPublicProfilePath } from "@/config/utils";
+import { formatMonthName, tEnum, toIntlLocale, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const OPEN_TO_VISIBILITY = [
-  { value: "recruiters", label: "Recruiters only" },
-  { value: "anyone", label: "All members" },
+  { value: "recruiters", labelKey: "recruitersOnly" },
+  { value: "anyone", labelKey: "allMembers" },
 ];
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const VISIBILITY_LABELS = {
-  anyone: "Anyone",
-  connections: "Connections only",
-  "only-me": "Only me",
+const VISIBILITY_LABEL_KEYS = {
+  anyone: "anyone",
+  connections: "connectionsOnly",
+  "only-me": "onlyMe",
 };
 
 const ADD_PROFILE_SECTIONS = [
-  "Add about",
-  "Add education",
-  "Add position",
-  "Add skills",
-  "Add featured",
-  "Add licenses and certifications",
-  "Add languages",
-  "Add volunteer experience",
+  { id: "about", key: "addAbout" },
+  { id: "education", key: "addEducation" },
+  { id: "position", key: "addPosition" },
+  { id: "skills", key: "addSkills" },
+  { id: "featured", key: "addFeatured" },
+  { id: "licenses", key: "addLicenses" },
+  { id: "languages", key: "addLanguages" },
+  { id: "volunteer", key: "addVolunteer" },
 ];
 
-function formatBirthdayDisplay(value) {
+function formatBirthdayDisplay(value, language = "en") {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || "").trim());
   if (!match) return "";
-  const month = MONTH_NAMES[Number(match[2]) - 1];
-  return month ? `${month} ${Number(match[3])}` : "";
+  const monthIndex = Number(match[2]) - 1;
+  if (monthIndex < 0 || monthIndex > 11) return "";
+  return `${formatMonthName(language, monthIndex)} ${Number(match[3])}`;
 }
 
 function hasSavedValue(value) {
   return String(value || "").trim().length > 0;
 }
 
-function formatPronouns(value) {
+function formatPronouns(value, t) {
   const raw = String(value || "").trim();
   if (!raw || raw === "custom") return "";
   const labels = {
@@ -62,14 +60,15 @@ function formatPronouns(value) {
     "she/her": "She/Her",
     "they/them": "They/Them",
   };
-  return labels[raw.toLowerCase()] || raw;
+  const mapped = labels[raw.toLowerCase()];
+  return mapped ? tEnum(t, mapped) : raw;
 }
 
-function formatJoinedDate(value) {
+function formatJoinedDate(value, language = "en") {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return date.toLocaleDateString(toIntlLocale(language), { month: "long", year: "numeric" });
 }
 
 function ResourceIcon({ name }) {
@@ -168,6 +167,7 @@ function ContactIcon({ name }) {
 export default function ProfileHeader({ profile, onEditProfile, onOpenEducation, onAddAbout, onAddEducation, onAddExperience, onAddSkill, onAddLanguage, isOwner = true }) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const { t, language } = useI18n();
   const { message, isError } = useSelector((state) => state.profile);
   const resourcesRef = useRef(null);
   const resourcesMenuRef = useRef(null);
@@ -197,9 +197,9 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   const openToEnabled = Boolean(openToWork.enabled);
   const introLocation = [profile?.intro?.city, profile?.intro?.country].filter(Boolean).join(", ");
   const headerLocation = introLocation || profile?.location || "";
-  const headerPronouns = formatPronouns(profile?.intro?.pronouns);
+  const headerPronouns = formatPronouns(profile?.intro?.pronouns, t);
   const headerSchool = String(profile?.intro?.education || "").trim();
-  const joinedLabel = formatJoinedDate(user?.createdAt);
+  const joinedLabel = formatJoinedDate(user?.createdAt, language);
   const contactAdded = Boolean(
     user?.username
     || hasSavedValue(profile?.contactInfo?.email)
@@ -278,7 +278,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
     }
   };
 
-  const visibilityLabel = OPEN_TO_VISIBILITY.find((item) => item.value === (openToWork.visibility || "recruiters"))?.label;
+  const visibilityLabel = t(OPEN_TO_VISIBILITY.find((item) => item.value === (openToWork.visibility || "recruiters"))?.labelKey || "recruitersOnly");
 
   return (
     <section className={`${styles.card} ${openPanel === "resources" ? styles.cardMenuOpen : ""}`}>
@@ -353,7 +353,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
           <button
             type="button"
             className={styles.identityEdit}
-            aria-label="Edit intro"
+            aria-label={t("editIntro")}
             onClick={() => {
               setIntroStartView("intro");
               setIntroOpen(true);
@@ -366,7 +366,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
         <div className={styles.identityRow}>
           <div className={styles.identityMain}>
             <h1>
-              {user?.name || "Your name"}
+              {user?.name || t("yourName")}
               {headerPronouns ? <span className={styles.pronouns}>{headerPronouns}</span> : null}
             </h1>
             {profile?.currentPost ? <p className={styles.headline}>{profile.currentPost}</p> : null}
@@ -377,11 +377,11 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 className={`${styles.linkBtn} ${styles.contactInfoLink}`}
                 onClick={() => setOpenPanel("contact")}
               >
-                Contact info
+                {t("contactInfo")}
               </button>
             </p>
             <p className={styles.stats}>
-              {connectionsCount} {connectionsCount === 1 ? "connection" : "connections"}
+              {t(connectionsCount === 1 ? "connectionOne" : "connectionsMany", { count: connectionsCount })}
             </p>
           </div>
 
@@ -405,10 +405,10 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
           {isOwner ? (
             <>
               <button type="button" className={styles.primaryBtn} onClick={() => setOpenPanel("openTo")}>
-                Open to
+                {t("openTo")}
               </button>
               <button type="button" className={styles.secondaryBtn} onClick={() => setOpenPanel("addSection")}>
-                Add section
+                {t("addSection")}
               </button>
             </>
           ) : null}
@@ -418,7 +418,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
               className={styles.ghostBtn}
               onClick={() => setOpenPanel((current) => (current === "resources" ? null : "resources"))}
             >
-              Resources
+              {t("resources")}
             </button>
             {openPanel === "resources" && (
               <div
@@ -433,7 +433,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                   // Messaging will be enabled later when a messaging system is implemented.
                 >
                   <ResourceIcon name="message" />
-                  <span>Send profile in a message</span>
+                  <span>{t("sendProfileMessage")}</span>
                 </button>
                 <button
                   type="button"
@@ -445,7 +445,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                   }}
                 >
                   <ResourceIcon name="pdf" />
-                  <span>Save to PDF</span>
+                  <span>{t("saveToPdf")}</span>
                 </button>
                 <button
                   type="button"
@@ -455,7 +455,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                   }}
                 >
                   <ResourceIcon name="saved" />
-                  <span>Saved items</span>
+                  <span>{t("savedItems")}</span>
                 </button>
                 <button
                   type="button"
@@ -465,11 +465,11 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                   }}
                 >
                   <ResourceIcon name="activity" />
-                  <span>Activity</span>
+                  <span>{t("activity")}</span>
                 </button>
                 <button type="button" onClick={() => setOpenPanel("aboutMember")}>
                   <ResourceIcon name="about" />
-                  <span>About this member</span>
+                  <span>{t("aboutThisMember")}</span>
                 </button>
               </div>
             )}
@@ -481,7 +481,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
             <div className={styles.openToHeader}>
               <div>
                 <p className={styles.openToTitle}>
-                  Open to work · {visibilityLabel}
+                  {t("openToWork")} · {visibilityLabel}
                 </p>
                 {(openToWork.location || openToWork.workTypes) ? (
                   <p className={styles.openToMeta}>
@@ -505,13 +505,13 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
               className={styles.linkBtn}
               onClick={() => setShowOpenToDetails((open) => !open)}
             >
-              {showOpenToDetails ? "Hide details" : "Show details"}
+              {showOpenToDetails ? t("hideDetails") : t("showDetails")}
             </button>
             {showOpenToDetails && (
               <p className={styles.openToDetails}>
                 {openToWork.location || openToWork.workTypes
                   ? [openToWork.location, openToWork.workTypes].filter(Boolean).join(" · ")
-                  : "Add your preferred locations and work types."}
+                  : t("openToHint")}
               </p>
             )}
           </div>
@@ -528,50 +528,50 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
             aria-labelledby="add-section-title"
           >
             <div className={styles.contactDialogHeader}>
-              <h3 id="add-section-title">Add to profile</h3>
+              <h3 id="add-section-title">{t("addToProfile")}</h3>
               <button
                 type="button"
                 className={styles.aboutClose}
                 onClick={() => setOpenPanel(null)}
-                aria-label="Close"
+                aria-label={t("close")}
               >
                 ×
               </button>
             </div>
             <div className={styles.addSectionList}>
-              {ADD_PROFILE_SECTIONS.map((label) => (
+              {ADD_PROFILE_SECTIONS.map((item) => (
                 <button
                   type="button"
-                  key={label}
+                  key={item.id}
                   className={styles.addSectionItem}
                   onClick={() => {
-                    if (label === "Add about") {
+                    if (item.id === "about") {
                       setOpenPanel(null);
                       onAddAbout?.();
                       return;
                     }
-                    if (label === "Add education") {
+                    if (item.id === "education") {
                       setOpenPanel(null);
                       onAddEducation?.();
                       return;
                     }
-                    if (label === "Add position") {
+                    if (item.id === "position") {
                       setOpenPanel(null);
                       onAddExperience?.();
                       return;
                     }
-                    if (label === "Add skill" || label === "Add skills") {
+                    if (item.id === "skills") {
                       setOpenPanel(null);
                       onAddSkill?.();
                       return;
                     }
-                    if (label === "Add languages") {
+                    if (item.id === "languages") {
                       setOpenPanel(null);
                       onAddLanguage?.();
                     }
                   }}
                 >
-                  {label}
+                  {t(item.key)}
                 </button>
               ))}
             </div>
@@ -589,7 +589,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
             aria-labelledby="contact-info-title"
           >
             <div className={styles.contactDialogHeader}>
-              <h3 id="contact-info-title">Contact info</h3>
+              <h3 id="contact-info-title">{t("contactInfo")}</h3>
               <div className={styles.contactDialogActions}>
                 {isOwner ? (
                   <button
@@ -601,11 +601,11 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                       setIntroOpen(true);
                     }}
                   >
-                    Edit contact info
+                    {t("editContactInfo")}
                   </button>
                 ) : null}
                 <button type="button" className={styles.secondaryBtn} onClick={() => setOpenPanel(null)}>
-                  Close
+                  {t("close")}
                 </button>
               </div>
             </div>
@@ -614,7 +614,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 const contact = profile?.contactInfo || {};
                 const profilePath = getPublicProfilePath(user?.username);
                 const profileHref = getPublicProfileHref(user?.username);
-                const birthdayLabel = formatBirthdayDisplay(contact.birthday);
+                const birthdayLabel = formatBirthdayDisplay(contact.birthday, language);
                 const websiteHref = contact.website
                   ? (/^https?:\/\//i.test(contact.website) ? contact.website : `https://${contact.website}`)
                   : "";
@@ -622,7 +622,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 if (profilePath) {
                   items.push(
                     <div className={styles.contactItem} key="url">
-                      <dt><ContactIcon name="link" /> Profile URL</dt>
+                      <dt><ContactIcon name="link" /> {t("profileUrl")}</dt>
                       <dd>
                         <a href={profilePath} target="_blank" rel="noreferrer">{profileHref}</a>
                       </dd>
@@ -634,7 +634,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                     <div className={styles.contactItem} key="email">
                       <dt>
                         <ContactIcon name="email" />
-                        Email{contact.emailVisibility ? ` · ${VISIBILITY_LABELS[contact.emailVisibility] || ""}` : ""}
+                        {t("email")}{contact.emailVisibility ? ` · ${t(VISIBILITY_LABEL_KEYS[contact.emailVisibility] || "anyone")}` : ""}
                       </dt>
                       <dd>
                         <a href={`mailto:${contact.email}`}>{contact.email}</a>
@@ -647,9 +647,9 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                     <div className={styles.contactItem} key="phone">
                       <dt>
                         <ContactIcon name="phone" />
-                        Phone
+                        {t("phone")}
                         {contact.phoneType ? ` · ${contact.phoneType}` : ""}
-                        {contact.phoneVisibility ? ` · ${VISIBILITY_LABELS[contact.phoneVisibility] || ""}` : ""}
+                        {contact.phoneVisibility ? ` · ${t(VISIBILITY_LABEL_KEYS[contact.phoneVisibility] || "anyone")}` : ""}
                       </dt>
                       <dd>
                         <a href={`tel:${contact.phone}`}>{contact.phone}</a>
@@ -660,7 +660,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 if (hasSavedValue(contact.address)) {
                   items.push(
                     <div className={styles.contactItem} key="address">
-                      <dt><ContactIcon name="address" /> Address</dt>
+                      <dt><ContactIcon name="address" /> {t("address")}</dt>
                       <dd>{contact.address}</dd>
                     </div>
                   );
@@ -668,7 +668,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 if (birthdayLabel) {
                   items.push(
                     <div className={styles.contactItem} key="birthday">
-                      <dt><ContactIcon name="birthday" /> Birthday</dt>
+                      <dt><ContactIcon name="birthday" /> {t("birthday")}</dt>
                       <dd>{birthdayLabel}</dd>
                     </div>
                   );
@@ -676,7 +676,7 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 if (hasSavedValue(contact.website)) {
                   items.push(
                     <div className={styles.contactItem} key="website">
-                      <dt><ContactIcon name="website" /> Website</dt>
+                      <dt><ContactIcon name="website" /> {t("website")}</dt>
                       <dd>
                         <a href={websiteHref} target="_blank" rel="noreferrer">{contact.website}</a>
                       </dd>
@@ -686,13 +686,13 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
                 if (hasSavedValue(contact.instantMessaging)) {
                   items.push(
                     <div className={styles.contactItem} key="im">
-                      <dt><ContactIcon name="im" /> Instant messaging</dt>
+                      <dt><ContactIcon name="im" /> {t("instantMessaging")}</dt>
                       <dd>{contact.instantMessaging}</dd>
                     </div>
                   );
                 }
                 if (items.length === 0) {
-                  return <p className={styles.contactEmpty}>No contact information added yet.</p>;
+                  return <p className={styles.contactEmpty}>{t("noContactInfo")}</p>;
                 }
                 return items;
               })()}
@@ -711,37 +711,37 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
             aria-labelledby="about-member-title"
           >
             <div className={styles.contactDialogHeader}>
-              <h3 id="about-member-title">About this member</h3>
-              <button type="button" className={styles.aboutClose} onClick={() => setOpenPanel(null)} aria-label="Close">
+              <h3 id="about-member-title">{t("aboutThisMember")}</h3>
+              <button type="button" className={styles.aboutClose} onClick={() => setOpenPanel(null)} aria-label={t("close")}>
                 ×
               </button>
             </div>
             <div className={styles.aboutBody}>
-              <h4 className={styles.aboutSectionTitle}>Account history</h4>
+              <h4 className={styles.aboutSectionTitle}>{t("accountHistory")}</h4>
               {joinedLabel ? (
                 <div className={styles.aboutRow}>
-                  <p className={styles.aboutLabel}>Joined</p>
+                  <p className={styles.aboutLabel}>{t("joined")}</p>
                   <p className={styles.aboutValue}>{joinedLabel}</p>
                 </div>
               ) : null}
               <div className={styles.aboutRow}>
-                <p className={styles.aboutLabel}>Contact info</p>
+                <p className={styles.aboutLabel}>{t("contactInfo")}</p>
                 <button
                   type="button"
                   className={styles.linkBtn}
                   onClick={() => setOpenPanel("contact")}
                 >
-                  {contactAdded ? "Added" : "Not added"}
+                  {contactAdded ? t("added") : t("notAdded")}
                 </button>
               </div>
               <div className={styles.aboutRow}>
-                <p className={styles.aboutLabel}>Profile photo</p>
-                <p className={styles.aboutValue}>{hasPhoto ? "Added" : "Not added"}</p>
+                <p className={styles.aboutLabel}>{t("profilePhoto")}</p>
+                <p className={styles.aboutValue}>{hasPhoto ? t("added") : t("notAdded")}</p>
               </div>
             </div>
             <div className={styles.aboutFooter}>
               <button type="button" className={styles.primaryBtn} onClick={() => setOpenPanel(null)}>
-                Done
+                {t("done")}
               </button>
             </div>
           </div>
@@ -751,39 +751,39 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
       {openPanel === "openTo" && (
         <div className={styles.overlay} onClick={() => setOpenPanel(null)} role="presentation">
           <div className={styles.dialog} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true">
-            <h3>Open to work</h3>
+            <h3>{t("openToWork")}</h3>
             <label className={styles.checkRow}>
               <input
                 type="checkbox"
                 checked={openToDraft.enabled}
                 onChange={(event) => setOpenToDraft((current) => ({ ...current, enabled: event.target.checked }))}
               />
-              Show Open to work on my profile
+              {t("showOpenToWork")}
             </label>
-            <label className={styles.fieldLabel}>Visible to</label>
+            <label className={styles.fieldLabel}>{t("visibleTo")}</label>
             <select
               value={openToDraft.visibility}
               onChange={(event) => setOpenToDraft((current) => ({ ...current, visibility: event.target.value }))}
             >
               {OPEN_TO_VISIBILITY.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+                <option key={option.value} value={option.value}>{t(option.labelKey)}</option>
               ))}
             </select>
-            <label className={styles.fieldLabel}>Locations</label>
+            <label className={styles.fieldLabel}>{t("locations")}</label>
             <input
               value={openToDraft.location}
               onChange={(event) => setOpenToDraft((current) => ({ ...current, location: event.target.value }))}
               placeholder="City, Remote, Hybrid"
             />
-            <label className={styles.fieldLabel}>Work types</label>
+            <label className={styles.fieldLabel}>{t("workTypes")}</label>
             <input
               value={openToDraft.workTypes}
               onChange={(event) => setOpenToDraft((current) => ({ ...current, workTypes: event.target.value }))}
               placeholder="On-site · Hybrid · Remote"
             />
             <div className={styles.dialogActions}>
-              <button type="button" className={styles.ghostBtn} onClick={() => setOpenPanel(null)}>Cancel</button>
-              <button type="button" className={styles.primaryBtn} onClick={handleSaveOpenTo}>Save</button>
+              <button type="button" className={styles.ghostBtn} onClick={() => setOpenPanel(null)}>{t("cancel")}</button>
+              <button type="button" className={styles.primaryBtn} onClick={handleSaveOpenTo}>{t("save")}</button>
             </div>
           </div>
         </div>

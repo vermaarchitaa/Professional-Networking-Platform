@@ -1,5 +1,6 @@
 import React from "react";
 import { CloseIcon, ImageIcon, PencilIcon, TrashIcon } from "@/Components/CoverPhotoFlow/icons";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function CoverPhotoMenu({
@@ -11,6 +12,7 @@ export default function CoverPhotoMenu({
   onChangePhoto,
   onDelete,
 }) {
+  const { t } = useI18n();
   if (!hasCover) {
     return (
       <div className={styles.overlay} onClick={onClose} role="presentation">
@@ -22,14 +24,14 @@ export default function CoverPhotoMenu({
           aria-labelledby="cover-photo-title"
         >
           <header className={styles.header}>
-            <h2 id="cover-photo-title">Cover photo</h2>
-            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+            <h2 id="cover-photo-title">{t("coverPhoto")}</h2>
+            <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
               <CloseIcon />
             </button>
           </header>
 
           <div className={styles.preview}>
-            <div className={styles.previewFallback} aria-label="Default cover" />
+            <div className={styles.previewFallback} aria-label={t("defaultCover")} />
           </div>
 
           {error ? <p className={styles.error}>{error}</p> : null}
@@ -37,7 +39,7 @@ export default function CoverPhotoMenu({
           <div className={styles.compactActions}>
             <button type="button" className={styles.actionBtn} onClick={onChangePhoto}>
               <ImageIcon />
-              Add a cover image
+              {t("addCoverImage")}
             </button>
           </div>
         </div>
@@ -55,17 +57,17 @@ export default function CoverPhotoMenu({
         aria-labelledby="cover-photo-title"
       >
         <header className={styles.header}>
-          <h2 id="cover-photo-title">Cover photo</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <h2 id="cover-photo-title">{t("coverPhoto")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
             <CloseIcon />
           </button>
         </header>
 
         <div className={styles.preview}>
           {coverSrc ? (
-            <img src={coverSrc} alt="Current cover" className={styles.previewImg} />
+            <img src={coverSrc} alt={t("currentCover")} className={styles.previewImg} />
           ) : (
-            <div className={styles.previewFallback} aria-label="Default cover" />
+            <div className={styles.previewFallback} aria-label={t("defaultCover")} />
           )}
         </div>
 
@@ -74,15 +76,15 @@ export default function CoverPhotoMenu({
         <div className={styles.actions}>
           <button type="button" className={styles.actionBtn} onClick={onEdit}>
             <PencilIcon />
-            Edit
+            {t("edit")}
           </button>
           <button type="button" className={styles.actionBtn} onClick={onChangePhoto}>
             <ImageIcon />
-            Change photo
+            {t("changePhoto")}
           </button>
           <button type="button" className={styles.actionBtn} onClick={onDelete}>
             <TrashIcon />
-            Delete
+            {t("delete")}
           </button>
         </div>
       </div>

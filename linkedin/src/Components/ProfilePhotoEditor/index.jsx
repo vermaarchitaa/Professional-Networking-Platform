@@ -16,12 +16,13 @@ import {
   drawCoverImage,
 } from "@/Components/CoverPhotoFlow/coverUtils";
 import { clampPhotoEdit, exportProfileBlob } from "@/Components/ProfilePhotoFlow/photoUtils";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const TABS = [
-  { id: "crop", label: "Crop", Icon: CropIcon },
-  { id: "filter", label: "Filter", Icon: FilterIcon },
-  { id: "adjust", label: "Adjust", Icon: AdjustIcon },
+  { id: "crop", labelKey: "crop", Icon: CropIcon },
+  { id: "filter", labelKey: "filter", Icon: FilterIcon },
+  { id: "adjust", labelKey: "adjust", Icon: AdjustIcon },
 ];
 
 export default function ProfilePhotoEditor({
@@ -32,6 +33,7 @@ export default function ProfilePhotoEditor({
   onClose,
   onSave,
 }) {
+  const { t } = useI18n();
   const canvasRef = useRef(null);
   const stageRef = useRef(null);
   const dragRef = useRef(null);
@@ -167,7 +169,7 @@ export default function ProfilePhotoEditor({
       const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
       await onSave(file);
     } catch {
-      setProcessError("Could not process this image. Try another file.");
+      setProcessError("couldNotProcessImage");
     } finally {
       setExporting(false);
     }
@@ -183,8 +185,8 @@ export default function ProfilePhotoEditor({
         aria-labelledby="edit-photo-title"
       >
         <header className={styles.header}>
-          <h2 id="edit-photo-title">Edit photo</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <h2 id="edit-photo-title">{t("editPhoto")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
             <CloseIcon />
           </button>
         </header>
@@ -213,7 +215,7 @@ export default function ProfilePhotoEditor({
 
           <aside className={styles.controls}>
             <div className={styles.tabs}>
-              {TABS.map(({ id, label, Icon }) => (
+              {TABS.map(({ id, labelKey, Icon }) => (
                 <button
                   type="button"
                   key={id}
@@ -222,7 +224,7 @@ export default function ProfilePhotoEditor({
                   onClick={() => setTab(id)}
                 >
                   <Icon />
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -260,7 +262,7 @@ export default function ProfilePhotoEditor({
                   </button>
                 </div>
                 <label className={styles.label}>
-                  Zoom
+                  {t("zoom")}
                   <span>{Math.round(edit.zoom * 100)}%</span>
                 </label>
                 <input
@@ -313,13 +315,13 @@ export default function ProfilePhotoEditor({
             {tab === "adjust" && (
               <div className={styles.panel}>
                 {[
-                  ["brightness", "Brightness"],
-                  ["contrast", "Contrast"],
-                  ["saturation", "Saturation"],
-                ].map(([key, label]) => (
+                  ["brightness", "brightness"],
+                  ["contrast", "contrast"],
+                  ["saturation", "saturation"],
+                ].map(([key, labelKey]) => (
                   <React.Fragment key={key}>
                     <label className={styles.label}>
-                      {label}
+                      {t(labelKey)}
                       <span>{edit[key]}</span>
                     </label>
                     <input
@@ -333,7 +335,7 @@ export default function ProfilePhotoEditor({
                   </React.Fragment>
                 ))}
                 <label className={styles.label}>
-                  Vignette
+                  {t("vignette")}
                   <span>{edit.vignette}</span>
                 </label>
                 <input
@@ -349,11 +351,11 @@ export default function ProfilePhotoEditor({
           </aside>
         </div>
 
-        {(error || processError) ? <p className={styles.error}>{error || processError}</p> : null}
+        {(error || processError) ? <p className={styles.error}>{tMessage(t, error || processError)}</p> : null}
 
         <div className={styles.footer}>
           <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={busy} aria-busy={busy}>
-            {saving || exporting ? "Saving..." : "Save changes"}
+            {saving || exporting ? t("saving") : t("saveChanges")}
           </button>
         </div>
       </div>

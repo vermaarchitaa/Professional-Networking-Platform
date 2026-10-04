@@ -1,5 +1,6 @@
 import React from "react";
 import { isFilledLanguage } from "@/Components/LanguageRecordForm";
+import { tEnum, useI18n } from "@/i18n";
 import styles from "@/Components/SkillsSection/styles.module.css";
 
 export default function LanguagesSection({
@@ -8,6 +9,7 @@ export default function LanguagesSection({
   onAdd,
   onOpenDetails,
 }) {
+  const { t } = useI18n();
   const languages = (profile?.languages || []).filter(isFilledLanguage);
 
   if (languages.length === 0) return null;
@@ -15,13 +17,13 @@ export default function LanguagesSection({
   return (
     <section id="languages" className={styles.section}>
       <div className={styles.header}>
-        <h2>Languages ({languages.length})</h2>
+        <h2>{t("languagesCount", { count: languages.length })}</h2>
         {isOwner ? (
           <div className={styles.actions}>
-            <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label="Add language">
+            <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label={t("addLanguage")}>
               +
             </button>
-            <button type="button" className={styles.iconBtn} onClick={onOpenDetails} aria-label="Manage languages">
+            <button type="button" className={styles.iconBtn} onClick={onOpenDetails} aria-label={t("manageLanguages")}>
               ✎
             </button>
           </div>
@@ -31,13 +33,13 @@ export default function LanguagesSection({
         {languages.slice(0, 2).map((entry, index) => (
           <li key={entry._id || `${entry.language}-${index}`} className={styles.item}>
             <p className={styles.name}>{entry.language}</p>
-            {entry.proficiency ? <p className={styles.meta}>{entry.proficiency}</p> : null}
+            {entry.proficiency ? <p className={styles.meta}>{tEnum(t, entry.proficiency)}</p> : null}
           </li>
         ))}
       </ul>
       {languages.length > 2 ? (
         <button type="button" className={styles.showAll} onClick={onOpenDetails}>
-          Show all {languages.length} languages →
+          {t("showAllLanguages", { count: languages.length })}
         </button>
       ) : null}
     </section>

@@ -4,6 +4,7 @@ import {
   EDUCATION_MEDIA_DESCRIPTION_MAX,
   EDUCATION_MEDIA_NAME_MAX,
 } from "@/Components/EducationRecordForm";
+import { useI18n } from "@/i18n";
 import styles from "@/Components/EditEducationModal/styles.module.css";
 
 export default function EditMediaModal({
@@ -16,18 +17,19 @@ export default function EditMediaModal({
   onSave,
   onDelete,
 }) {
+  const { t } = useI18n();
   if (!item) return null;
 
   return (
     <div className={styles.nestedOverlay} onClick={onClose} role="presentation">
       <div className={styles.editMediaDialog} onClick={(event) => event.stopPropagation()} role="dialog" aria-labelledby="edit-media-title">
         <header className={styles.header}>
-          <h2 id="edit-media-title">Edit media</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">×</button>
+          <h2 id="edit-media-title">{t("editMedia")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>×</button>
         </header>
         <div className={styles.editMediaBody}>
           <label className={styles.nestedLabel}>
-            Title
+            {t("mediaTitle")}
             <input
               autoFocus
               value={title}
@@ -37,7 +39,7 @@ export default function EditMediaModal({
           </label>
           <p className={styles.charCount}>{title.length}/{EDUCATION_MEDIA_NAME_MAX}</p>
           <label className={styles.nestedLabel}>
-            Description
+            {t("description")}
             <textarea
               className={styles.editMediaTextarea}
               value={description}
@@ -56,10 +58,10 @@ export default function EditMediaModal({
           </div>
         </div>
         <footer className={styles.editMediaFooter}>
-          <button type="button" className={styles.deleteBtn} onClick={onDelete}>Delete</button>
+          <button type="button" className={styles.deleteBtn} onClick={onDelete}>{t("delete")}</button>
           <div className={styles.footerRight}>
-            <button type="button" className={styles.cancelBtn} onClick={onClose}>Back</button>
-            <button type="button" className={styles.saveBtn} onClick={onSave}>Save</button>
+            <button type="button" className={styles.cancelBtn} onClick={onClose}>{t("back")}</button>
+            <button type="button" className={styles.saveBtn} onClick={onSave}>{t("save")}</button>
           </div>
         </footer>
       </div>

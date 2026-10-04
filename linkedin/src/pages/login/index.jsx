@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { registerUser, loginUser } from "@/config/redux/action/authAction";
 import { emptyMessage } from "@/config/redux/reducer/authReducer";
 import { validateLogin, validateRegister } from "@/config/validation";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 function LoginComponent() {
@@ -18,6 +19,7 @@ function LoginComponent() {
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
+  const { t } = useI18n();
 
   useEffect(() => {
     if (authState.loggedIn) {
@@ -67,11 +69,11 @@ function LoginComponent() {
       <div className={styles.container}>
         <div className={styles.cardContainer}>
           <div className={styles.cardContainer_left}>
-            <p className={styles.cardleft_heading}>{userLoginMethod ? "Sign In" : "Sign Up"}</p>
+            <p className={styles.cardleft_heading}>{userLoginMethod ? t("signIn") : t("signUp")}</p>
             <p className={`${styles.statusMsg} ${authState.isError ? styles.error : styles.success}`}>
-              {typeof authState.message === "string"
+              {tMessage(t, typeof authState.message === "string"
                 ? authState.message
-                : authState.message?.message}
+                : authState.message?.message)}
             </p>
 
             <div className={styles.inputContainer}>
@@ -85,10 +87,10 @@ function LoginComponent() {
                       }}
                       className={`${styles.inputField} ${fieldErrors.name ? styles.inputError : ""}`}
                       type="text"
-                      placeholder="Name"
+                      placeholder={t("name")}
                       value={name}
                     />
-                    {fieldErrors.name && <span className={styles.fieldError}>{fieldErrors.name}</span>}
+                    {fieldErrors.name && <span className={styles.fieldError}>{t(fieldErrors.name)}</span>}
                   </div>
                   <div className={styles.fieldWrap}>
                     <input
@@ -98,10 +100,10 @@ function LoginComponent() {
                       }}
                       className={`${styles.inputField} ${fieldErrors.username ? styles.inputError : ""}`}
                       type="text"
-                      placeholder="Username"
+                      placeholder={t("username")}
                       value={username}
                     />
-                    {fieldErrors.username && <span className={styles.fieldError}>{fieldErrors.username}</span>}
+                    {fieldErrors.username && <span className={styles.fieldError}>{t(fieldErrors.username)}</span>}
                   </div>
                 </div>
               )}
@@ -113,10 +115,10 @@ function LoginComponent() {
                   }}
                   className={`${styles.inputField} ${fieldErrors.email ? styles.inputError : ""}`}
                   type="email"
-                  placeholder="Email"
+                  placeholder={t("email")}
                   value={email}
                 />
-                {fieldErrors.email && <span className={styles.fieldError}>{fieldErrors.email}</span>}
+                {fieldErrors.email && <span className={styles.fieldError}>{t(fieldErrors.email)}</span>}
               </div>
               <div className={styles.fieldWrap}>
                 <input
@@ -126,26 +128,26 @@ function LoginComponent() {
                   }}
                   className={`${styles.inputField} ${fieldErrors.password ? styles.inputError : ""}`}
                   type="password"
-                  placeholder="Password (min 6 characters)"
+                  placeholder={t("password")}
                   value={password}
                 />
-                {fieldErrors.password && <span className={styles.fieldError}>{fieldErrors.password}</span>}
+                {fieldErrors.password && <span className={styles.fieldError}>{t(fieldErrors.password)}</span>}
               </div>
 
               <div onClick={handleSubmit} className={styles.buttonWithOutline}>
-                <p>{userLoginMethod ? "Sign In" : "Sign Up"}</p>
+                <p>{userLoginMethod ? t("signIn") : t("signUp")}</p>
               </div>
             </div>
           </div>
 
           <div className={styles.cardContainer_right}>
-            <p>{userLoginMethod ? "Don't have an account?" : "Already have an account?"}</p>
+            <p>{userLoginMethod ? t("dontHaveAccount") : t("alreadyHaveAccount")}</p>
             <div
               onClick={() => setUserLoginMethod(!userLoginMethod)}
               style={{ color: "black", textAlign: "center" }}
               className={styles.buttonWithOutline}
             >
-              <p>{userLoginMethod ? "Sign Up" : "Sign In"}</p>
+              <p>{userLoginMethod ? t("signUp") : t("signIn")}</p>
             </div>
           </div>
         </div>

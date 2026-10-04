@@ -1,6 +1,6 @@
 export const validateEmail = (email) => {
-  if (!email?.trim()) return "Email is required";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "Enter a valid email address";
+  if (!email?.trim()) return "emailRequired";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "emailInvalid";
   return "";
 };
 
@@ -10,33 +10,33 @@ export const validateOptionalEmail = (email) => {
 };
 
 export const validatePassword = (password) => {
-  if (!password) return "Password is required";
-  if (password.length < 6) return "Password must be at least 6 characters";
+  if (!password) return "passwordRequired";
+  if (password.length < 6) return "passwordMin";
   return "";
 };
 
 export const validateUsername = (username) => {
-  if (!username?.trim()) return "Username is required";
-  if (username.trim().length < 3) return "Username must be at least 3 characters";
-  if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) return "Username can only contain letters, numbers, and underscores";
+  if (!username?.trim()) return "usernameRequired";
+  if (username.trim().length < 3) return "usernameMin";
+  if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) return "usernameInvalid";
   return "";
 };
 
 export const validateName = (name) => {
-  if (!name?.trim()) return "Name is required";
-  if (name.trim().length < 2) return "Name must be at least 2 characters";
+  if (!name?.trim()) return "nameRequired";
+  if (name.trim().length < 2) return "nameMin";
   return "";
 };
 
 export const validatePostBody = (body) => {
-  if (!body?.trim()) return "Post cannot be empty";
-  if (body.trim().length > 5000) return "Post must be under 5000 characters";
+  if (!body?.trim()) return "postEmpty";
+  if (body.trim().length > 5000) return "postTooLong";
   return "";
 };
 
 export const validateComment = (comment) => {
-  if (!comment?.trim()) return "Comment cannot be empty";
-  if (comment.trim().length > 1000) return "Comment must be under 1000 characters";
+  if (!comment?.trim()) return "commentEmpty";
+  if (comment.trim().length > 1000) return "commentTooLong";
   return "";
 };
 

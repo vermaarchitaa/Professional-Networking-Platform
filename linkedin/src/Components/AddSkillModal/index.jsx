@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { SKILL_NAME_MAX, getSkillSuggestions, normalizeSkillName, skillKey } from "@/Components/SkillsSection/skillUtils";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function AddSkillModal({
@@ -11,6 +12,7 @@ export default function AddSkillModal({
   onClose,
   onSave,
 }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [formError, setFormError] = useState("");
 
@@ -38,11 +40,11 @@ export default function AddSkillModal({
 
   const handleSave = () => {
     if (!value) {
-      setFormError("Skill is required");
+      setFormError("skillRequired");
       return;
     }
     if (duplicate) {
-      setFormError("That skill is already added");
+      setFormError("skillAlreadyAdded");
       return;
     }
     setFormError("");
@@ -59,15 +61,15 @@ export default function AddSkillModal({
         aria-labelledby="add-skill-title"
       >
         <header className={styles.header}>
-          <h2 id="add-skill-title">Add skill</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close" disabled={isSaving}>
+          <h2 id="add-skill-title">{t("addSkill")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")} disabled={isSaving}>
             ×
           </button>
         </header>
         <div className={styles.body}>
-          <p className={styles.requiredNote}>* Indicates required</p>
+          <p className={styles.requiredNote}>{t("indicatesRequired")}</p>
           <label className={styles.field}>
-            Skill*
+            {t("skillStar")}
             <div className={styles.searchWrap}>
               <svg className={styles.searchIcon} viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -77,7 +79,7 @@ export default function AddSkillModal({
                 autoFocus
                 value={query}
                 maxLength={SKILL_NAME_MAX}
-                placeholder="Skill (ex: Project Management)"
+                placeholder={t("skillPlaceholder")}
                 onChange={(event) => {
                   setQuery(event.target.value);
                   if (formError) setFormError("");
@@ -93,7 +95,7 @@ export default function AddSkillModal({
           </label>
           {suggestions.length > 0 ? (
             <div className={styles.suggestBlock}>
-              <p className={styles.suggestLabel}>Suggested based on your profile</p>
+              <p className={styles.suggestLabel}>{t("suggestedSkills")}</p>
               <div className={styles.chips}>
                 {suggestions.map((name) => (
                   <button
@@ -111,11 +113,11 @@ export default function AddSkillModal({
               </div>
             </div>
           ) : null}
-          {formError || error ? <p className={styles.error}>{formError || error}</p> : null}
+          {formError || error ? <p className={styles.error}>{tMessage(t, formError || error)}</p> : null}
         </div>
         <footer className={styles.footer}>
           <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={!canSave}>
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? t("saving") : t("save")}
           </button>
         </footer>
       </div>

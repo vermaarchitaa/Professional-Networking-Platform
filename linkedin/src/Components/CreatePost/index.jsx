@@ -4,6 +4,7 @@ import Avatar from "@/Components/Avatar";
 import MediaEditor from "@/Components/MediaEditor";
 import { createPost, fetchPosts } from "@/config/redux/action/postAction";
 import { validatePostBody } from "@/config/validation";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const MAX_FILES = 10;
@@ -20,16 +21,16 @@ const ALLOWED_EXTS = new Set(["jpeg", "jpg", "png", "gif", "webp", "mp4", "webm"
 const VIDEO_EXTS = new Set(["mp4", "webm"]);
 const EMOJIS = ["😀", "😁", "😂", "🥹", "😍", "🤩", "👍", "👏", "🙏", "🎉", "🔥", "💯", "💡", "📌", "🚀", "❤️"];
 
-const VISIBILITY_LABELS = {
-  anyone: "Post to Anyone",
-  connections: "Post to Connections only",
-  group: "Post to Group",
+const VISIBILITY_KEYS = {
+  anyone: "postToAnyone",
+  connections: "postToConnections",
+  group: "postToGroup",
 };
 
-const COMMENT_LABELS = {
-  anyone: "Comments: Anyone",
-  connections: "Comments: Connections only",
-  off: "Comments: Off",
+const COMMENT_KEYS = {
+  anyone: "commentsAnyone",
+  connections: "commentsConnections",
+  off: "commentsOffLabel",
 };
 
 const Icon = ({ children }) => (
@@ -103,6 +104,7 @@ const createMediaItem = (file) => ({
 
 export default function CreatePost({ isOpen, onClose, user }) {
   const dispatch = useDispatch();
+  const { t } = useI18n();
   const textareaRef = useRef(null);
   const mediaItemsRef = useRef([]);
   const visibilityRef = useRef(null);
@@ -298,12 +300,12 @@ export default function CreatePost({ isOpen, onClose, user }) {
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
-          aria-label="Create a post"
+          aria-label={t("createPost")}
         >
           <header className={styles.header}>
             <Avatar user={user} size={48} />
             <div className={styles.identity}>
-              <p className={styles.name}>{user?.name || "You"}</p>
+              <p className={styles.name}>{user?.name || t("you")}</p>
               <div className={styles.audience}>
                 <div className={styles.settingWrap} ref={visibilityRef}>
                   <button
@@ -317,12 +319,12 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       setShowPlus(false);
                     }}
                   >
-                    {VISIBILITY_LABELS[selectedPostVisibility]}
+                    {t(VISIBILITY_KEYS[selectedPostVisibility])}
                     <ChevronDownIcon />
                   </button>
                   {openDropdown === "visibility" && (
-                    <div className={styles.settingsMenu} role="dialog" aria-label="Who can see your post?">
-                      <p className={styles.settingsTitle}>Who can see your post?</p>
+                    <div className={styles.settingsMenu} role="dialog" aria-label={t("whoCanSeePost")}>
+                      <p className={styles.settingsTitle}>{t("whoCanSeePost")}</p>
                       <button
                         type="button"
                         className={styles.settingsOption}
@@ -333,8 +335,8 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       >
                         <span className={styles.optionIcon}><GlobeIcon /></span>
                         <span className={styles.optionText}>
-                          <span className={styles.optionLabel}>Anyone</span>
-                          <span className={styles.optionDesc}>Anyone on or off LinkedIn</span>
+                          <span className={styles.optionLabel}>{t("anyone")}</span>
+                          <span className={styles.optionDesc}>{t("anyoneOnOrOff")}</span>
                         </span>
                         <span className={selectedPostVisibility === "anyone" ? styles.radioOn : styles.radioOff} />
                       </button>
@@ -348,7 +350,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       >
                         <span className={styles.optionIcon}><ConnectionsIcon /></span>
                         <span className={styles.optionText}>
-                          <span className={styles.optionLabel}>Connections only</span>
+                          <span className={styles.optionLabel}>{t("connectionsOnly")}</span>
                         </span>
                         <span className={selectedPostVisibility === "connections" ? styles.radioOn : styles.radioOff} />
                       </button>
@@ -362,7 +364,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       >
                         <span className={styles.optionIcon}><GroupIcon /></span>
                         <span className={styles.optionText}>
-                          <span className={styles.optionLabel}>Group</span>
+                          <span className={styles.optionLabel}>{t("group")}</span>
                         </span>
                         <span className={styles.optionTrailing}>
                           <span className={selectedPostVisibility === "group" ? styles.radioOn : styles.radioOff} />
@@ -371,14 +373,14 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       </button>
                       <div className={styles.brandRow}>
                         <div>
-                          <p className={styles.brandTitle}>Brand Partnership</p>
-                          <button type="button" className={styles.learnMore}>Learn more</button>
+                          <p className={styles.brandTitle}>{t("brandPartnership")}</p>
+                          <button type="button" className={styles.learnMore}>{t("learnMore")}</button>
                         </div>
                         <button
                           type="button"
                           role="switch"
                           aria-checked={brandPartnership}
-                          aria-label="Brand Partnership"
+                          aria-label={t("brandPartnership")}
                           className={`${styles.toggle} ${brandPartnership ? styles.toggleOn : ""}`}
                           onClick={() => setBrandPartnership((current) => !current)}
                         >
@@ -401,12 +403,12 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       setShowPlus(false);
                     }}
                   >
-                    {COMMENT_LABELS[selectedCommentPermission]}
+                    {t(COMMENT_KEYS[selectedCommentPermission])}
                     <ChevronDownIcon />
                   </button>
                   {openDropdown === "comments" && (
-                    <div className={`${styles.settingsMenu} ${styles.settingsMenuEnd}`} role="dialog" aria-label="Comment settings">
-                      <p className={styles.settingsTitle}>Comment settings</p>
+                    <div className={`${styles.settingsMenu} ${styles.settingsMenuEnd}`} role="dialog" aria-label={t("commentSettings")}>
+                      <p className={styles.settingsTitle}>{t("commentSettings")}</p>
                       <button
                         type="button"
                         className={styles.settingsOption}
@@ -417,7 +419,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       >
                         <span className={styles.optionIcon}><GlobeIcon /></span>
                         <span className={styles.optionText}>
-                          <span className={styles.optionLabel}>Anyone</span>
+                          <span className={styles.optionLabel}>{t("anyone")}</span>
                         </span>
                         <span className={selectedCommentPermission === "anyone" ? styles.radioOn : styles.radioOff} />
                       </button>
@@ -431,7 +433,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       >
                         <span className={styles.optionIcon}><ConnectionsIcon /></span>
                         <span className={styles.optionText}>
-                          <span className={styles.optionLabel}>Connections only</span>
+                          <span className={styles.optionLabel}>{t("connectionsOnly")}</span>
                         </span>
                         <span className={selectedCommentPermission === "connections" ? styles.radioOn : styles.radioOff} />
                       </button>
@@ -445,7 +447,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       >
                         <span className={styles.optionIcon}><CommentsOffIcon /></span>
                         <span className={styles.optionText}>
-                          <span className={styles.optionLabel}>Off</span>
+                          <span className={styles.optionLabel}>{t("off")}</span>
                         </span>
                         <span className={selectedCommentPermission === "off" ? styles.radioOn : styles.radioOff} />
                       </button>
@@ -454,7 +456,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                 </div>
               </div>
             </div>
-            <button type="button" className={styles.closeBtn} onClick={closeComposer} aria-label="Close">
+            <button type="button" className={styles.closeBtn} onClick={closeComposer} aria-label={t("close")}>
               ✕
             </button>
           </header>
@@ -463,7 +465,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
             <textarea
               ref={textareaRef}
               className={`${styles.textarea} ${error ? styles.inputError : ""}`}
-              placeholder="Share your thoughts ..."
+              placeholder={t("shareThoughts")}
               value={body}
               onChange={(e) => {
                 setBody(e.target.value);
@@ -471,7 +473,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
               }}
               maxLength={5000}
             />
-            {error && <p className={styles.fieldError}>{error}</p>}
+            {error && <p className={styles.fieldError}>{tMessage(t, error)}</p>}
 
             {mediaItems.length > 0 && (
               <div className={styles.compactGallery}>
@@ -484,7 +486,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                       setSelectedIndex(index);
                       setShowEditor(true);
                     }}
-                    aria-label="Edit media"
+                    aria-label={t("editMedia")}
                   >
                     {item.kind === "video" ? (
                       <video src={item.previewUrl} muted />
@@ -508,7 +510,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                     setShowPlus(false);
                     setOpenDropdown(null);
                   }}
-                  aria-label="Emoji"
+                  aria-label={t("emoji")}
                 >
                   😊
                 </button>
@@ -540,7 +542,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                   setOpenDropdown(null);
                   setShowEditor(true);
                 }}
-                aria-label="Media"
+                aria-label={t("mediaLabel")}
               >
                 🖼️
               </button>
@@ -549,7 +551,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                 type="button"
                 className={styles.toolBtn}
                 onClick={() => insertText("Celebrating a new achievement 🎉 ")}
-                aria-label="Celebration"
+                aria-label={t("celebration")}
               >
                 🎉
               </button>
@@ -563,7 +565,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                     setShowEmoji(false);
                     setOpenDropdown(null);
                   }}
-                  aria-label="More"
+                  aria-label={t("more")}
                 >
                   ➕
                 </button>
@@ -577,7 +579,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
                         setShowEditor(true);
                       }}
                     >
-                      Media
+                      {t("mediaLabel")}
                     </button>
                   </div>
                 )}
@@ -587,8 +589,8 @@ export default function CreatePost({ isOpen, onClose, user }) {
                 type="button"
                 className={styles.toolBtn}
                 disabled
-                title="Scheduling is not available yet"
-                aria-label="Schedule for later"
+                title={t("scheduleUnavailable")}
+                aria-label={t("scheduleLater")}
               >
                 🕒
               </button>
@@ -600,7 +602,7 @@ export default function CreatePost({ isOpen, onClose, user }) {
               onClick={handleSubmit}
               disabled={!canPost}
             >
-              {isSubmitting ? "Posting..." : "Post"}
+              {isSubmitting ? t("posting") : t("post")}
             </button>
           </div>
         </div>

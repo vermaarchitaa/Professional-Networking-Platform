@@ -4,6 +4,7 @@ import LanguageRecordForm, {
   emptyLanguage,
   hasDuplicateLanguage,
 } from "@/Components/LanguageRecordForm";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "@/Components/EditEducationModal/styles.module.css";
 
 export default function EditLanguageModal({
@@ -16,6 +17,7 @@ export default function EditLanguageModal({
   onSave,
   onDelete,
 }) {
+  const { t } = useI18n();
   const isEditing = initialValue != null;
   const [draft, setDraft] = useState({ ...emptyLanguage });
   const [formError, setFormError] = useState("");
@@ -50,11 +52,11 @@ export default function EditLanguageModal({
   const handleSave = () => {
     const cleaned = cleanLanguage(draft);
     if (!cleaned.language) {
-      setFormError("Language is required");
+      setFormError("languageRequired");
       return;
     }
     if (hasDuplicateLanguage(existingLanguages, cleaned.language)) {
-      setFormError("That language is already added");
+      setFormError("languageAlreadyAdded");
       return;
     }
     setFormError("");
@@ -71,20 +73,20 @@ export default function EditLanguageModal({
         aria-labelledby="edit-language-title"
       >
         <header className={styles.header}>
-          <h2 id="edit-language-title">{isEditing ? "Edit language" : "Add language"}</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close" disabled={isSaving}>
+          <h2 id="edit-language-title">{isEditing ? t("editLanguage") : t("addLanguageTitle")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")} disabled={isSaving}>
             ×
           </button>
         </header>
         <div className={styles.body}>
           {confirmDelete ? (
             <div className={styles.confirm}>
-              <p>Delete this language?</p>
+              <p>{t("confirmDeleteLanguage")}</p>
             </div>
           ) : (
             <>
               <p className={styles.help}>
-                {isEditing ? "* Indicates required" : "Self identify your language and proficiency."}
+                {isEditing ? t("indicatesRequired") : t("selfIdentifyLanguage")}
               </p>
               <LanguageRecordForm
                 value={draft}
@@ -98,22 +100,22 @@ export default function EditLanguageModal({
           {confirmDelete ? (
             <>
               <button type="button" className={styles.cancelBtn} onClick={() => setConfirmDelete(false)} disabled={isSaving}>
-                Cancel
+                {t("cancel")}
               </button>
               <button type="button" className={styles.deleteSolid} onClick={() => !isSaving && onDelete?.()} disabled={isSaving}>
-                {isSaving ? "Deleting..." : "Delete"}
+                {isSaving ? t("deleting") : t("delete")}
               </button>
             </>
           ) : (
             <>
               {isEditing ? (
                 <button type="button" className={styles.deleteBtn} onClick={() => setConfirmDelete(true)} disabled={isSaving}>
-                  Delete
+                  {t("delete")}
                 </button>
               ) : <span />}
               <div className={styles.footerRight}>
                 <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={!canSave}>
-                  {isSaving ? "Saving..." : "Save"}
+                  {isSaving ? t("saving") : t("save")}
                 </button>
               </div>
             </>

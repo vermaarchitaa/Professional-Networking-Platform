@@ -1,0 +1,99 @@
+.footer {
+  background: #f3f2ef;
+  border-top: 1px solid #e0dfdc;
+  padding: 1.4rem 1rem 1.8rem;
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.inner {
+  max-width: 1128px;
+  margin: 0 auto;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem 2.4rem;
+}
+
+.brand {
+  min-width: 160px;
+  flex: 0 0 180px;
+}
+
+.logo {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #0a66c2;
+}
+
+.copyright {
+  margin: 0.4rem 0 0;
+  color: #666;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 140px;
+  flex: 1 1 140px;
+}
+
+.item {
+  color: #545454;
+  font-weight: 600;
+  cursor: default;
+  line-height: 1.35;
+}
+
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e6e6e6;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.language {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 220px;
+  color: #191919;
+  font-weight: 600;
+}
+
+.language select {
+  min-width: 220px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 4px;
+  background: white;
+  color: #191919;
+  font: inherit;
+  padding: 0.4rem 0.55rem;
+}
+
+.language select:focus {
+  outline: 2px solid #0a66c2;
+  outline-offset: 0;
+}
+
+@media (max-width: 720px) {
+  .language,
+  .language select {
+    width: 100%;
+    min-width: 0;
+  }
+}

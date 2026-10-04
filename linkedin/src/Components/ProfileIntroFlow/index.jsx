@@ -5,42 +5,29 @@ import { CloseIcon } from "@/Components/CoverPhotoFlow/icons";
 import { updateProfileData, updateUserInfo } from "@/config/redux/action/profileAction";
 import { getPublicProfileHref } from "@/config/utils";
 import { validateName, validateOptionalEmail } from "@/config/validation";
+import { getMonthOptions, tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const ADDRESS_MAX = 260;
 const HEADLINE_MAX = 220;
 const STANDARD_PRONOUNS = new Set(["she/her", "he/him", "they/them"]);
 const PRONOUN_OPTIONS = [
-  { value: "", label: "Please select" },
-  { value: "he/him", label: "He/Him" },
-  { value: "she/her", label: "She/Her" },
-  { value: "they/them", label: "They/Them" },
-  { value: "custom", label: "Custom" },
+  { value: "", labelKey: "pleaseSelect" },
+  { value: "he/him", labelKey: "heHim" },
+  { value: "she/her", labelKey: "sheHer" },
+  { value: "they/them", labelKey: "theyThem" },
+  { value: "custom", labelKey: "custom" },
 ];
 const PHONE_TYPES = [
-  { value: "", label: "Please select" },
-  { value: "Mobile", label: "Mobile" },
-  { value: "Home", label: "Home" },
-  { value: "Work", label: "Work" },
+  { value: "", labelKey: "pleaseSelect" },
+  { value: "Mobile", labelKey: "mobile" },
+  { value: "Home", labelKey: "home" },
+  { value: "Work", labelKey: "work" },
 ];
 const VISIBILITY_OPTIONS = [
-  { value: "anyone", label: "Anyone" },
-  { value: "connections", label: "Connections only" },
-  { value: "only-me", label: "Only me" },
-];
-const MONTHS = [
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
+  { value: "anyone", labelKey: "anyone" },
+  { value: "connections", labelKey: "connectionsOnly" },
+  { value: "only-me", labelKey: "onlyMe" },
 ];
 
 function splitName(fullName) {
@@ -124,6 +111,8 @@ function draftFromProfile(profile) {
 }
 
 export default function ProfileIntroFlow({ open, profile, onClose, initialView = "intro" }) {
+  const { t, language } = useI18n();
+  const monthOptions = getMonthOptions(language);
   const dispatch = useDispatch();
   const router = useRouter();
   const savingRef = useRef(false);
@@ -264,18 +253,18 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
         {view === "intro" ? (
           <>
             <header className={styles.header}>
-              <h2 id="intro-editor-title">Edit intro</h2>
-              <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+              <h2 id="intro-editor-title">{t("editIntro")}</h2>
+              <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
                 <CloseIcon />
               </button>
             </header>
 
             <div className={styles.body}>
-              <p className={styles.hint}>* Indicates required</p>
+              <p className={styles.hint}>{t("indicatesRequired")}</p>
 
               <div className={styles.row}>
                 <label className={styles.field}>
-                  First name*
+                  {t("firstName")}
                   <input
                     value={draft.firstName}
                     onChange={(event) => patch("firstName", event.target.value)}
@@ -283,7 +272,7 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
                   />
                 </label>
                 <label className={styles.field}>
-                  Last name*
+                  {t("lastName")}
                   <input
                     value={draft.lastName}
                     onChange={(event) => patch("lastName", event.target.value)}
@@ -293,7 +282,7 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               </div>
 
               <label className={styles.field}>
-                Additional name
+                {t("additionalName")}
                 <input
                   value={draft.additionalName}
                   onChange={(event) => patch("additionalName", event.target.value)}
@@ -301,16 +290,16 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               </label>
 
               <label className={styles.field}>
-                Pronouns
+                {t("pronouns")}
                 <select value={draft.pronouns} onChange={(event) => patch("pronouns", event.target.value)}>
                   {PRONOUN_OPTIONS.map((option) => (
-                    <option key={option.value || "none"} value={option.value}>{option.label}</option>
+                    <option key={option.value || "none"} value={option.value}>{t(option.labelKey)}</option>
                   ))}
                 </select>
               </label>
               {draft.pronouns === "custom" ? (
                 <label className={styles.field}>
-                  Custom pronouns
+                  {t("customPronouns")}
                   <input
                     value={draft.customPronouns}
                     onChange={(event) => patch("customPronouns", event.target.value)}
@@ -320,19 +309,19 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               ) : null}
 
               <label className={styles.field}>
-                Headline*
+                {t("headlineStar")}
                 <textarea
                   rows={3}
                   maxLength={HEADLINE_MAX}
                   value={draft.headline}
                   onChange={(event) => patch("headline", event.target.value.slice(0, HEADLINE_MAX))}
-                  placeholder="Student at ..."
+                  placeholder={t("studentAt")}
                 />
                 <span className={styles.counter}>{draft.headline.length}/{HEADLINE_MAX}</span>
               </label>
 
               <label className={styles.field}>
-                Country/Region
+                {t("countryRegion")}
                 <input
                   value={draft.country}
                   onChange={(event) => patch("country", event.target.value)}
@@ -341,7 +330,7 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               </label>
 
               <label className={styles.field}>
-                City
+                {t("city")}
                 <input
                   value={draft.city}
                   onChange={(event) => patch("city", event.target.value)}
@@ -350,7 +339,7 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               </label>
 
               <label className={styles.field}>
-                Education
+                {t("education")}
                 <input
                   value={draft.education}
                   onChange={(event) => patch("education", event.target.value)}
@@ -359,7 +348,7 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               </label>
 
               <label className={styles.field}>
-                Industry
+                {t("industry")}
                 <input
                   value={draft.industry}
                   onChange={(event) => patch("industry", event.target.value)}
@@ -369,22 +358,22 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
 
               <div className={styles.contactCard}>
                 <div>
-                  <p className={styles.contactTitle}>Contact info</p>
+                  <p className={styles.contactTitle}>{t("contactInfo")}</p>
                   <p className={styles.contactMeta}>
-                    {[draft.email, draft.username ? `/in/${draft.username}` : ""].filter(Boolean).join(" · ") || "Add contact info"}
+                    {[draft.email, draft.username ? `/in/${draft.username}` : ""].filter(Boolean).join(" · ") || t("addContactInfo")}
                   </p>
                 </div>
                 <button type="button" className={styles.linkBtn} onClick={() => { setError(""); setView("contact"); }}>
-                  Edit contact info
+                  {t("editContactInfo")}
                 </button>
               </div>
 
-              {error ? <p className={styles.error}>{error}</p> : null}
+              {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
             </div>
 
             <div className={styles.footer}>
               <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={busy} aria-busy={saving}>
-                {saving ? "Saving..." : "Save"}
+                {saving ? t("saving") : t("save")}
               </button>
             </div>
           </>
@@ -392,17 +381,17 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
           <>
             <header className={styles.header}>
               <button type="button" className={styles.backBtn} onClick={() => { setError(""); setView("intro"); }}>
-                ← Back
+                ← {t("back")}
               </button>
-              <h2 id="intro-editor-title">Edit contact info</h2>
-              <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+              <h2 id="intro-editor-title">{t("editContactInfo")}</h2>
+              <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
                 <CloseIcon />
               </button>
             </header>
 
             <div className={styles.body}>
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Profile URL</h3>
+                <h3 className={styles.sectionTitle}>{t("profileUrl")}</h3>
                 {profileUrlHref ? (
                   <button
                     type="button"
@@ -417,37 +406,37 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
                   </button>
                 ) : (
                   <button type="button" className={styles.addBtn} onClick={() => { onClose(); router.push("/profile/url"); }}>
-                    + Set profile URL
+                    {t("setProfileUrl")}
                   </button>
                 )}
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Email</h3>
+                <h3 className={styles.sectionTitle}>{t("email")}</h3>
                 <label className={styles.field}>
                   <input
                     type="email"
                     value={draft.email}
                     onChange={(event) => patch("email", event.target.value)}
-                    placeholder="Add a contact email"
+                    placeholder={t("addContactEmail")}
                     autoComplete="off"
                   />
                 </label>
                 <label className={styles.field}>
-                  Visible to
+                  {t("visibleTo")}
                   <select value={draft.emailVisibility} onChange={(event) => patch("emailVisibility", event.target.value)}>
                     {VISIBILITY_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value}>{t(option.labelKey)}</option>
                     ))}
                   </select>
                 </label>
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Phone</h3>
+                <h3 className={styles.sectionTitle}>{t("phone")}</h3>
                 <div className={styles.row}>
                   <label className={styles.field}>
-                    Phone number
+                    {t("phoneNumber")}
                     <input
                       value={draft.phone}
                       onChange={(event) => patch("phone", event.target.value)}
@@ -455,26 +444,26 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
                     />
                   </label>
                   <label className={styles.field}>
-                    Phone type
+                    {t("phoneType")}
                     <select value={draft.phoneType} onChange={(event) => patch("phoneType", event.target.value)}>
                       {PHONE_TYPES.map((option) => (
-                        <option key={option.value || "none"} value={option.value}>{option.label}</option>
+                        <option key={option.value || "none"} value={option.value}>{t(option.labelKey)}</option>
                       ))}
                     </select>
                   </label>
                 </div>
                 <label className={styles.field}>
-                  Visible to
+                  {t("visibleTo")}
                   <select value={draft.phoneVisibility} onChange={(event) => patch("phoneVisibility", event.target.value)}>
                     {VISIBILITY_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value}>{t(option.labelKey)}</option>
                     ))}
                   </select>
                 </label>
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Address</h3>
+                <h3 className={styles.sectionTitle}>{t("address")}</h3>
                 <label className={styles.field}>
                   <textarea
                     rows={3}
@@ -487,10 +476,10 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Birthday</h3>
+                <h3 className={styles.sectionTitle}>{t("birthday")}</h3>
                 <div className={styles.row}>
                   <label className={styles.field}>
-                    Month
+                    {t("month")}
                     <select
                       value={draft.birthMonth}
                       onChange={(event) => {
@@ -509,16 +498,16 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
                         setError("");
                       }}
                     >
-                      <option value="">Month</option>
-                      {MONTHS.map((month) => (
+                      <option value="">{t("month")}</option>
+                      {monthOptions.map((month) => (
                         <option key={month.value} value={month.value}>{month.label}</option>
                       ))}
                     </select>
                   </label>
                   <label className={styles.field}>
-                    Day
+                    {t("day")}
                     <select value={draft.birthDay} onChange={(event) => patch("birthDay", event.target.value)}>
-                      <option value="">Day</option>
+                      <option value="">{t("day")}</option>
                       {Array.from({ length: dayCount }, (_, index) => {
                         const day = String(index + 1).padStart(2, "0");
                         return <option key={day} value={day}>{index + 1}</option>;
@@ -529,7 +518,7 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Website</h3>
+                <h3 className={styles.sectionTitle}>{t("website")}</h3>
                 {draft.showWebsite ? (
                   <label className={styles.field}>
                     <input
@@ -540,13 +529,13 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
                   </label>
                 ) : (
                   <button type="button" className={styles.addBtn} onClick={() => patch("showWebsite", true)}>
-                    + Add website
+                    {t("addWebsite")}
                   </button>
                 )}
               </section>
 
               <section className={styles.section}>
-                <h3 className={styles.sectionTitle}>Instant messaging</h3>
+                <h3 className={styles.sectionTitle}>{t("instantMessaging")}</h3>
                 {draft.showMessaging ? (
                   <label className={styles.field}>
                     <input
@@ -557,17 +546,17 @@ export default function ProfileIntroFlow({ open, profile, onClose, initialView =
                   </label>
                 ) : (
                   <button type="button" className={styles.addBtn} onClick={() => patch("showMessaging", true)}>
-                    + Add instant messaging
+                    {t("addInstantMessaging")}
                   </button>
                 )}
               </section>
 
-              {error ? <p className={styles.error}>{error}</p> : null}
+              {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
             </div>
 
             <div className={styles.footer}>
               <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={busy} aria-busy={saving}>
-                {saving ? "Saving..." : "Save"}
+                {saving ? t("saving") : t("save")}
               </button>
             </div>
           </>

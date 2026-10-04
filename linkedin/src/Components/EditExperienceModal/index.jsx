@@ -15,6 +15,7 @@ import { uploadEducationMedia } from "@/config/redux/action/profileAction";
 import AddMediaMenu from "@/Components/RecordMedia/AddMediaMenu";
 import EditMediaModal from "@/Components/RecordMedia/EditMediaModal";
 import MediaItems from "@/Components/RecordMedia/MediaItems";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "@/Components/EditEducationModal/styles.module.css";
 
 const isValidHttpUrl = (value) => {
@@ -37,6 +38,7 @@ export default function EditExperienceModal({
   onDelete,
 }) {
   const dispatch = useDispatch();
+  const { t } = useI18n();
   const isEditing = initialValue != null;
   const imageInputRef = useRef(null);
   const documentInputRef = useRef(null);
@@ -134,7 +136,7 @@ export default function EditExperienceModal({
     if (busy) return;
     const cleaned = cleanExperience(draft);
     if (!cleaned.position || !cleaned.company) {
-      setFormError("Title and company are required");
+      setFormError("titleAndCompanyRequired");
       return;
     }
     setFormError("");
@@ -144,15 +146,15 @@ export default function EditExperienceModal({
   const addSkill = (name) => {
     const nextName = String(name || "").trim().slice(0, 80);
     if (!nextName) {
-      setSkillError("Enter a skill");
+      setSkillError("enterSkill");
       return false;
     }
     if (skills.length >= EXPERIENCE_SKILLS_LIMIT) {
-      setSkillError("You can add up to 5 skills");
+      setSkillError("skillsLimit");
       return false;
     }
     if (skills.some((item) => String(item.name || "").toLowerCase() === nextName.toLowerCase())) {
-      setSkillError("That skill is already added");
+      setSkillError("skillAlreadyAdded");
       return false;
     }
     patchDraft({ ...draft, skills: [...skills, { name: nextName }] });
@@ -203,11 +205,11 @@ export default function EditExperienceModal({
   const addLink = () => {
     const url = linkValue.trim();
     if (!url) {
-      setLinkError("Enter a URL");
+      setLinkError("enterUrl");
       return;
     }
     if (!isValidHttpUrl(url)) {
-      setLinkError("Enter a valid URL");
+      setLinkError("enterValidUrl");
       return;
     }
     let name = url;
@@ -246,20 +248,20 @@ export default function EditExperienceModal({
     <div className={styles.overlay} onClick={() => !busy && !nestedOpen && onClose?.()} role="presentation">
       <div className={styles.dialog} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="edit-experience-title">
         <header className={styles.header}>
-          <h2 id="edit-experience-title">{isEditing ? "Edit experience" : "Add experience"}</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close" disabled={busy}>×</button>
+          <h2 id="edit-experience-title">{isEditing ? t("editExperience") : t("addExperienceTitle")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")} disabled={busy}>×</button>
         </header>
         <div className={styles.body}>
           {confirmDelete ? (
             <div className={styles.confirm}>
-              <p>Are you sure you want to delete this experience?</p>
+              <p>{t("confirmDeleteExperience")}</p>
             </div>
           ) : (
             <>
               <ExperienceRecordForm value={draft} onChange={patchDraft} error={formError || error} />
               <section className={styles.block}>
-                <h3>Skills</h3>
-                <p className={styles.help}>Select skills from your profile or add up to 5 skills used in this role.</p>
+                <h3>{t("skills")}</h3>
+                <p className={styles.help}>{t("skillsHelp")}</p>
                 {profileSkillNames.length > 0 ? (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem", marginBottom: "0.75rem" }}>
                     {profileSkillNames.map((name) => {
@@ -293,17 +295,17 @@ export default function EditExperienceModal({
                   {skills.map((skill, index) => (
                     <li key={`${skill.name}-${index}`} className={styles.skillRow}>
                       <span className={styles.skillName}>{skill.name}</span>
-                      <button type="button" className={styles.iconBtn} onClick={() => patchDraft({ ...draft, skills: skills.filter((_, i) => i !== index) })} aria-label={`Remove ${skill.name}`}>×</button>
+                      <button type="button" className={styles.iconBtn} onClick={() => patchDraft({ ...draft, skills: skills.filter((_, i) => i !== index) })} aria-label={t("removeNamed", { name: skill.name })}>×</button>
                     </li>
                   ))}
                 </ul>
                 {skills.length < EXPERIENCE_SKILLS_LIMIT ? (
-                  <button type="button" className={styles.addLink} onClick={() => { setSkillOpen(true); setSkillError(""); }}>+ Add skill</button>
+                  <button type="button" className={styles.addLink} onClick={() => { setSkillOpen(true); setSkillError(""); }}>{t("addSkillPlus")}</button>
                 ) : null}
               </section>
               <section className={styles.block}>
-                <h3>Media</h3>
-                <p className={styles.help}>Add images, documents, or links that highlight this role.</p>
+                <h3>{t("media")}</h3>
+                <p className={styles.help}>{t("mediaHelpExperience")}</p>
                 <MediaItems items={media} onEdit={openMediaEditor} onRemove={removeMedia} />
                 <AddMediaMenu
                   menuRef={mediaMenuRef}
@@ -323,7 +325,7 @@ export default function EditExperienceModal({
                     documentInputRef.current?.click();
                   }}
                 />
-                {uploading ? <p className={styles.help}>Uploading...</p> : null}
+                {uploading ? <p className={styles.help}>{t("uploading")}</p> : null}
               </section>
             </>
           )}
@@ -331,17 +333,17 @@ export default function EditExperienceModal({
         <footer className={styles.footer}>
           {confirmDelete ? (
             <>
-              <button type="button" className={styles.cancelBtn} onClick={() => setConfirmDelete(false)} disabled={busy}>Cancel</button>
-              <button type="button" className={styles.deleteSolid} onClick={() => !busy && onDelete?.()} disabled={busy}>{isSaving ? "Deleting..." : "Delete"}</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setConfirmDelete(false)} disabled={busy}>{t("cancel")}</button>
+              <button type="button" className={styles.deleteSolid} onClick={() => !busy && onDelete?.()} disabled={busy}>{isSaving ? t("deleting") : t("delete")}</button>
             </>
           ) : (
             <>
               {isEditing ? (
-                <button type="button" className={styles.deleteBtn} onClick={() => setConfirmDelete(true)} disabled={busy}>Delete experience</button>
+                <button type="button" className={styles.deleteBtn} onClick={() => setConfirmDelete(true)} disabled={busy}>{t("deleteExperience")}</button>
               ) : <span />}
               <div className={styles.footerRight}>
-                <button type="button" className={styles.cancelBtn} onClick={onClose} disabled={busy}>Cancel</button>
-                <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={busy}>{isSaving ? "Saving..." : "Save"}</button>
+                <button type="button" className={styles.cancelBtn} onClick={onClose} disabled={busy}>{t("cancel")}</button>
+                <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={busy}>{isSaving ? t("saving") : t("save")}</button>
               </div>
             </>
           )}
@@ -353,19 +355,19 @@ export default function EditExperienceModal({
         <div className={styles.nestedOverlay} onClick={() => setSkillOpen(false)} role="presentation">
           <div className={styles.nestedDialog} onClick={(event) => event.stopPropagation()} role="dialog">
             <header className={styles.header}>
-              <h2>Add skill</h2>
-              <button type="button" className={styles.closeBtn} onClick={() => setSkillOpen(false)} aria-label="Close">×</button>
+              <h2>{t("addSkill")}</h2>
+              <button type="button" className={styles.closeBtn} onClick={() => setSkillOpen(false)} aria-label={t("close")}>×</button>
             </header>
             <div className={styles.nestedBody}>
               <label className={styles.nestedLabel}>
-                Skill
-                <input autoFocus value={skillName} onChange={(event) => { setSkillName(event.target.value); if (skillError) setSkillError(""); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addSkill(skillName); } }} placeholder="Skill (ex: Project Management)" />
+                {t("skill")}
+                <input autoFocus value={skillName} onChange={(event) => { setSkillName(event.target.value); if (skillError) setSkillError(""); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addSkill(skillName); } }} placeholder={t("skillPlaceholder")} />
               </label>
-              {skillError ? <p className={styles.nestedError}>{skillError}</p> : null}
+              {skillError ? <p className={styles.nestedError}>{tMessage(t, skillError)}</p> : null}
             </div>
             <footer className={styles.footer}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setSkillOpen(false)}>Cancel</button>
-              <button type="button" className={styles.saveBtn} onClick={() => addSkill(skillName)}>Add</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setSkillOpen(false)}>{t("cancel")}</button>
+              <button type="button" className={styles.saveBtn} onClick={() => addSkill(skillName)}>{t("add")}</button>
             </footer>
           </div>
         </div>
@@ -386,19 +388,19 @@ export default function EditExperienceModal({
         <div className={styles.nestedOverlay} onClick={() => setLinkOpen(false)} role="presentation">
           <div className={styles.nestedDialog} onClick={(event) => event.stopPropagation()} role="dialog">
             <header className={styles.header}>
-              <h2>Add media</h2>
-              <button type="button" className={styles.closeBtn} onClick={() => setLinkOpen(false)} aria-label="Close">×</button>
+              <h2>{t("addMediaTitle")}</h2>
+              <button type="button" className={styles.closeBtn} onClick={() => setLinkOpen(false)} aria-label={t("close")}>×</button>
             </header>
             <div className={styles.nestedBody}>
               <label className={styles.nestedLabel}>
-                URL
+                {t("url")}
                 <input autoFocus value={linkValue} onChange={(event) => { setLinkValue(event.target.value); if (linkError) setLinkError(""); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addLink(); } }} placeholder="https://" />
               </label>
-              {linkError ? <p className={styles.nestedError}>{linkError}</p> : null}
+              {linkError ? <p className={styles.nestedError}>{tMessage(t, linkError)}</p> : null}
             </div>
             <footer className={styles.footer}>
-              <button type="button" className={styles.cancelBtn} onClick={() => setLinkOpen(false)}>Back</button>
-              <button type="button" className={styles.saveBtn} onClick={addLink}>Save</button>
+              <button type="button" className={styles.cancelBtn} onClick={() => setLinkOpen(false)}>{t("back")}</button>
+              <button type="button" className={styles.saveBtn} onClick={addLink}>{t("save")}</button>
             </footer>
           </div>
         </div>

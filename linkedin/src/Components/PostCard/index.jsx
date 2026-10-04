@@ -14,6 +14,7 @@ import {
 import { validateComment } from "@/config/validation";
 import { COMMENT_EMOJIS } from "@/config/reactions";
 import { getMediaUrl, formatDate, getPostMediaItems, isVideoMedia } from "@/config/utils";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const CARD_MAIN = "card-main";
@@ -26,7 +27,7 @@ const renderMedia = (item, className, extraProps = {}) => {
   if (isVideoMedia(item)) {
     return <video src={src} className={className} {...extraProps} />;
   }
-  return <img src={src} alt="Post media" className={className} {...extraProps} />;
+  return <img src={src} alt="" className={className} {...extraProps} />;
 };
 
 const revokeAttachment = (attachment) => {
@@ -35,6 +36,7 @@ const revokeAttachment = (attachment) => {
 
 export default function PostCard({ post, autoOpenViewer = false, hideCard = false, onViewerClose }) {
   const dispatch = useDispatch();
+  const { t, language } = useI18n();
   const { comments } = useSelector((state) => state.posts);
   const { profile } = useSelector((state) => state.profile);
   const imageInputRef = useRef(null);
@@ -59,8 +61,8 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
   const isOwner = currentUserId && post.userId?._id === currentUserId;
   const canComment = post.canComment !== false;
   const commentBlockedMessage = (post.commentPermission || "anyone") === "off"
-    ? "Comments are turned off"
-    : "Only connections can comment on this post";
+    ? t("commentsOff")
+    : t("commentsConnectionsOnly");
   const mediaItems = getPostMediaItems(post);
   const firstMedia = mediaItems[0];
   const viewerOpen = viewerIndex !== null;
@@ -211,7 +213,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                   setOpenEmojiId((current) => (current === composerId ? null : composerId));
                   setOpenGifId(null);
                 }}
-                aria-label="Emoji"
+                aria-label={t("emoji")}
               >
                 😊
               </button>
@@ -241,7 +243,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                   setOpenGifId((current) => (current === composerId ? null : composerId));
                   setOpenEmojiId(null);
                 }}
-                aria-label="GIF"
+                aria-label={t("gif")}
               >
                 GIF
               </button>
@@ -264,13 +266,13 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                 setOpenGifId(null);
                 imageInputRef.current?.click();
               }}
-              aria-label="Comment media"
+              aria-label={t("commentMedia")}
             >
               🖼️
             </button>
           </div>
           <button onClick={onSubmit} disabled={!value.trim() && !attachment}>
-            Post
+            {t("post")}
           </button>
         </div>
         {attachment && (
@@ -280,11 +282,11 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
               alt=""
             />
             <button type="button" onClick={() => setAttachment(composerId, null)}>
-              Remove
+              {t("remove")}
             </button>
           </div>
         )}
-        {error && <p className={styles.fieldError}>{error}</p>}
+        {error && <p className={styles.fieldError}>{tMessage(t, error)}</p>}
       </div>
     );
   };
@@ -333,7 +335,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                 setAttachment(replyComposerId(comment._id), null);
               }}
             >
-              Reply
+              {t("reply")}
             </button>
           )}
           {comment.userId?._id === currentUserId && (
@@ -353,7 +355,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
               setReplyText,
               () => handleAddReply(comment._id),
               replyError,
-              "Write a reply..."
+              t("writeReply")
             )}
           </div>
         )}
@@ -363,7 +365,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
   );
 
   const commentList = topLevelComments.length === 0 ? (
-    <p className={styles.noComments}>No comments yet</p>
+    <p className={styles.noComments}>{t("noCommentsYet")}</p>
   ) : (
     topLevelComments.map((comment) => renderComment(comment))
   );
@@ -393,9 +395,9 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
       <div className={styles.header}>
         <Avatar user={post.userId} size={44} />
         <div className={styles.headerInfo}>
-          <p className={styles.authorName}>{post.userId?.name || "Unknown"}</p>
+          <p className={styles.authorName}>{post.userId?.name || t("unknown")}</p>
           <p className={styles.meta}>
-            @{post.userId?.username} · {formatDate(post.createdAt)}
+            @{post.userId?.username} · {formatDate(post.createdAt, language)}
           </p>
         </div>
         {!viewerOpen && <PostOwnerMenu post={post} />}
@@ -415,7 +417,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
           }}
           role="button"
           tabIndex={0}
-          aria-label="View media"
+          aria-label={t("viewMedia")}
         >
           {renderMedia(firstMedia, styles.mediaFile, isVideoMedia(firstMedia) ? { muted: true } : {})}
           {mediaItems.length > 1 && (
@@ -431,14 +433,14 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
           onSelect={(reactionType) => dispatch(toggleLike({ postId: post._id, reactionType }))}
         />
         <button className={styles.actionBtn} onClick={handleToggleComments}>
-          💬 {showComments ? "Hide" : "Comment"}
+          💬 {showComments ? t("hide") : t("comment")}
         </button>
       </div>
 
       {showComments && !viewerOpen && (
         <div className={styles.commentSection}>
           {canComment
-            ? renderComposer(CARD_MAIN, commentText, setCommentText, handleAddComment, commentError, "Add a comment...")
+            ? renderComposer(CARD_MAIN, commentText, setCommentText, handleAddComment, commentError, t("addComment"))
             : <p className={styles.noComments}>{commentBlockedMessage}</p>}
           {commentList}
         </div>
@@ -453,14 +455,14 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-label="Post details"
+            aria-label={t("postDetails")}
           >
             <div className={styles.viewerMediaPane}>
               <button
                 type="button"
                 className={styles.viewerClose}
                 onClick={closeViewer}
-                aria-label="Close viewer"
+                aria-label={t("closeViewer")}
               >
                 ✕
               </button>
@@ -469,7 +471,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                   type="button"
                   className={styles.viewerPrev}
                   onClick={goPrev}
-                  aria-label="Previous media"
+                  aria-label={t("previousMedia")}
                 >
                   ←
                 </button>
@@ -484,7 +486,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                   type="button"
                   className={styles.viewerNext}
                   onClick={goNext}
-                  aria-label="Next media"
+                  aria-label={t("nextMedia")}
                 >
                   →
                 </button>
@@ -501,7 +503,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
                 <div className={styles.header}>
                   <Avatar user={post.userId} size={44} />
                   <div className={styles.headerInfo}>
-                    <p className={styles.authorName}>{post.userId?.name || "Unknown"}</p>
+                    <p className={styles.authorName}>{post.userId?.name || t("unknown")}</p>
                     <p className={styles.meta}>
                       {post.userId?.username ? `@${post.userId.username}` : ""}
                       {post.userId?.username && post.createdAt ? " · " : ""}
@@ -526,7 +528,7 @@ export default function PostCard({ post, autoOpenViewer = false, hideCard = fals
 
               <div className={styles.viewerComposer}>
                 {canComment
-                  ? renderComposer(VIEWER_MAIN, commentText, setCommentText, handleAddComment, commentError, "Add a comment...")
+                  ? renderComposer(VIEWER_MAIN, commentText, setCommentText, handleAddComment, commentError, t("addComment"))
                   : <p className={styles.noComments}>{commentBlockedMessage}</p>}
               </div>
             </aside>

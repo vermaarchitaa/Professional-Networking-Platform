@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/layout/DashboardLayout";
+import Footer from "@/Components/Footer";
 import CreatePost from "@/Components/CreatePost";
 import PostCard from "@/Components/PostCard";
 import ProfileHeader from "@/Components/ProfileHeader";
@@ -38,6 +39,7 @@ import { validateProfile } from "@/config/validation";
 import useAuthGuard from "@/hooks/useAuth";
 import { getMediaUrl, formatDate, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
 import { clearViewedProfile } from "@/config/redux/reducer/profileReducer";
+import { useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 const emptyWork = { company: "", position: "", years: "" };
@@ -106,6 +108,7 @@ export default function ProfilePage({ publicUsername = "" }) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const carouselRef = useRef(null);
+  const { t, language } = useI18n();
 
   useAuthGuard();
 
@@ -521,25 +524,31 @@ export default function ProfilePage({ publicUsername = "" }) {
     || (isPublicRoute && !viewedProfile && !viewedError)
   ) {
     return (
-      <DashboardLayout>
-        <div className={styles.container}>
-          <ProfileFormSkeleton />
-          <ProfileFormSkeleton />
-        </div>
-      </DashboardLayout>
+      <>
+        <DashboardLayout>
+          <div className={styles.container}>
+            <ProfileFormSkeleton />
+            <ProfileFormSkeleton />
+          </div>
+        </DashboardLayout>
+        <Footer />
+      </>
     );
   }
 
   if (isPublicRoute && !viewedProfile) {
     return (
-      <DashboardLayout>
-        <div className={styles.container}>
-          <section className={styles.section}>
-            <h2>Profile not available</h2>
-            <p className={styles.displayText}>{viewedError || "This profile URL is not available."}</p>
-          </section>
-        </div>
-      </DashboardLayout>
+      <>
+        <DashboardLayout>
+          <div className={styles.container}>
+            <section className={styles.section}>
+              <h2>Profile not available</h2>
+              <p className={styles.displayText}>{viewedError || "This profile URL is not available."}</p>
+            </section>
+          </div>
+        </DashboardLayout>
+        <Footer />
+      </>
     );
   }
 
@@ -594,6 +603,7 @@ export default function ProfilePage({ publicUsername = "" }) {
   ));
 
   return (
+    <>
     <DashboardLayout>
       <div className={styles.container}>
         <ProfileHeader
@@ -616,7 +626,7 @@ export default function ProfilePage({ publicUsername = "" }) {
             {aboutText ? (
               <section className={styles.section}>
                 <div className={styles.sectionHeader}>
-                  <h2>About</h2>
+                  <h2>{t("about")}</h2>
                   {isOwner ? (
                     <button
                       type="button"
@@ -636,7 +646,7 @@ export default function ProfilePage({ publicUsername = "" }) {
                       className={styles.aboutMore}
                       onClick={() => setIsAboutExpanded((open) => !open)}
                     >
-                      {isAboutExpanded ? "less" : "more"}
+                      {isAboutExpanded ? t("less") : t("more")}
                     </button>
                   ) : null}
                 </p>
@@ -658,7 +668,7 @@ export default function ProfilePage({ publicUsername = "" }) {
                 className={`${styles.section} ${highlightEducation ? styles.eduHighlight : ""}`}
               >
                 <div className={styles.sectionHeader}>
-                  <h2>Education</h2>
+                  <h2>{t("education")}</h2>
                   {isOwner ? (
                     <div className={styles.sectionActions}>
                       <button
@@ -695,7 +705,7 @@ export default function ProfilePage({ publicUsername = "" }) {
                         <p className={styles.displayEntryTitle}>{edu.school}</p>
                         {edu.degree ? <p className={styles.displayMeta}>{edu.degree}</p> : null}
                         {edu.fieldOfStudy ? <p className={styles.displayMeta}>{edu.fieldOfStudy}</p> : null}
-                        {formatEducationDates(edu) ? <p className={styles.displayMeta}>{formatEducationDates(edu)}</p> : null}
+                        {formatEducationDates(edu, language, t("present")) ? <p className={styles.displayMeta}>{formatEducationDates(edu, language, t("present"))}</p> : null}
                         {edu.grade ? <p className={styles.displayMeta}>Grade: {edu.grade}</p> : null}
                         {edu.activitiesAndSocieties ? (
                           <p className={styles.displayText}>
@@ -747,7 +757,7 @@ export default function ProfilePage({ publicUsername = "" }) {
                     className={styles.showAll}
                     onClick={openEducationDetails}
                   >
-                    Show all {visibleEdu.length} educations →
+                    {t("showAllEducations", { count: visibleEdu.length })}
                   </button>
                 ) : null}
               </section>
@@ -763,39 +773,39 @@ export default function ProfilePage({ publicUsername = "" }) {
         ) : (
           <>
             <section className={styles.section}>
-              <h2>Basic Info</h2>
+              <h2>{t("basicInfo")}</h2>
               <div className={styles.grid}>
                 <div className={styles.fieldWrap}>
                   <input
-                    placeholder="Name"
+                    placeholder={t("name")}
                     value={name}
                     onChange={(e) => { setName(e.target.value); if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: "" }); }}
                     className={fieldErrors.name ? styles.inputError : ""}
                   />
-                  {fieldErrors.name && <span className={styles.fieldError}>{fieldErrors.name}</span>}
+                  {fieldErrors.name && <span className={styles.fieldError}>{t(fieldErrors.name)}</span>}
                 </div>
                 <div className={styles.fieldWrap}>
                   <input
-                    placeholder="Username"
+                    placeholder={t("username")}
                     value={username}
                     onChange={(e) => { setUsername(e.target.value); if (fieldErrors.username) setFieldErrors({ ...fieldErrors, username: "" }); }}
                     className={fieldErrors.username ? styles.inputError : ""}
                   />
-                  {fieldErrors.username && <span className={styles.fieldError}>{fieldErrors.username}</span>}
+                  {fieldErrors.username && <span className={styles.fieldError}>{t(fieldErrors.username)}</span>}
                 </div>
                 <div className={`${styles.fieldWrap} ${styles.fullWidth}`}>
                   <input
-                    placeholder="Email"
+                    placeholder={t("email")}
                     type="email"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: "" }); }}
                     className={fieldErrors.email ? styles.inputError : ""}
                   />
-                  {fieldErrors.email && <span className={styles.fieldError}>{fieldErrors.email}</span>}
+                  {fieldErrors.email && <span className={styles.fieldError}>{t(fieldErrors.email)}</span>}
                 </div>
                 <div className={`${styles.fieldWrap} ${styles.fullWidth}`}>
                   <input
-                    placeholder="Location (e.g. Ghaziabad, Uttar Pradesh, India)"
+                    placeholder={t("locationPlaceholder")}
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                   />
@@ -804,36 +814,36 @@ export default function ProfilePage({ publicUsername = "" }) {
             </section>
 
             <section className={styles.section}>
-              <h2>About</h2>
+              <h2>{t("about")}</h2>
               <textarea
-                placeholder="Write a short bio..."
+                placeholder={t("writeBio")}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={3}
               />
               <input
-                placeholder="Current position (e.g. Software Engineer at Google)"
+                placeholder={t("currentPosition")}
                 value={currentPost}
                 onChange={(e) => setCurrentPost(e.target.value)}
               />
             </section>
 
             <section className={styles.section}>
-              <h2>Work Experience</h2>
+              <h2>{t("workExperience")}</h2>
               {pastWork.map((work, i) => (
                 <div key={i} className={styles.entryRow}>
-                  <input placeholder="Company" value={work.company} onChange={(e) => updateWork(i, "company", e.target.value)} />
-                  <input placeholder="Position" value={work.position} onChange={(e) => updateWork(i, "position", e.target.value)} />
-                  <input placeholder="Years" value={work.years} onChange={(e) => updateWork(i, "years", e.target.value)} />
+                  <input placeholder={t("company")} value={work.company} onChange={(e) => updateWork(i, "company", e.target.value)} />
+                  <input placeholder={t("position")} value={work.position} onChange={(e) => updateWork(i, "position", e.target.value)} />
+                  <input placeholder={t("years")} value={work.years} onChange={(e) => updateWork(i, "years", e.target.value)} />
                 </div>
               ))}
               <button className={styles.addBtn} onClick={() => setPastWork([...pastWork, { ...emptyWork }])}>
-                + Add Experience
+                {t("addExperienceRow")}
               </button>
             </section>
 
             <section id="education" ref={educationRef} className={styles.section}>
-              <h2>Education</h2>
+              <h2>{t("education")}</h2>
               {education.map((edu, i) => (
                 <div key={i} className={styles.eduEditorBlock}>
                   <EducationRecordForm
@@ -847,16 +857,16 @@ export default function ProfilePage({ publicUsername = "" }) {
                 </div>
               ))}
               <button className={styles.addBtn} onClick={() => setEducation([...education, { ...emptyEducation }])}>
-                + Add Education
+                {t("addEducationRow")}
               </button>
             </section>
 
             <div className={styles.actions}>
               <button className={styles.saveBtn} onClick={handleSave}>
-                Save Profile
+                {t("saveProfile")}
               </button>
               <button className={styles.downloadBtn} onClick={handleCancelEdit}>
-                Cancel
+                {t("cancel")}
               </button>
             </div>
           </>
@@ -864,7 +874,7 @@ export default function ProfilePage({ publicUsername = "" }) {
 
         <section className={styles.activityCard}>
           <div className={styles.activityHeader}>
-            <h2 className={styles.activityTitle}>Activity</h2>
+            <h2 className={styles.activityTitle}>{t("activity")}</h2>
             <div className={styles.activityActions}>
               {isOwner ? (
                 <button
@@ -872,7 +882,7 @@ export default function ProfilePage({ publicUsername = "" }) {
                   className={styles.createPostBtn}
                   onClick={() => setShowComposer(true)}
                 >
-                  Create a post
+                  {t("createPost")}
                 </button>
               ) : null}
             </div>
@@ -887,14 +897,14 @@ export default function ProfilePage({ publicUsername = "" }) {
                 setPreviewTile(null);
               }}
             >
-              Posts
+              {t("posts")}
             </button>
             <button
               type="button"
               className={activityTab === "images" ? styles.tabActive : styles.tab}
               onClick={() => setActivityTab("images")}
             >
-              Images
+              {t("images")}
             </button>
           </div>
 
@@ -907,8 +917,8 @@ export default function ProfilePage({ publicUsername = "" }) {
             <div className={styles.activityEmpty}>
               <p>
                 {activityTab === "images"
-                  ? "No images yet. Share a post with a photo."
-                  : "No activity yet. Share a post."}
+                  ? t("noImages")
+                  : t("noActivity")}
               </p>
             </div>
           ) : activityTab === "images" ? (
@@ -985,7 +995,7 @@ export default function ProfilePage({ publicUsername = "" }) {
                   <p className={styles.imageModalBody}>{previewTile.post.body}</p>
                 )}
                 <p className={styles.imageModalMeta}>
-                  {formatDate(previewTile.post.createdAt)}
+                  {formatDate(previewTile.post.createdAt, language)}
                 </p>
               </div>
             </div>
@@ -997,7 +1007,7 @@ export default function ProfilePage({ publicUsername = "" }) {
               className={styles.showAll}
               onClick={() => router.push("/profile/activity")}
             >
-              Show all →
+              {t("showAll")}
             </button>
           )}
         </section>
@@ -1094,5 +1104,7 @@ export default function ProfilePage({ publicUsername = "" }) {
         ) : null}
       </div>
     </DashboardLayout>
+    <Footer />
+    </>
   );
 }

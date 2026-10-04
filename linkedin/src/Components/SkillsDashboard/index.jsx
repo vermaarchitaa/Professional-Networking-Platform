@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { listProfileSkills, resolveSkillAssociations } from "@/Components/SkillsSection/skillUtils";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function SkillsDashboard({
@@ -9,6 +10,7 @@ export default function SkillsDashboard({
   onAdd,
   onEdit,
 }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState("all");
   const [menuOpen, setMenuOpen] = useState(false);
   const skills = listProfileSkills(profile);
@@ -17,28 +19,28 @@ export default function SkillsDashboard({
   return (
     <section className={styles.page} aria-labelledby="skills-dashboard-title">
       <header className={styles.header}>
-        <button type="button" className={styles.iconBtn} onClick={onBack} aria-label="Back">
+        <button type="button" className={styles.iconBtn} onClick={onBack} aria-label={t("back")}>
           ←
         </button>
-        <h2 id="skills-dashboard-title">Skills</h2>
+        <h2 id="skills-dashboard-title">{t("skills")}</h2>
         <div className={styles.headerActions}>
           <div className={styles.menuWrap}>
             <button
               type="button"
               className={styles.iconBtn}
               onClick={() => setMenuOpen((open) => !open)}
-              aria-label="More"
+              aria-label={t("more")}
             >
               ⋯
             </button>
             {menuOpen ? (
               <div className={styles.menu} role="menu">
-                <p>Skills help show how you fit new opportunities.</p>
+                <p>{t("skillsHelpMenu")}</p>
               </div>
             ) : null}
           </div>
           {isOwner ? (
-            <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label="Add skill">
+            <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label={t("addSkill")}>
               +
             </button>
           ) : null}
@@ -51,21 +53,21 @@ export default function SkillsDashboard({
           className={tab === "all" ? styles.tabActive : styles.tab}
           onClick={() => setTab("all")}
         >
-          All
+          {t("all")}
         </button>
         <button
           type="button"
           className={tab === "tools" ? styles.tabActive : styles.tab}
           onClick={() => setTab("tools")}
         >
-          Tools & Technologies
+          {t("toolsAndTech")}
         </button>
       </div>
 
       <div className={styles.body}>
         {visible.length === 0 ? (
           <p className={styles.empty}>
-            {tab === "tools" ? "No tools or technologies added yet." : "No skills added yet."}
+            {tab === "tools" ? t("noToolsYet") : t("noSkillsYet")}
           </p>
         ) : (
           visible.map((skill) => {
@@ -83,7 +85,7 @@ export default function SkillsDashboard({
                     type="button"
                     className={styles.iconBtn}
                     onClick={() => onEdit?.(skill)}
-                    aria-label={`Edit ${skill.name}`}
+                    aria-label={t("editNamed", { name: skill.name })}
                   >
                     ✎
                   </button>

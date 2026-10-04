@@ -16,12 +16,13 @@ import {
   drawCoverImage,
   exportCoverBlob,
 } from "@/Components/CoverPhotoFlow/coverUtils";
+import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 const TABS = [
-  { id: "crop", label: "Crop", Icon: CropIcon },
-  { id: "filter", label: "Filter", Icon: FilterIcon },
-  { id: "adjust", label: "Adjust", Icon: AdjustIcon },
+  { id: "crop", labelKey: "crop", Icon: CropIcon },
+  { id: "filter", labelKey: "filter", Icon: FilterIcon },
+  { id: "adjust", labelKey: "adjust", Icon: AdjustIcon },
 ];
 
 export default function CoverPhotoEditor({
@@ -32,6 +33,7 @@ export default function CoverPhotoEditor({
   onClose,
   onSave,
 }) {
+  const { t } = useI18n();
   const canvasRef = useRef(null);
   const stageRef = useRef(null);
   const dragRef = useRef(null);
@@ -141,7 +143,7 @@ export default function CoverPhotoEditor({
       const file = new File([blob], "cover.jpg", { type: "image/jpeg" });
       await onSave(file);
     } catch {
-      setProcessError("Could not process this image. Try another file.");
+      setProcessError("couldNotProcessImage");
     } finally {
       setExporting(false);
     }
@@ -157,8 +159,8 @@ export default function CoverPhotoEditor({
         aria-labelledby="edit-image-title"
       >
         <header className={styles.header}>
-          <h2 id="edit-image-title">Edit image</h2>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <h2 id="edit-image-title">{t("editPhoto")}</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label={t("close")}>
             <CloseIcon />
           </button>
         </header>
@@ -181,7 +183,7 @@ export default function CoverPhotoEditor({
 
           <aside className={styles.controls}>
             <div className={styles.tabs}>
-              {TABS.map(({ id, label, Icon }) => (
+              {TABS.map(({ id, labelKey, Icon }) => (
                 <button
                   type="button"
                   key={id}
@@ -189,7 +191,7 @@ export default function CoverPhotoEditor({
                   onClick={() => setTab(id)}
                 >
                   <Icon />
-                  {label}
+                  {t(labelKey)}
                 </button>
               ))}
             </div>
@@ -197,10 +199,10 @@ export default function CoverPhotoEditor({
             {tab === "crop" && (
               <div className={styles.panel}>
                 <p className={styles.hint}>
-                  Drag to reposition. Scroll or pinch-style zoom with the slider. Double-click to toggle zoom.
+                  {t("cropHint")}
                 </p>
                 <label className={styles.label}>
-                  Zoom
+                  {t("zoom")}
                   <span>{Math.round(edit.zoom * 100)}%</span>
                 </label>
                 <input
@@ -218,28 +220,28 @@ export default function CoverPhotoEditor({
                     className={styles.toolBtn}
                     onClick={() => setEdit((current) => ({ ...current, rotation: (current.rotation - 90 + 360) % 360 }))}
                   >
-                    <RotateLeftIcon /> Rotate left
+                    <RotateLeftIcon /> {t("rotateLeft")}
                   </button>
                   <button
                     type="button"
                     className={styles.toolBtn}
                     onClick={() => setEdit((current) => ({ ...current, rotation: (current.rotation + 90) % 360 }))}
                   >
-                    <RotateRightIcon /> Rotate right
+                    <RotateRightIcon /> {t("rotateRight")}
                   </button>
                   <button
                     type="button"
                     className={styles.toolBtn}
                     onClick={() => setEdit((current) => ({ ...current, flipH: !current.flipH }))}
                   >
-                    <FlipHIcon /> Flip horizontal
+                    <FlipHIcon /> {t("flipHorizontal")}
                   </button>
                   <button
                     type="button"
                     className={styles.toolBtn}
                     onClick={() => setEdit((current) => ({ ...current, flipV: !current.flipV }))}
                   >
-                    <FlipVIcon /> Flip vertical
+                    <FlipVIcon /> {t("flipVertical")}
                   </button>
                 </div>
               </div>
@@ -269,13 +271,13 @@ export default function CoverPhotoEditor({
             {tab === "adjust" && (
               <div className={styles.panel}>
                 {[
-                  ["brightness", "Brightness"],
-                  ["contrast", "Contrast"],
-                  ["saturation", "Saturation"],
-                ].map(([key, label]) => (
+                  ["brightness", "brightness"],
+                  ["contrast", "contrast"],
+                  ["saturation", "saturation"],
+                ].map(([key, labelKey]) => (
                   <React.Fragment key={key}>
                     <label className={styles.label}>
-                      {label}
+                      {t(labelKey)}
                       <span>{edit[key]}</span>
                     </label>
                     <input
@@ -289,7 +291,7 @@ export default function CoverPhotoEditor({
                   </React.Fragment>
                 ))}
                 <label className={styles.label}>
-                  Vignette
+                  {t("vignette")}
                   <span>{edit.vignette}</span>
                 </label>
                 <input
@@ -305,11 +307,11 @@ export default function CoverPhotoEditor({
           </aside>
         </div>
 
-        {(error || processError) ? <p className={styles.error}>{error || processError}</p> : null}
+        {(error || processError) ? <p className={styles.error}>{tMessage(t, error || processError)}</p> : null}
 
         <div className={styles.footer}>
           <button type="button" className={styles.saveBtn} onClick={handleSave} disabled={busy}>
-            {saving || exporting ? "Saving..." : "Save changes"}
+            {saving || exporting ? t("saving") : t("saveChanges")}
           </button>
         </div>
       </div>

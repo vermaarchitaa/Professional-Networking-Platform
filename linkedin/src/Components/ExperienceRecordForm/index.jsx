@@ -3,6 +3,7 @@ import {
   EDUCATION_MEDIA_DESCRIPTION_MAX,
   EDUCATION_MEDIA_NAME_MAX,
 } from "@/Components/EducationRecordForm";
+import { getMonthOptions, tEnum, tMessage, toIntlLocale, useI18n } from "@/i18n";
 import styles from "@/Components/EducationRecordForm/styles.module.css";
 
 export const EXPERIENCE_DESCRIPTION_MAX = 2000;
@@ -58,10 +59,12 @@ function joinYearMonth(year, month) {
   return `${year}-${month}`;
 }
 
-function formatYearMonth(value) {
+function formatYearMonth(value, language = "en") {
   const { year, month } = splitYearMonth(value);
-  const monthLabel = MONTHS.find((item) => item.value === month)?.label;
-  if (monthLabel && year) return `${monthLabel} ${year}`;
+  if (month && year) {
+    const monthLabel = new Intl.DateTimeFormat(toIntlLocale(language), { month: "long" }).format(new Date(2000, Number(month) - 1, 1));
+    return `${monthLabel} ${year}`;
+  }
   return year || "";
 }
 
@@ -69,10 +72,10 @@ export function isFilledExperience(entry) {
   return Boolean(String(entry?.company || entry?.position || entry?.years || "").trim());
 }
 
-export function formatExperienceDates(entry) {
-  const start = formatYearMonth(entry?.startDate);
-  if (entry?.current) return start ? `${start} – Present` : "Present";
-  const end = formatYearMonth(entry?.endDate);
+export function formatExperienceDates(entry, language = "en", presentLabel = "Present") {
+  const start = formatYearMonth(entry?.startDate, language);
+  if (entry?.current) return start ? `${start} – ${presentLabel}` : presentLabel;
+  const end = formatYearMonth(entry?.endDate, language);
   if (start || end) return [start, end].filter(Boolean).join(" – ");
   return String(entry?.years || "").trim();
 }
@@ -162,6 +165,8 @@ export function experienceSkillsFromProfile(profile, experience) {
 }
 
 export default function ExperienceRecordForm({ value, onChange, error }) {
+  const { t, language } = useI18n();
+  const months = getMonthOptions(language);
   const start = splitYearMonth(value.startDate);
   const end = splitYearMonth(value.endDate);
   const patch = (field, next) => onChange({ ...value, [field]: next });
@@ -170,44 +175,44 @@ export default function ExperienceRecordForm({ value, onChange, error }) {
   return (
     <div className={styles.form}>
       <label className={styles.field}>
-        Title*
+        {t("title")}
         <input
           value={value.position || ""}
           onChange={(event) => patch("position", event.target.value)}
-          placeholder="Ex: Software Engineer"
+          placeholder={t("titleEx")}
         />
       </label>
       <label className={styles.field}>
-        Employment type
+        {t("employmentType")}
         <select value={value.employmentType || ""} onChange={(event) => patch("employmentType", event.target.value)}>
-          <option value="">Please select</option>
+          <option value="">{t("pleaseSelect")}</option>
           {EXPERIENCE_EMPLOYMENT_TYPES.map((type) => (
-            <option key={type} value={type}>{type}</option>
+            <option key={type} value={type}>{tEnum(t, type)}</option>
           ))}
         </select>
       </label>
       <label className={styles.field}>
-        Company name*
+        {t("companyName")}
         <input
           value={value.company || ""}
           onChange={(event) => patch("company", event.target.value)}
-          placeholder="Ex: Microsoft"
+          placeholder={t("companyEx")}
         />
       </label>
       <label className={styles.field}>
-        Location
+        {t("location")}
         <input
           value={value.location || ""}
           onChange={(event) => patch("location", event.target.value)}
-          placeholder="Ex: Ghaziabad, Uttar Pradesh, India"
+          placeholder={t("locationEx")}
         />
       </label>
       <label className={styles.field}>
-        Location type
+        {t("locationType")}
         <select value={value.locationType || ""} onChange={(event) => patch("locationType", event.target.value)}>
-          <option value="">Please select</option>
+          <option value="">{t("pleaseSelect")}</option>
           {EXPERIENCE_LOCATION_TYPES.map((type) => (
-            <option key={type} value={type}>{type}</option>
+            <option key={type} value={type}>{tEnum(t, type)}</option>
           ))}
         </select>
       </label>
@@ -221,28 +226,28 @@ export default function ExperienceRecordForm({ value, onChange, error }) {
             endDate: event.target.checked ? "" : value.endDate,
           })}
         />
-        I am currently working in this role
+        {t("currentlyWorking")}
       </label>
       <div className={styles.row}>
         <label className={styles.field}>
-          Start month
+          {t("startMonth")}
           <select
             value={start.month}
             onChange={(event) => patch("startDate", joinYearMonth(start.year || String(currentYear), event.target.value))}
           >
-            <option value="">Month</option>
-            {MONTHS.map((month) => (
+            <option value="">{t("month")}</option>
+            {months.map((month) => (
               <option key={month.value} value={month.value}>{month.label}</option>
             ))}
           </select>
         </label>
         <label className={styles.field}>
-          Start year
+          {t("startYear")}
           <select
             value={start.year}
             onChange={(event) => patch("startDate", joinYearMonth(event.target.value, start.month || "01"))}
           >
-            <option value="">Year</option>
+            <option value="">{t("year")}</option>
             {YEARS.map((year) => (
               <option key={year} value={year}>{year}</option>
             ))}
@@ -252,24 +257,24 @@ export default function ExperienceRecordForm({ value, onChange, error }) {
       {value.current ? null : (
         <div className={styles.row}>
           <label className={styles.field}>
-            End month
+            {t("endMonth")}
             <select
               value={end.month}
               onChange={(event) => patch("endDate", joinYearMonth(end.year || String(currentYear), event.target.value))}
             >
-              <option value="">Month</option>
-              {MONTHS.map((month) => (
+              <option value="">{t("month")}</option>
+              {months.map((month) => (
                 <option key={month.value} value={month.value}>{month.label}</option>
               ))}
             </select>
           </label>
           <label className={styles.field}>
-            End year
+            {t("endYear")}
             <select
               value={end.year}
               onChange={(event) => patch("endDate", joinYearMonth(event.target.value, end.month || "01"))}
             >
-              <option value="">Year</option>
+              <option value="">{t("year")}</option>
               {YEARS.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
@@ -278,26 +283,26 @@ export default function ExperienceRecordForm({ value, onChange, error }) {
         </div>
       )}
       <label className={styles.field}>
-        Description
+        {t("description")}
         <textarea
           rows={4}
           value={description}
           maxLength={EXPERIENCE_DESCRIPTION_MAX}
           onChange={(event) => patch("description", event.target.value.slice(0, EXPERIENCE_DESCRIPTION_MAX))}
-          placeholder="List your major contributions and achievements"
+          placeholder={t("experienceDescEx")}
         />
-        <span className={styles.counter}>{description.length.toLocaleString("en-US")}/{EXPERIENCE_DESCRIPTION_MAX.toLocaleString("en-US")}</span>
+        <span className={styles.counter}>{description.length.toLocaleString(toIntlLocale(language))}/{EXPERIENCE_DESCRIPTION_MAX.toLocaleString(toIntlLocale(language))}</span>
       </label>
       <label className={styles.field}>
-        Where did you find this job
+        {t("jobSource")}
         <select value={value.jobSource || ""} onChange={(event) => patch("jobSource", event.target.value)}>
-          <option value="">Please select</option>
+          <option value="">{t("pleaseSelect")}</option>
           {EXPERIENCE_JOB_SOURCES.map((source) => (
-            <option key={source} value={source}>{source}</option>
+            <option key={source} value={source}>{tEnum(t, source)}</option>
           ))}
         </select>
       </label>
-      {error ? <p className={styles.error}>{error}</p> : null}
+      {error ? <p className={styles.error}>{tMessage(t, error)}</p> : null}
     </div>
   );
 }

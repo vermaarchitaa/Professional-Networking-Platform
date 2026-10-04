@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { tEnum, useI18n } from "@/i18n";
 import styles from "@/Components/SkillsDashboard/styles.module.css";
 
 export default function LanguagesDashboard({
@@ -7,6 +8,8 @@ export default function LanguagesDashboard({
   onAdd,
   onEdit,
 }) {
+  const { t } = useI18n();
+
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose?.();
@@ -18,30 +21,30 @@ export default function LanguagesDashboard({
   return (
     <section className={styles.page} aria-labelledby="languages-dashboard-title">
       <header className={styles.header}>
-        <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Back">←</button>
-        <h2 id="languages-dashboard-title">Languages</h2>
+        <button type="button" className={styles.iconBtn} onClick={onClose} aria-label={t("back")}>←</button>
+        <h2 id="languages-dashboard-title">{t("languages")}</h2>
         <div className={styles.headerActions}>
           {onAdd ? (
-            <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label="Add language">+</button>
+            <button type="button" className={styles.iconBtn} onClick={onAdd} aria-label={t("addLanguage")}>+</button>
           ) : null}
         </div>
       </header>
       <div className={styles.body}>
         {entries.length === 0 ? (
-          <p className={styles.empty}>No languages added yet.</p>
+          <p className={styles.empty}>{t("noLanguagesYet")}</p>
         ) : (
           entries.map((entry, index) => (
             <article key={entry._id || `${entry.language}-${index}`} className={styles.row}>
               <div className={styles.details}>
                 <h3>{entry.language}</h3>
-                {entry.proficiency ? <p>{entry.proficiency}</p> : null}
+                {entry.proficiency ? <p>{tEnum(t, entry.proficiency)}</p> : null}
               </div>
               {onEdit ? (
                 <button
                   type="button"
                   className={styles.iconBtn}
                   onClick={() => onEdit(entry)}
-                  aria-label={`Edit ${entry.language}`}
+                  aria-label={t("editNamed", { name: entry.language })}
                 >
                   ✎
                 </button>

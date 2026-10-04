@@ -9,6 +9,7 @@ import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import useAuthGuard from "@/hooks/useAuth";
 import { getMediaUrl, getPostMediaItems, isImageMedia, sortActivityPosts } from "@/config/utils";
+import { useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 export default function ProfileActivityPage() {
@@ -18,6 +19,7 @@ export default function ProfileActivityPage() {
   const { posts, isLoading: postsLoading } = useSelector((state) => state.posts);
   const [activityTab, setActivityTab] = useState("posts");
   const [viewerPostId, setViewerPostId] = useState(null);
+  const { t } = useI18n();
 
   useAuthGuard();
 
@@ -36,13 +38,13 @@ export default function ProfileActivityPage() {
     <DashboardLayout>
       <div className={styles.container}>
         <button type="button" className={styles.backBtn} onClick={() => router.push("/profile")}>
-          ← Back to profile
+          {t("backToProfile")}
         </button>
 
         <header className={styles.summary}>
           <Avatar user={profile?.userId} size={64} />
           <div>
-            <h1>All activity</h1>
+            <h1>{t("allActivity")}</h1>
             <p>
               {profile?.userId?.name}
               {profile?.userId?.username ? ` · @${profile.userId.username}` : ""}
@@ -60,14 +62,14 @@ export default function ProfileActivityPage() {
                 setViewerPostId(null);
               }}
             >
-              Posts
+              {t("posts")}
             </button>
             <button
               type="button"
               className={activityTab === "images" ? styles.tabActive : styles.tab}
               onClick={() => setActivityTab("images")}
             >
-              Images
+              {t("images")}
             </button>
           </div>
 
@@ -80,8 +82,8 @@ export default function ProfileActivityPage() {
             <div className={styles.empty}>
               <p>
                 {activityTab === "images"
-                  ? "No images yet. Share a post with a photo."
-                  : "No activity yet. Share a post from your profile."}
+                  ? t("noImages")
+                  : t("noActivity")}
               </p>
             </div>
           ) : activityTab === "images" ? (
@@ -95,7 +97,7 @@ export default function ProfileActivityPage() {
                     key={post._id}
                     className={styles.imageTile}
                     onClick={() => setViewerPostId(post._id)}
-                    aria-label="View post"
+                    aria-label={t("viewPost")}
                   >
                     <img src={getMediaUrl(imageItems[0].filename)} alt="" />
                     {extraCount > 0 && (

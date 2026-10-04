@@ -1,8 +1,10 @@
 import React from "react";
 import Avatar from "@/Components/Avatar";
+import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
 export default function UserCard({ user, profile, onConnect, isPending, isConnected }) {
+  const { t } = useI18n();
   const userData = user?.userId || user;
   const userId = userData?._id;
 
@@ -21,7 +23,7 @@ export default function UserCard({ user, profile, onConnect, isPending, isConnec
           onClick={() => onConnect(userId)}
           disabled={isPending || isConnected}
         >
-          {isConnected ? "Connected" : isPending ? "Pending" : "Connect"}
+          {isConnected ? t("connected") : isPending ? t("pending") : t("connect")}
         </button>
       )}
     </div>

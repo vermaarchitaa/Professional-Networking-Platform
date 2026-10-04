@@ -7,12 +7,15 @@ import { PostSkeleton, ProfileSidebarSkeleton } from "@/Components/Skeleton";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import useAuthGuard from "@/hooks/useAuth";
+import { useI18n } from "@/i18n";
 import styles from "./style.module.css";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
   const { posts, isLoading } = useSelector((state) => state.posts);
   const { profile, isLoading: profileLoading } = useSelector((state) => state.profile);
+
+  const { t } = useI18n();
 
   useAuthGuard();
 
@@ -37,7 +40,7 @@ export default function Dashboard() {
             </>
           ) : posts.length === 0 ? (
             <div className={styles.empty}>
-              <p>No posts yet. Be the first to share something!</p>
+              <p>{t("noPosts")}</p>
             </div>
           ) : (
             [...posts]
