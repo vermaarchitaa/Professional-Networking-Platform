@@ -74,6 +74,11 @@
   cursor: not-allowed;
 }
 
+.messageBtnActive {
+  opacity: 1;
+  cursor: pointer;
+}
+
 .menuWrap {
   position: relative;
 }

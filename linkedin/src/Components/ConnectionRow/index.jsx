@@ -59,7 +59,11 @@ export default function ConnectionRow({
       </button>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.messageBtn} disabled>
+        <button
+          type="button"
+          className={`${styles.messageBtn} ${styles.messageBtnActive}`}
+          onClick={() => user?._id && router.push(`/messaging?userId=${user._id}`)}
+        >
           {t("messageAction")}
         </button>
         <div className={styles.menuWrap} ref={menuRef}>

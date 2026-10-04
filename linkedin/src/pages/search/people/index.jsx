@@ -159,7 +159,11 @@ export default function PeopleSearchPage() {
                     </button>
                   ) : null}
                   {relationship.status === "connected" ? (
-                    <button type="button" className={styles.outlineBtn} disabled>
+                    <button
+                      type="button"
+                      className={styles.outlineBtn}
+                      onClick={() => router.push(`/messaging?userId=${person._id}`)}
+                    >
                       {t("messageAction")}
                     </button>
                   ) : null}

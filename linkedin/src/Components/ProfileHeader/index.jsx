@@ -514,7 +514,11 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
             </button>
           ) : null}
           {!isOwner && isConnected ? (
-            <button type="button" className={styles.primaryBtn} disabled>
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              onClick={() => user?._id && router.push(`/messaging?userId=${user._id}`)}
+            >
               {t("messageAction")}
             </button>
           ) : null}
@@ -534,8 +538,12 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
               >
                 <button
                   type="button"
-                  className={styles.resourcesItemDisabled}
-                  disabled
+                  onClick={() => {
+                    const share = user?.username || user?._id;
+                    if (!share) return;
+                    setOpenPanel(null);
+                    router.push(`/messaging?shareProfile=${encodeURIComponent(share)}`);
+                  }}
                 >
                   <ResourceIcon name="message" />
                   <span>{t("sendProfileMessage")}</span>

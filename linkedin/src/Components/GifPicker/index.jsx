@@ -3,7 +3,7 @@ import { searchGifs } from "@/config/redux/action/postAction";
 import { tMessage, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
-export default function GifPicker({ onSelect, onClose }) {
+export default function GifPicker({ onSelect, onClose, className }) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [gifs, setGifs] = useState([]);
@@ -36,14 +36,23 @@ export default function GifPicker({ onSelect, onClose }) {
   }, [query]);
 
   return (
-    <div className={styles.picker} role="dialog" aria-label={t("gifPicker")}>
+    <div className={`${styles.picker}${className ? ` ${className}` : ""}`} role="dialog" aria-label={t("gifPicker")}>
       <div className={styles.header}>
-        <input
-          type="search"
-          placeholder={t("searchGifs")}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <label className={styles.searchField}>
+          <svg className={styles.searchIcon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            placeholder={t("searchGifs")}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.preventDefault();
+            }}
+          />
+        </label>
         <button type="button" onClick={onClose} aria-label={t("closeGifPicker")}>
           ✕
         </button>

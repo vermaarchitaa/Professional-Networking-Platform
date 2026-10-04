@@ -1,0 +1,666 @@
+.shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  max-width: 1128px;
+  min-height: calc(100vh - 120px);
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.listPane,
+.threadPane {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.threadPane {
+  overflow: visible;
+  position: relative;
+}
+
+.listPane {
+  border-right: 1px solid #eef0f2;
+}
+
+.listHeader {
+  padding: 0.9rem 1rem 0.75rem;
+  border-bottom: 1px solid #eef0f2;
+}
+
+.heading {
+  margin: 0 0 0.7rem;
+  font-size: 1.2rem;
+}
+
+.search {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d0d0d0;
+  border-radius: 20px;
+  font: inherit;
+  font-size: 0.86rem;
+  box-sizing: border-box;
+}
+
+.conversation {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.conversation:hover,
+.conversationActive {
+  background: #f3f2ef;
+}
+
+.conversationInfo {
+  min-width: 0;
+  flex: 1;
+}
+
+.conversationTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.conversationName {
+  margin: 0;
+  font-weight: 650;
+  color: #191919;
+}
+
+.conversationTime {
+  color: #666666;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.conversationPreview {
+  margin: 0.2rem 0 0;
+  color: #666666;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unreadDot {
+  width: 8px;
+  height: 8px;
+  margin-top: 0.45rem;
+  border-radius: 50%;
+  background: #0a66c2;
+  flex-shrink: 0;
+}
+
+.threadHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #eef0f2;
+}
+
+.peerBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.peerBtn:hover .peerName {
+  color: #0a66c2;
+  text-decoration: underline;
+}
+
+.peerName {
+  margin: 0;
+  font-weight: 650;
+}
+
+.peerHeadline {
+  margin: 0.15rem 0 0;
+  color: #666666;
+  font-size: 0.8rem;
+}
+
+.thread {
+  flex: 1;
+  overflow: auto;
+  padding: 1rem;
+  background: #f3f2ef;
+}
+
+.bubbleWrap {
+  display: flex;
+  margin-bottom: 0.65rem;
+}
+
+.mine {
+  justify-content: flex-end;
+}
+
+.theirs {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: min(70%, 420px);
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+}
+
+.bubble p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bubble span {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.bubbleMine {
+  background: #0a66c2;
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.bubbleTheirs {
+  background: #ffffff;
+  color: #191919;
+  border: 1px solid #e0e0e0;
+  border-bottom-left-radius: 4px;
+}
+
+.bubbleRich {
+  background: #ffffff;
+  color: #191919;
+  border: 1px solid #e0e0e0;
+  padding: 0.5rem;
+}
+
+.bubbleRich p {
+  margin-bottom: 0.45rem;
+}
+
+.bubbleRich span {
+  color: #666666;
+}
+
+.mediaImage,
+.mediaVideo {
+  display: block;
+  max-width: 100%;
+  max-height: 260px;
+  border-radius: 8px;
+  margin-bottom: 0.35rem;
+}
+
+.mediaVideo {
+  background: #111111;
+}
+
+.docCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-width: 180px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.docIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #eef3f8;
+  color: #0a66c2;
+}
+
+.docMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.docMeta strong {
+  font-size: 0.86rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docMeta em,
+.docMeta span {
+  font-style: normal;
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.docMeta span {
+  color: #0a66c2;
+  font-weight: 650;
+}
+
+.giftDisplay {
+  font-size: 2.6rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+}
+
+.emojiGlyph {
+  font-family: "Segoe UI Emoji", "Segoe UI Symbol", "Apple Color Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.stickerDisplay {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+}
+
+.composer {
+  position: relative;
+  z-index: 3;
+  padding: 0.75rem 1rem 0.9rem;
+  border-top: 1px solid #eef0f2;
+  background: #ffffff;
+  overflow: visible;
+}
+
+.composerBox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d0d0d0;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.input {
+  width: 100%;
+  resize: none;
+  border: none;
+  border-radius: 10px 10px 0 0;
+  padding: 0.7rem 0.8rem 0.45rem;
+  font: inherit;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline: none;
+}
+
+.preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0.7rem 0.45rem;
+  padding: 0.45rem;
+  border: 1px solid #e6e6e6;
+  border-radius: 8px;
+  background: #f8f8f8;
+}
+
+.previewImage,
+.previewVideo {
+  max-width: 120px;
+  max-height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.previewVideo {
+  background: #111111;
+}
+
+.previewDoc {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: #191919;
+}
+
+.previewDoc p {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.previewDoc span {
+  color: #666666;
+  font-size: 0.74rem;
+}
+
+.previewGift {
+  font-size: 2rem;
+  line-height: 1;
+  padding: 0.15rem 0.3rem;
+}
+
+.previewSticker {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.previewProfile {
+  min-width: 0;
+  flex: 1;
+}
+
+.recipientPane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.recipientPane .search {
+  margin: 0.75rem 1rem 0;
+  width: auto;
+}
+
+.recipientList {
+  flex: 1;
+  overflow: auto;
+}
+
+.sharePreview {
+  padding: 0.85rem 1rem 0;
+}
+
+.removePreview {
+  margin-left: auto;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #191919;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.composerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.25rem 0.55rem 0.45rem;
+}
+
+.composerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #666666;
+  cursor: pointer;
+}
+
+.iconBtn:hover,
+.iconBtnActive {
+  background: #eef3f8;
+  color: #0a66c2;
+}
+
+.gifWrap {
+  position: relative;
+}
+
+.gifLabelBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #f3f2ef;
+  color: #191919;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gifLabelBtn:hover,
+.gifLabelBtnActive {
+  background: #e6e6e6;
+}
+
+.gifPickerDock {
+  left: 0;
+  right: auto;
+  bottom: calc(100% + 0.45rem);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.picker {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  max-width: 360px;
+  padding: 0.65rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.pickerTabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.pickerTab {
+  flex: 1;
+  border: none;
+  border-radius: 16px;
+  padding: 0.28rem 0.5rem;
+  background: #f3f2ef;
+  color: #666666;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pickerTabActive {
+  background: #e8f3ff;
+  color: #0a66c2;
+}
+
+.pickerGrid,
+.stickerGrid,
+.emojiGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.stickerGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.emojiGrid {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  max-height: 220px;
+  overflow: auto;
+}
+
+.giftBtn,
+.stickerBtn,
+.emojiBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: #f8f8f8;
+  cursor: pointer;
+}
+
+.giftBtn {
+  height: 42px;
+  font-size: 1.45rem;
+}
+
+.emojiBtn {
+  height: 34px;
+  font-size: 1.25rem;
+}
+
+.stickerBtn {
+  padding: 0.25rem;
+}
+
+.stickerBtn img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.giftBtn:hover,
+.stickerBtn:hover,
+.emojiBtn:hover {
+  background: #eef3f8;
+}
+
+.sendBtn {
+  border: none;
+  border-radius: 24px;
+  padding: 0.4rem 0.95rem;
+  background: #0a66c2;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.sendBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.placeholder,
+.empty {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  color: #666666;
+  text-align: center;
+}
+
+.placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholderHint {
+  margin: 0.4rem 0 0;
+  color: #8a8a8a;
+}
+
+.error {
+  margin: 0;
+  padding: 0.4rem 1rem;
+  color: #b42318;
+  font-size: 0.85rem;
+}
+
+.backBtn {
+  display: none;
+  border: none;
+  background: none;
+  color: #0a66c2;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .shell {
+    grid-template-columns: 1fr;
+    min-height: calc(100vh - 100px);
+  }
+
+  .threadPane {
+    display: none;
+  }
+
+  .shellThread .listPane {
+    display: none;
+  }
+
+  .shellThread .threadPane {
+    display: flex;
+  }
+
+  .backBtn {
+    display: inline-block;
+  }
+
+  .picker {
+    max-width: none;
+    max-height: 42vh;
+    overflow: auto;
+  }
+
+  .composerActions {
+    gap: 0;
+  }
+}

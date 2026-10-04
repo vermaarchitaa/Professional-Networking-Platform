@@ -4,6 +4,7 @@ import postReducer from "./reducer/postReducer";
 import profileReducer from "./reducer/profileReducer";
 import connectionReducer from "./reducer/connectionReducer";
 import notificationReducer from "./reducer/notificationReducer";
+import messageReducer from "./reducer/messageReducer";
 
 export const store = configureStore({
   reducer: {
@@ -12,5 +13,6 @@ export const store = configureStore({
     profile: profileReducer,
     connections: connectionReducer,
     notifications: notificationReducer,
+    messages: messageReducer,
   },
 });

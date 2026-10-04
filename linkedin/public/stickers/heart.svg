@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Heart">
+  <circle cx="64" cy="64" r="60" fill="#FFD6DE"/>
+  <path fill="#E11D48" d="M64 98c-22-16-34-30-34-46 0-12 9-22 21-22 7 0 13 3 17 9 4-6 10-9 17-9 12 0 21 10 21 22 0 16-12 30-34 46z"/>
+</svg>

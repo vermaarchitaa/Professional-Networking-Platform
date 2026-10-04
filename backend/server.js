@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import postRoutes from "./routes/posts.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import messageRoutes from "./routes/message.routes.js";
 import { ensureUploadsDir } from "./utils/uploads.js";
 
 dotenv.config();
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use(postRoutes);
 app.use(userRoutes);
 app.use(notificationRoutes);
+app.use(messageRoutes);
 
 app.use(express.static("uploads"));
 

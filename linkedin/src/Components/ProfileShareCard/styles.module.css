@@ -1,0 +1,66 @@
+.card {
+  width: 100%;
+  max-width: 280px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.main:disabled {
+  cursor: default;
+}
+
+.main:hover:not(:disabled) .name,
+.main:hover:not(:disabled) .view {
+  color: #0a66c2;
+}
+
+.meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  margin: 0;
+  font-weight: 650;
+  color: #191919;
+}
+
+.headline,
+.location {
+  margin: 0.15rem 0 0;
+  color: #666666;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.location {
+  -webkit-line-clamp: 1;
+}
+
+.view {
+  display: inline-block;
+  margin-top: 0.45rem;
+  color: #0a66c2;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
