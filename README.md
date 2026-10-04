@@ -416,6 +416,6 @@ Please keep pull requests small and avoid committing secrets or generated upload
 
 ## Author
 
-**Archita Verma**
+**Archita**
 
 GitHub: [https://github.com/vermaarchitaa](https://github.com/vermaarchitaa)
