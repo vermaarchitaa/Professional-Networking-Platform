@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import Comment from "../models/comments.model.js";
 import ConnectionRequest from "../models/connections.model.js";
 import SavedPost from "../models/savedPost.model.js";
-import { createNotification } from "../utils/notificationHelper.js";
+import { createNotification, notifyAcceptedConnectionsOfPost } from "../utils/notificationHelper.js";
 
 const REACTION_TYPES = new Set(["like", "love", "celebrate", "funny", "insightful", "support"]);
 
@@ -163,6 +163,12 @@ export const createPost = async (req, res) => {
         });
 
         await post.save();
+
+        try {
+            await notifyAcceptedConnectionsOfPost(user._id, post._id, user.name);
+        } catch {
+            // Keep post creation successful if notification fan-out fails.
+        }
 
         return res.status(200).json({ message: "Post Created" });
 

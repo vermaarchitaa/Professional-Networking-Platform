@@ -43,6 +43,32 @@ export const markAllNotificationsRead = createAsyncThunk(
   }
 );
 
+export const fetchNewPostCount = createAsyncThunk(
+  "notifications/fetchNewPostCount",
+  async (_, thunkAPI) => {
+    try {
+      const response = await clientServer.get("/notifications/new_post_count", {
+        params: { token: getToken() },
+      });
+      return Number(response.data.count || 0);
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ count: 0 });
+    }
+  }
+);
+
+export const markNewPostsSeen = createAsyncThunk(
+  "notifications/markNewPostsSeen",
+  async (_, thunkAPI) => {
+    try {
+      await clientServer.post("/notifications/new_post_seen", { token: getToken() });
+      return 0;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data);
+    }
+  }
+);
+
 export const markNotificationRead = createAsyncThunk(
   "notifications/markRead",
   async (notificationId, thunkAPI) => {

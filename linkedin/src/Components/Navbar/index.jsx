@@ -8,6 +8,7 @@ import { clearNotifications } from "@/config/redux/reducer/notificationReducer";
 import { clearMessages } from "@/config/redux/reducer/messageReducer";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
 import { fetchMessageUnreadCount } from "@/config/redux/action/messageAction";
+import { fetchNewPostCount } from "@/config/redux/action/notificationAction";
 import NotificationBell from "@/Components/NotificationBell";
 import PeopleSearch from "@/Components/PeopleSearch";
 import Avatar from "@/Components/Avatar";
@@ -39,6 +40,7 @@ export default function NavbarComponent() {
   const { loggedIn } = useSelector((state) => state.auth);
   const { profile, isLoading: profileLoading, isError: profileError } = useSelector((state) => state.profile);
   const unreadMessages = useSelector((state) => state.messages.unreadCount);
+  const newPostCount = useSelector((state) => state.notifications.newPostCount);
   const [meOpen, setMeOpen] = useState(false);
   const meRef = useRef(null);
 
@@ -55,7 +57,10 @@ export default function NavbarComponent() {
   }, [dispatch, isLoggedIn, profile, profileLoading, profileError]);
 
   useEffect(() => {
-    if (isLoggedIn && getToken()) dispatch(fetchMessageUnreadCount());
+    if (isLoggedIn && getToken()) {
+      dispatch(fetchMessageUnreadCount());
+      dispatch(fetchNewPostCount());
+    }
   }, [dispatch, isLoggedIn]);
 
   useEffect(() => {
@@ -119,7 +124,12 @@ export default function NavbarComponent() {
               className={`${styles.navItem} ${homeActive ? styles.navItemActive : ""}`}
               onClick={() => navigate("/dashboard")}
             >
-              <span className={styles.iconSlot}><HouseIcon /></span>
+              <span className={styles.iconSlot}>
+                <HouseIcon />
+                {newPostCount > 0 ? (
+                  <span className={styles.homeBadge} aria-label={t("homeNewPosts")} />
+                ) : null}
+              </span>
               <span className={styles.label}>{t("home")}</span>
             </button>
 

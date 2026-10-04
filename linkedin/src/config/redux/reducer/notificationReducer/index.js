@@ -2,13 +2,16 @@ import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchNotifications,
   fetchUnreadCount,
+  fetchNewPostCount,
   markAllNotificationsRead,
+  markNewPostsSeen,
   markNotificationRead,
 } from "@/config/redux/action/notificationAction";
 
 const initialState = {
   items: [],
   unreadCount: 0,
+  newPostCount: 0,
   isLoading: false,
   isOpen: false,
 };
@@ -51,6 +54,12 @@ const notificationSlice = createSlice({
           item.read = true;
           state.unreadCount = Math.max(0, state.unreadCount - 1);
         }
+      })
+      .addCase(fetchNewPostCount.fulfilled, (state, action) => {
+        state.newPostCount = action.payload;
+      })
+      .addCase(markNewPostsSeen.fulfilled, (state) => {
+        state.newPostCount = 0;
       });
   },
 });

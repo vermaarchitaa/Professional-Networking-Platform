@@ -13,7 +13,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["like", "comment", "connection_request", "connection_accept"],
+    enum: ["like", "comment", "connection_request", "connection_accept", "new_post"],
     required: true,
   },
   message: {
@@ -33,6 +33,11 @@ const notificationSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+notificationSchema.index(
+  { recipientId: 1, type: 1, referenceId: 1 },
+  { unique: true, partialFilterExpression: { type: "new_post" } }
+);
 
 const Notification = mongoose.model("Notification", notificationSchema);
 export default Notification;

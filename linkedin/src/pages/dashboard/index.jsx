@@ -6,6 +6,7 @@ import ProfileSidebar from "@/Components/ProfileSidebar";
 import { PostSkeleton, ProfileSidebarSkeleton } from "@/Components/Skeleton";
 import { fetchPosts } from "@/config/redux/action/postAction";
 import { fetchUserProfile } from "@/config/redux/action/profileAction";
+import { markNewPostsSeen } from "@/config/redux/action/notificationAction";
 import useAuthGuard from "@/hooks/useAuth";
 import { useI18n } from "@/i18n";
 import styles from "./style.module.css";
@@ -22,6 +23,7 @@ export default function Dashboard() {
   useEffect(() => {
     dispatch(fetchPosts());
     dispatch(fetchUserProfile());
+    dispatch(markNewPostsSeen());
   }, [dispatch]);
 
   return (
