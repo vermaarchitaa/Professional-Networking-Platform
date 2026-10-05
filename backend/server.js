@@ -12,14 +12,31 @@ dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://professional-networking-platform-orcin.vercel.app",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
-app.options("*", cors());
+app.options(
+  "*",
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -34,9 +51,11 @@ app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
     return res.status(400).json({ message: "File is too large" });
   }
+
   if (err.message === "Unsupported file type") {
     return res.status(400).json({ message: err.message });
   }
+
   console.error(err.stack);
   res.status(500).json({ message: err.message });
 });
@@ -44,6 +63,7 @@ app.use((err, req, res, next) => {
 const start = async () => {
   try {
     ensureUploadsDir();
+
     await mongoose.connect(process.env.MONGO_URI);
 
     console.log("✅ MongoDB Connected");

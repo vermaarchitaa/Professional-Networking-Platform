@@ -1,5 +1,5 @@
 import axios from "axios";
 
 export const clientServer = axios.create({
-  baseURL: "http://localhost:9090",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:9090",
 });
