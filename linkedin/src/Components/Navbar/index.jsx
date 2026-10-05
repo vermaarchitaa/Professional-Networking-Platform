@@ -109,9 +109,14 @@ export default function NavbarComponent() {
   const meActive = isSectionActive(pathname, "/profile");
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${isLoggedIn ? "" : styles.guestBar}`}>
       <nav className={styles.navbar}>
         <h1 className={styles.logo} onClick={() => navigate(isLoggedIn ? "/dashboard" : "/")}>
+          <span className={styles.logoMark} aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
           Pro Connect
         </h1>
 
@@ -221,13 +226,24 @@ export default function NavbarComponent() {
             </button>
           </div>
         ) : (
-          <div className={styles.navbarOptionContainer}>
-            <button type="button" className={styles.navLink} onClick={() => navigate("/blog")}>
-              {t("blog")}
+          <div className={`${styles.navbarOptionContainer} ${styles.guestActions}`}>
+            <button
+              type="button"
+              className={`${styles.guestBlog} ${blogActive ? styles.guestBlogActive : ""}`}
+              onClick={() => navigate("/blog")}
+            >
+              <span className={styles.guestBlogIcon}>
+                <NewspaperIcon size={18} />
+              </span>
+              <span>{t("blog")}</span>
             </button>
-            <div onClick={() => navigate("/login")} className={styles.buttonJoin}>
-              <p>{t("beAPart")}</p>
-            </div>
+            <button
+              type="button"
+              className={styles.buttonJoin}
+              onClick={() => navigate("/login")}
+            >
+              {t("beAPart")}
+            </button>
           </div>
         )}
       </nav>
