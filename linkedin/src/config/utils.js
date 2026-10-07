@@ -16,8 +16,14 @@ export const getPublicProfileHref = (username) => {
 };
 
 export const getMediaUrl = (filename) => {
-  if (!filename || filename === "default.jpg") return "/images/default-avatar.png";
-  return `http://localhost:9090/${filename}`;
+  if (!filename || filename === "default.jpg") {
+    return "/images/default-avatar.png";
+  }
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:9090";
+
+  return `${baseUrl}/${filename}`;
 };
 
 export const getPostMediaItems = (post) => {
