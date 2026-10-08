@@ -4,6 +4,19 @@ import Comment from "../models/comments.model.js";
 import ConnectionRequest from "../models/connections.model.js";
 import SavedPost from "../models/savedPost.model.js";
 import { createNotification, notifyAcceptedConnectionsOfPost } from "../utils/notificationHelper.js";
+import {
+    destroyCloudinaryAsset,
+    uploadCommentImage,
+    uploadPostMedia,
+} from "../config/cloudinary.js";
+
+const storedFileType = (mimetype) => String(mimetype || "").split("/")[1] || "";
+
+const destroyUploadedAssets = async (assets) => {
+    await Promise.all(
+        (assets || []).map((asset) => destroyCloudinaryAsset(asset.publicId, asset.resourceType))
+    );
+};
 
 const REACTION_TYPES = new Set(["like", "love", "celebrate", "funny", "insightful", "support"]);
 
@@ -136,6 +149,7 @@ export const activeCheck = async (req, res) => {
 
 export const createPost = async (req, res) => {
     const { token } = req.body;
+    const uploadedAssets = [];
 
     try{
 
@@ -146,23 +160,47 @@ export const createPost = async (req, res) => {
         }
 
         const files = Array.isArray(req.files) ? req.files : [];
-        const firstFile = files[0];
-        const mediaItems = files.map((file) => ({
-            filename: file.filename,
-            fileType: file.mimetype.split("/")[1]
-        }));
+        const mediaItems = [];
+
+        for (const file of files) {
+            if (!file?.buffer?.length) {
+                await destroyUploadedAssets(uploadedAssets);
+                return res.status(400).json({ message: "No file uploaded" });
+            }
+
+            let uploaded;
+            try {
+                uploaded = await uploadPostMedia(file.buffer, file.mimetype);
+            } catch (error) {
+                await destroyUploadedAssets(uploadedAssets);
+                return res.status(500).json({ message: error.message || "Failed to upload post media" });
+            }
+
+            uploadedAssets.push(uploaded);
+            mediaItems.push({
+                filename: uploaded.url,
+                fileType: storedFileType(file.mimetype),
+            });
+        }
+
+        const firstItem = mediaItems[0];
         const commentPermission = normalizeCommentPermission(req.body.commentPermission);
 
         const post = new Post({
             userId: user._id,
             body: req.body.body,
-            media: firstFile ? firstFile.filename : "",
-            fileType: firstFile ? firstFile.mimetype.split("/")[1] : "",
+            media: firstItem ? firstItem.filename : "",
+            fileType: firstItem ? firstItem.fileType : "",
             mediaItems,
             commentPermission
         });
 
-        await post.save();
+        try {
+            await post.save();
+        } catch (error) {
+            await destroyUploadedAssets(uploadedAssets);
+            return res.status(500).json({ message: error.message });
+        }
 
         try {
             await notifyAcceptedConnectionsOfPost(user._id, post._id, user.name);
@@ -173,6 +211,7 @@ export const createPost = async (req, res) => {
         return res.status(200).json({ message: "Post Created" });
 
     } catch(error){
+        await destroyUploadedAssets(uploadedAssets);
         return res.status(500).json({ message: error.message});
     }
 }
@@ -314,6 +353,7 @@ export const updatePost = async (req, res) => {
 export const commentPost = async (req, res) => {
 
     const { token, post_id, commentBody, parent_comment_id } = req.body;
+    let uploadedAsset = null;
 
     try{
 
@@ -360,9 +400,25 @@ export const commentPost = async (req, res) => {
             return res.status(400).json({ message: "Invalid GIF URL" });
         }
         const gifUrl = rawGifUrl;
-        const uploaded = req.file
-            ? { filename: req.file.filename, fileType: req.file.mimetype.split("/")[1] }
-            : { filename: "", fileType: "" };
+        let uploaded = { filename: "", fileType: "" };
+
+        if (req.file) {
+            if (!req.file.buffer?.length) {
+                return res.status(400).json({ message: "No file uploaded" });
+            }
+
+            try {
+                uploadedAsset = await uploadCommentImage(req.file.buffer);
+            } catch (error) {
+                return res.status(500).json({ message: error.message || "Failed to upload comment image" });
+            }
+
+            uploaded = {
+                filename: uploadedAsset.url,
+                fileType: storedFileType(req.file.mimetype),
+            };
+        }
+
         const hasImage = Boolean(uploaded.filename);
         const hasGif = Boolean(gifUrl) && !hasImage;
         const body = (commentBody || "").trim();
@@ -380,7 +436,14 @@ export const commentPost = async (req, res) => {
             gifUrl: hasGif ? gifUrl : ""
         });
 
-        await comment.save();
+        try {
+            await comment.save();
+        } catch (error) {
+            if (uploadedAsset?.publicId) {
+                await destroyCloudinaryAsset(uploadedAsset.publicId, "image");
+            }
+            return res.status(500).json({ message: error.message });
+        }
 
         if (post.userId.toString() !== user._id.toString()) {
             await createNotification({

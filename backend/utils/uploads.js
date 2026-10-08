@@ -99,8 +99,8 @@ const createMemoryUploader = (allowedTypes, maxBytes) =>
 
 export const profilePictureUpload = createMemoryUploader(PROFILE_TYPES, 2 * 1024 * 1024);
 export const coverPhotoUpload = createMemoryUploader(IMAGE_TYPES, 5 * 1024 * 1024);
-export const postMediaUpload = createUploader(POST_MEDIA_TYPES, 10 * 1024 * 1024);
-export const commentImageUpload = createUploader(IMAGE_TYPES, 5 * 1024 * 1024);
+export const postMediaUpload = createMemoryUploader(POST_MEDIA_TYPES, 10 * 1024 * 1024);
+export const commentImageUpload = createMemoryUploader(IMAGE_TYPES, 5 * 1024 * 1024);
 export const educationMediaUpload = createUploader(EDUCATION_MEDIA_TYPES, 10 * 1024 * 1024);
 export const messageAttachmentUpload = createUploader(MESSAGE_ATTACHMENT_TYPES, 10 * 1024 * 1024, true);
 

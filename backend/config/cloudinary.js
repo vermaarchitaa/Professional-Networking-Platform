@@ -2,6 +2,8 @@ import { v2 as cloudinary } from "cloudinary";
 
 const PROFILE_FOLDER = "proconnect/profile";
 const COVER_FOLDER = "proconnect/covers";
+const POST_FOLDER = "proconnect/posts";
+const COMMENT_FOLDER = "proconnect/comments";
 
 const isConfigured = () =>
   Boolean(
@@ -27,18 +29,19 @@ const getCloudinary = () => {
 export const isCloudinaryPublicId = (value) =>
   typeof value === "string" && value.startsWith("proconnect/");
 
-export const uploadImageBuffer = (buffer, folder) => {
+export const uploadImageBuffer = (buffer, folder, resourceType = "image") => {
   if (!buffer?.length) {
     return Promise.reject(new Error("No file uploaded"));
   }
 
+  const type = resourceType === "video" ? "video" : "image";
   const cloud = getCloudinary();
 
   return new Promise((resolve, reject) => {
     const stream = cloud.uploader.upload_stream(
       {
         folder,
-        resource_type: "image",
+        resource_type: type,
         overwrite: false,
       },
       (error, result) => {
@@ -50,6 +53,7 @@ export const uploadImageBuffer = (buffer, folder) => {
         resolve({
           url: result.secure_url,
           publicId: result.public_id,
+          resourceType: type,
         });
       }
     );
@@ -61,13 +65,24 @@ export const uploadImageBuffer = (buffer, folder) => {
 export const uploadProfileImage = (buffer) => uploadImageBuffer(buffer, PROFILE_FOLDER);
 export const uploadCoverImage = (buffer) => uploadImageBuffer(buffer, COVER_FOLDER);
 
-export const destroyCloudinaryImage = async (publicId) => {
+export const uploadPostMedia = (buffer, mimetype) => {
+  const resourceType = String(mimetype || "").startsWith("video/") ? "video" : "image";
+  return uploadImageBuffer(buffer, POST_FOLDER, resourceType);
+};
+
+export const uploadCommentImage = (buffer) => uploadImageBuffer(buffer, COMMENT_FOLDER);
+
+export const destroyCloudinaryAsset = async (publicId, resourceType = "image") => {
   if (!isCloudinaryPublicId(publicId)) return;
 
   try {
     const cloud = getCloudinary();
-    await cloud.uploader.destroy(publicId, { resource_type: "image" });
+    await cloud.uploader.destroy(publicId, {
+      resource_type: resourceType === "video" ? "video" : "image",
+    });
   } catch {
     // Cleanup must not fail the user-facing request.
   }
 };
+
+export const destroyCloudinaryImage = (publicId) => destroyCloudinaryAsset(publicId, "image");
