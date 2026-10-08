@@ -172,11 +172,14 @@ export const deleteProfileSkill = createAsyncThunk("profile/deleteSkill", async 
   }
 });
 
-export const uploadEducationMedia = createAsyncThunk("profile/uploadEducationMedia", async (file, thunkAPI) => {
+export const uploadEducationMedia = createAsyncThunk("profile/uploadEducationMedia", async (payload, thunkAPI) => {
   try {
+    const file = payload?.file || payload;
+    const kind = payload?.kind === "experience" ? "experience" : "education";
     const formData = new FormData();
     formData.append("token", getToken());
     formData.append("media", file);
+    formData.append("kind", kind);
     const response = await clientServer.post("/upload_education_media", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });

@@ -228,7 +228,7 @@ export default function EditExperienceModal({
     if (!file) return;
     setUploading(true);
     setFormError("");
-    const result = await dispatch(uploadEducationMedia(file));
+    const result = await dispatch(uploadEducationMedia({ file, kind: "experience" }));
     setUploading(false);
     if (uploadEducationMedia.rejected.match(result)) {
       setFormError(result.payload?.message || "Failed to upload media");

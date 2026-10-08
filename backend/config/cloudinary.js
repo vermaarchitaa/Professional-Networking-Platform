@@ -4,6 +4,14 @@ const PROFILE_FOLDER = "proconnect/profile";
 const COVER_FOLDER = "proconnect/covers";
 const POST_FOLDER = "proconnect/posts";
 const COMMENT_FOLDER = "proconnect/comments";
+const EDUCATION_FOLDER = "proconnect/education";
+const EXPERIENCE_FOLDER = "proconnect/experience";
+
+const toResourceType = (resourceType) => {
+  if (resourceType === "video") return "video";
+  if (resourceType === "raw") return "raw";
+  return "image";
+};
 
 const isConfigured = () =>
   Boolean(
@@ -34,7 +42,7 @@ export const uploadImageBuffer = (buffer, folder, resourceType = "image") => {
     return Promise.reject(new Error("No file uploaded"));
   }
 
-  const type = resourceType === "video" ? "video" : "image";
+  const type = toResourceType(resourceType);
   const cloud = getCloudinary();
 
   return new Promise((resolve, reject) => {
@@ -72,13 +80,20 @@ export const uploadPostMedia = (buffer, mimetype) => {
 
 export const uploadCommentImage = (buffer) => uploadImageBuffer(buffer, COMMENT_FOLDER);
 
+export const uploadEducationRecordMedia = (buffer, mimetype, kind = "education") => {
+  const folder = kind === "experience" ? EXPERIENCE_FOLDER : EDUCATION_FOLDER;
+  const mime = String(mimetype || "").toLowerCase();
+  const resourceType = mime.startsWith("image/") ? "image" : "raw";
+  return uploadImageBuffer(buffer, folder, resourceType);
+};
+
 export const destroyCloudinaryAsset = async (publicId, resourceType = "image") => {
   if (!isCloudinaryPublicId(publicId)) return;
 
   try {
     const cloud = getCloudinary();
     await cloud.uploader.destroy(publicId, {
-      resource_type: resourceType === "video" ? "video" : "image",
+      resource_type: toResourceType(resourceType),
     });
   } catch {
     // Cleanup must not fail the user-facing request.

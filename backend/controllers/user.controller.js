@@ -10,8 +10,8 @@ import bcrypt from 'bcrypt';
 import fs from "fs";
 import path from "path";
 import Post from "../models/posts.model.js";
-import { destroyCloudinaryImage, uploadCoverImage, uploadProfileImage } from "../config/cloudinary.js";
-import { UPLOADS_DIR, ensureUploadsDir, isPdfEmbeddableImage, removeUploadedFile } from "../utils/uploads.js";
+import { destroyCloudinaryAsset, destroyCloudinaryImage, uploadCoverImage, uploadEducationRecordMedia, uploadProfileImage } from "../config/cloudinary.js";
+import { UPLOADS_DIR, ensureUploadsDir, isPdfEmbeddableImage } from "../utils/uploads.js";
 
 const pictureValue = (value) => {
     if (!value) return "";
@@ -229,35 +229,43 @@ export const uploadCoverPicture = async (req, res) => {
 }
 
 export const uploadEducationMedia = async (req, res) => {
-    const { token } = req.body;
-    const uploaded = req.file?.filename;
+    const { token, kind } = req.body;
+    const buffer = req.file?.buffer;
+    let uploadedAsset = null;
 
     try {
         if (!token || typeof token !== "string") {
-            if (uploaded) removeUploadedFile(uploaded);
             return res.status(401).json({ message: "Unauthorized" });
         }
 
         const user = await User.findOne({ token }).select("_id");
         if (!user) {
-            if (uploaded) removeUploadedFile(uploaded);
             return res.status(404).json({ message: "User not found" });
         }
-        if (!uploaded) {
+        if (!buffer) {
             return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        const folderKind = kind === "experience" ? "experience" : "education";
+        try {
+            uploadedAsset = await uploadEducationRecordMedia(buffer, req.file.mimetype, folderKind);
+        } catch (error) {
+            return res.status(500).json({ message: error.message || "Failed to upload media" });
         }
 
         const mime = req.file.mimetype || "";
         const type = mime.startsWith("image/") ? "image" : "document";
-        const original = String(req.file.originalname || uploaded).slice(0, 200);
+        const original = String(req.file.originalname || "media").slice(0, 200);
 
         return res.json({
-            filename: uploaded,
+            filename: uploadedAsset.url,
             name: original,
             type,
         });
     } catch (error) {
-        if (uploaded) removeUploadedFile(uploaded);
+        if (uploadedAsset?.publicId) {
+            await destroyCloudinaryAsset(uploadedAsset.publicId, uploadedAsset.resourceType);
+        }
         return res.status(500).json({ message: error.message });
     }
 };
@@ -553,6 +561,19 @@ const isValidHttpUrl = (value) => {
     }
 };
 
+const isCloudinaryMediaUrl = (value) => {
+    try {
+        const parsed = new URL(value);
+        if (parsed.protocol !== "https:") return false;
+        const host = parsed.hostname.toLowerCase();
+        return host === "res.cloudinary.com" || host.endsWith(".cloudinary.com");
+    } catch {
+        return false;
+    }
+};
+
+const isStoredEducationMediaUrl = (value) => STORED_MEDIA_FILE.test(value) || isCloudinaryMediaUrl(value);
+
 const normalizeEducationSkills = (value) => {
     if (value === undefined || value === null) return { ok: true, value: [] };
     if (!Array.isArray(value)) return { ok: false, message: "Education skills must be an array" };
@@ -598,7 +619,7 @@ const normalizeEducationMedia = (value) => {
             });
             continue;
         }
-        if ((type === "image" || type === "document") && STORED_MEDIA_FILE.test(url)) {
+        if ((type === "image" || type === "document") && isStoredEducationMediaUrl(url)) {
             next.push({
                 type,
                 url,
