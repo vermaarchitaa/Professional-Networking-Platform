@@ -50,6 +50,19 @@ const safeStoredName = (mimetype, allowedTypes) => {
   return crypto.randomBytes(32).toString("hex") + ext;
 };
 
+const createFileFilter = (allowedTypes, remapOctetStream = false) => (req, file, cb) => {
+  if (remapOctetStream && file.mimetype === "application/octet-stream") {
+    const ext = path.extname(file.originalname || "").toLowerCase();
+    const mapped = Object.entries(allowedTypes).find(([, allowed]) => allowed === ext || allowed === MESSAGE_EXT_ALIASES[ext]);
+    if (mapped) file.mimetype = mapped[0];
+  }
+  if (!allowedTypes[file.mimetype]) {
+    cb(new Error("Unsupported file type"));
+    return;
+  }
+  cb(null, true);
+};
+
 const createUploader = (allowedTypes, maxBytes, remapOctetStream = false) => {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -73,23 +86,19 @@ const createUploader = (allowedTypes, maxBytes, remapOctetStream = false) => {
   return multer({
     storage,
     limits: { fileSize: maxBytes },
-    fileFilter: (req, file, cb) => {
-      if (remapOctetStream && file.mimetype === "application/octet-stream") {
-        const ext = path.extname(file.originalname || "").toLowerCase();
-        const mapped = Object.entries(allowedTypes).find(([, allowed]) => allowed === ext || allowed === MESSAGE_EXT_ALIASES[ext]);
-        if (mapped) file.mimetype = mapped[0];
-      }
-      if (!allowedTypes[file.mimetype]) {
-        cb(new Error("Unsupported file type"));
-        return;
-      }
-      cb(null, true);
-    },
+    fileFilter: createFileFilter(allowedTypes, remapOctetStream),
   });
 };
 
-export const profilePictureUpload = createUploader(PROFILE_TYPES, 2 * 1024 * 1024);
-export const coverPhotoUpload = createUploader(IMAGE_TYPES, 5 * 1024 * 1024);
+const createMemoryUploader = (allowedTypes, maxBytes) =>
+  multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: maxBytes },
+    fileFilter: createFileFilter(allowedTypes),
+  });
+
+export const profilePictureUpload = createMemoryUploader(PROFILE_TYPES, 2 * 1024 * 1024);
+export const coverPhotoUpload = createMemoryUploader(IMAGE_TYPES, 5 * 1024 * 1024);
 export const postMediaUpload = createUploader(POST_MEDIA_TYPES, 10 * 1024 * 1024);
 export const commentImageUpload = createUploader(IMAGE_TYPES, 5 * 1024 * 1024);
 export const educationMediaUpload = createUploader(EDUCATION_MEDIA_TYPES, 10 * 1024 * 1024);

@@ -24,7 +24,7 @@ import {
   sendConnectionRequest,
 } from "@/config/redux/action/connectionAction";
 import { getRelationship } from "@/config/connectionRelationship";
-import { getMediaUrl, getPublicProfileHref, getPublicProfilePath } from "@/config/utils";
+import { getMediaRef, getMediaUrl, getPublicProfileHref, getPublicProfilePath } from "@/config/utils";
 import { formatMonthName, tEnum, toIntlLocale, useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
@@ -203,9 +203,10 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   const [showOpenToDetails, setShowOpenToDetails] = useState(false);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
+  const [coverFailed, setCoverFailed] = useState(false);
 
   const user = profile?.userId;
-  const hasCover = Boolean(user?.coverPicture);
+  const hasCover = Boolean(getMediaRef(user?.coverPicture));
   const hasPhoto = hasUploadedProfilePicture(user);
   const coverSrc = hasCover ? getMediaUrl(user.coverPicture) : "";
   const photoSrc = hasPhoto ? getMediaUrl(user.profilePicture) : "";
@@ -253,6 +254,10 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
       workTypes: openToWork.workTypes || "",
     });
   }, [openToWork.enabled, openToWork.visibility, openToWork.location, openToWork.workTypes]);
+
+  useEffect(() => {
+    setCoverFailed(false);
+  }, [coverSrc]);
 
   useEffect(() => {
     if (!openPanel) return undefined;
@@ -319,8 +324,13 @@ export default function ProfileHeader({ profile, onEditProfile, onOpenEducation,
   return (
     <section className={`${styles.card} ${openPanel === "resources" ? styles.cardMenuOpen : ""}`}>
       <div className={styles.coverWrap}>
-        {coverSrc ? (
-          <img src={coverSrc} alt="" className={styles.coverImage} />
+        {coverSrc && !coverFailed ? (
+          <img
+            src={coverSrc}
+            alt=""
+            className={styles.coverImage}
+            onError={() => setCoverFailed(true)}
+          />
         ) : (
           <div className={styles.coverFallback} />
         )}

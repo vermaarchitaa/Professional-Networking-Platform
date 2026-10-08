@@ -14,9 +14,24 @@ const FRAME_CLASS = {
 
 export function ProfilePhotoBadge({ src, frameId, className, alt = "" }) {
   const frame = normalizeProfileFrame(frameId);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
   return (
     <div className={`${styles.circle} ${FRAME_CLASS[frame] || styles.original} ${className || ""}`}>
-      {src ? <img src={src} alt={alt} className={styles.photo} /> : <div className={styles.photoFallback} />}
+      {src && !failed ? (
+        <img
+          src={src}
+          alt={alt}
+          className={styles.photo}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className={styles.photoFallback} />
+      )}
       {frame === "open-to-work" ? <span className={styles.bannerOpen}>#OpenToWork</span> : null}
       {frame === "hiring" ? <span className={styles.bannerHiring}>#Hiring</span> : null}
     </div>

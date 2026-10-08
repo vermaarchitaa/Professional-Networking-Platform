@@ -1,5 +1,5 @@
 import React from "react";
-import { getMediaUrl } from "@/config/utils";
+import { getMediaUrl, isDefaultProfilePicture } from "@/config/utils";
 import styles from "./styles.module.css";
 
 export default function Avatar({ user, size = 48 }) {
@@ -11,11 +11,12 @@ export default function Avatar({ user, size = 48 }) {
     .slice(0, 2)
     .toUpperCase();
 
-  const src = getMediaUrl(user?.profilePicture);
+  const hasPhoto = !isDefaultProfilePicture(user?.profilePicture);
+  const src = hasPhoto ? getMediaUrl(user?.profilePicture) : "";
 
   return (
     <div className={styles.avatar} style={{ width: size, height: size, fontSize: size * 0.35 }}>
-      {src && user?.profilePicture !== "default.jpg" ? (
+      {src ? (
         <img
           src={src}
           alt={name}
@@ -26,7 +27,7 @@ export default function Avatar({ user, size = 48 }) {
           }}
         />
       ) : null}
-      <span className={styles.initials} style={{ display: user?.profilePicture && user.profilePicture !== "default.jpg" ? "none" : "flex" }}>
+      <span className={styles.initials} style={{ display: src ? "none" : "flex" }}>
         {initials}
       </span>
     </div>

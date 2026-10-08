@@ -15,9 +15,30 @@ export const getPublicProfileHref = (username) => {
   return `${window.location.origin}${path}`;
 };
 
-export const getMediaUrl = (filename) => {
+export const getMediaRef = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "object") {
+    if (typeof value.url === "string") return value.url.trim();
+    if (typeof value.secure_url === "string") return value.secure_url.trim();
+  }
+  return "";
+};
+
+export const isDefaultProfilePicture = (value) => {
+  const ref = getMediaRef(value);
+  return !ref || ref === "default.jpg";
+};
+
+export const getMediaUrl = (value) => {
+  const filename = getMediaRef(value);
+
   if (!filename || filename === "default.jpg") {
     return "/images/default-avatar.png";
+  }
+
+  if (/^https?:\/\//i.test(filename)) {
+    return filename;
   }
 
   const baseUrl =

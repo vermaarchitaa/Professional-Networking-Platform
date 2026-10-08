@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import Avatar from "@/Components/Avatar";
 import { isFilledEducation } from "@/Components/EducationRecordForm";
-import { getMediaUrl } from "@/config/utils";
+import { getMediaRef, getMediaUrl } from "@/config/utils";
 import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
@@ -32,6 +32,12 @@ export default function ProfileSidebar() {
   const { t } = useI18n();
   const { profile } = useSelector((state) => state.profile);
   const user = profile?.userId;
+  const coverSrc = getMediaRef(user?.coverPicture) ? getMediaUrl(user.coverPicture) : "";
+  const [coverFailed, setCoverFailed] = useState(false);
+
+  useEffect(() => {
+    setCoverFailed(false);
+  }, [coverSrc]);
 
   if (!profile) {
     return (
@@ -41,7 +47,6 @@ export default function ProfileSidebar() {
     );
   }
 
-  const coverSrc = user?.coverPicture ? getMediaUrl(user.coverPicture) : "";
   const headline = String(profile.currentPost || "").trim();
   const location = getCardLocation(profile);
   const education = getPrimaryEducation(profile);
@@ -56,8 +61,13 @@ export default function ProfileSidebar() {
       onClick={() => router.push("/profile")}
     >
       <div className={styles.cover}>
-        {coverSrc ? (
-          <img src={coverSrc} alt="" className={styles.coverImage} />
+        {coverSrc && !coverFailed ? (
+          <img
+            src={coverSrc}
+            alt=""
+            className={styles.coverImage}
+            onError={() => setCoverFailed(true)}
+          />
         ) : (
           <div className={styles.coverFallback} />
         )}

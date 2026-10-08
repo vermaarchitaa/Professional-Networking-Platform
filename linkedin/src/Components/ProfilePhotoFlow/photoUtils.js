@@ -7,6 +7,7 @@ import {
   loadImageFromBlob,
   revokeImageUrl,
 } from "@/Components/CoverPhotoFlow/coverUtils";
+import { isDefaultProfilePicture } from "@/config/utils";
 
 export const PHOTO_ACCEPT = "image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp";
 export const PHOTO_MAX_BYTES = 2 * 1024 * 1024;
@@ -61,8 +62,7 @@ export function normalizePhotoVisibility(value) {
 }
 
 export function hasUploadedProfilePicture(user) {
-  const picture = user?.profilePicture;
-  return Boolean(picture) && picture !== "default.jpg";
+  return !isDefaultProfilePicture(user?.profilePicture);
 }
 
 export function validateProfilePhotoFile(file) {

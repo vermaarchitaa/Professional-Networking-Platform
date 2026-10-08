@@ -10,7 +10,15 @@ import bcrypt from 'bcrypt';
 import fs from "fs";
 import path from "path";
 import Post from "../models/posts.model.js";
+import { destroyCloudinaryImage, uploadCoverImage, uploadProfileImage } from "../config/cloudinary.js";
 import { UPLOADS_DIR, ensureUploadsDir, isPdfEmbeddableImage, removeUploadedFile } from "../utils/uploads.js";
+
+const pictureValue = (value) => {
+    if (!value) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "object" && typeof value.url === "string") return value.url;
+    return "";
+};
 
 const convertUserDataToPDF = async (userData) => {
     ensureUploadsDir();
@@ -22,15 +30,27 @@ const convertUserDataToPDF = async (userData) => {
 
     doc.pipe(stream);
 
-    const picture = userData.userId?.profilePicture;
-    const picturePath = picture ? path.join(UPLOADS_DIR, path.basename(picture)) : "";
-    if (
-        picture &&
-        picture !== "default.jpg" &&
-        isPdfEmbeddableImage(picture) &&
-        fs.existsSync(picturePath)
-    ) {
-        doc.image(picturePath, { align: "center", width: 100 });
+    const picture = pictureValue(userData.userId?.profilePicture);
+    try {
+        if (picture && picture !== "default.jpg" && /^https?:\/\//i.test(picture)) {
+            const response = await fetch(picture);
+            if (response.ok) {
+                const buffer = Buffer.from(await response.arrayBuffer());
+                doc.image(buffer, { align: "center", width: 100 });
+            }
+        } else {
+            const picturePath = picture ? path.join(UPLOADS_DIR, path.basename(picture)) : "";
+            if (
+                picture &&
+                picture !== "default.jpg" &&
+                isPdfEmbeddableImage(picture) &&
+                fs.existsSync(picturePath)
+            ) {
+                doc.image(picturePath, { align: "center", width: 100 });
+            }
+        }
+    } catch {
+        // Resume generation continues without a profile image.
     }
 
     doc.fontSize(14).text(`Name: ${userData.userId.name}`);
@@ -118,60 +138,89 @@ export const login = async (req, res) => {
 
 export const uploadProfilePicture = async (req, res) => {
     const { token } = req.body;
-    const uploaded = req.file?.filename;
+    const buffer = req.file?.buffer;
 
-    const discardUpload = () => {
-        if (uploaded) removeUploadedFile(uploaded);
-    };
-
-    let saved = false;
     try {
         if (!token || typeof token !== "string") {
-            discardUpload();
             return res.status(401).json({ message: "Unauthorized" });
         }
 
         const user = await User.findOne({ token: token });
 
         if (!user) {
-            discardUpload();
             return res.status(404).json({ message: "User not found" });
         }
-        if (!uploaded) {
+        if (!buffer) {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        const previous = user.profilePicture;
-        user.profilePicture = uploaded;
-        await user.save();
-        saved = true;
+        let uploaded;
+        try {
+            uploaded = await uploadProfileImage(buffer);
+        } catch (error) {
+            return res.status(500).json({ message: error.message || "Failed to upload profile picture" });
+        }
 
-        if (previous && previous !== "default.jpg" && previous !== uploaded) {
-            removeUploadedFile(previous);
+        const previousPublicId = user.profilePicturePublicId;
+
+        try {
+            user.profilePicture = uploaded.url;
+            user.profilePicturePublicId = uploaded.publicId;
+            await user.save();
+        } catch (error) {
+            await destroyCloudinaryImage(uploaded.publicId);
+            return res.status(500).json({ message: error.message });
+        }
+
+        if (previousPublicId && previousPublicId !== uploaded.publicId) {
+            await destroyCloudinaryImage(previousPublicId);
         }
 
         return res.json({ message: "Profile Picture Updated" });
     } catch (error) {
-        if (!saved) discardUpload();
         return res.status(500).json({ message: error.message });
     }
 }
 
 export const uploadCoverPicture = async (req, res) => {
     const { token } = req.body;
+    const buffer = req.file?.buffer;
 
     try {
+        if (!token || typeof token !== "string") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
         const user = await User.findOne({ token: token });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        if (!req.file) {
+        if (!buffer) {
             return res.status(400).json({ message: "No file uploaded" });
         }
 
-        user.coverPicture = req.file.filename;
-        await user.save();
+        let uploaded;
+        try {
+            uploaded = await uploadCoverImage(buffer);
+        } catch (error) {
+            return res.status(500).json({ message: error.message || "Failed to upload cover photo" });
+        }
+
+        const previousPublicId = user.coverPicturePublicId;
+
+        try {
+            user.coverPicture = uploaded.url;
+            user.coverPicturePublicId = uploaded.publicId;
+            await user.save();
+        } catch (error) {
+            await destroyCloudinaryImage(uploaded.publicId);
+            return res.status(500).json({ message: error.message });
+        }
+
+        if (previousPublicId && previousPublicId !== uploaded.publicId) {
+            await destroyCloudinaryImage(previousPublicId);
+        }
 
         return res.json({ message: "Cover photo updated" });
     } catch (error) {
@@ -227,13 +276,12 @@ export const deleteCoverPicture = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const previous = user.coverPicture;
+        const previousPublicId = user.coverPicturePublicId;
         user.coverPicture = "";
+        user.coverPicturePublicId = "";
         await user.save();
 
-        if (previous) {
-            removeUploadedFile(previous);
-        }
+        await destroyCloudinaryImage(previousPublicId);
 
         return res.json({ message: "Cover photo deleted" });
     } catch (error) {
@@ -255,14 +303,13 @@ export const deleteProfilePicture = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const previous = user.profilePicture;
+        const previousPublicId = user.profilePicturePublicId;
         user.profilePicture = "default.jpg";
+        user.profilePicturePublicId = "";
         user.profilePictureFrame = "original";
         await user.save();
 
-        if (previous && previous !== "default.jpg") {
-            removeUploadedFile(previous);
-        }
+        await destroyCloudinaryImage(previousPublicId);
 
         return res.json({ message: "Profile picture deleted" });
     } catch (error) {

@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Avatar from "@/Components/Avatar";
-import { getMediaUrl, getPublicProfilePath } from "@/config/utils";
+import { getMediaRef, getMediaUrl, getPublicProfilePath } from "@/config/utils";
 import { useI18n } from "@/i18n";
 import styles from "./styles.module.css";
 
@@ -11,8 +11,13 @@ export default function SuggestionCard({ user, profile, onConnect, onDismiss, is
   const userData = user?.userId || user;
   const userId = userData?._id;
   const headline = String(profile?.currentPost || "").trim();
-  const coverSrc = userData?.coverPicture ? getMediaUrl(userData.coverPicture) : "";
+  const coverSrc = getMediaRef(userData?.coverPicture) ? getMediaUrl(userData.coverPicture) : "";
+  const [coverFailed, setCoverFailed] = useState(false);
   const profilePath = getPublicProfilePath(userData?.username);
+
+  useEffect(() => {
+    setCoverFailed(false);
+  }, [coverSrc]);
 
   const openProfile = () => {
     if (profilePath) router.push(profilePath);
@@ -39,8 +44,13 @@ export default function SuggestionCard({ user, profile, onConnect, onDismiss, is
         disabled={!profilePath}
       >
         <div className={styles.cover}>
-          {coverSrc ? (
-            <img src={coverSrc} alt="" className={styles.coverImage} />
+          {coverSrc && !coverFailed ? (
+            <img
+              src={coverSrc}
+              alt=""
+              className={styles.coverImage}
+              onError={() => setCoverFailed(true)}
+            />
           ) : (
             <div className={styles.coverFallback} />
           )}
