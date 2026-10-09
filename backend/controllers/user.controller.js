@@ -20,55 +20,285 @@ const pictureValue = (value) => {
     return "";
 };
 
-const convertUserDataToPDF = async (userData) => {
-    const doc = new PDFDocument();
-    const chunks = [];
+const RESUME_NAVY = "#1B365D";
+const RESUME_ACCENT = "#3A7CA5";
+const RESUME_TEXT = "#2C333A";
+const RESUME_MUTED = "#5C6770";
+const RESUME_RULE = "#D0D7DE";
 
+const stripEmojis = (value) => {
+    if (value == null) return "";
+    return String(value)
+        .replace(/\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*/gu, "")
+        .replace(/\p{Regional_Indicator}{2}/gu, "")
+        .replace(/[#*0-9]\uFE0F?\u20E3/gu, "")
+        .replace(/[\uFE0F\u200D\u20E3]/g, "");
+};
+
+const pdfText = (value, { keepNewlines = false } = {}) => {
+    if (value == null) return "";
+    let text = stripEmojis(value)
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"')
+        .replace(/[\u2013\u2014]/g, "-")
+        .replace(/\u2026/g, "...")
+        .replace(/\u00A0/g, " ");
+    text = keepNewlines
+        ? text.replace(/[^\S\n]+/g, " ").replace(/\n{3,}/g, "\n\n")
+        : text.replace(/\s+/g, " ");
+    return text.trim();
+};
+
+const isEmbeddableImageBuffer = (buffer) => {
+    if (!buffer || buffer.length < 8) return false;
+    const jpeg = buffer[0] === 0xff && buffer[1] === 0xd8;
+    const png = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+    return jpeg || png;
+};
+
+const loadResumePhoto = async (picture) => {
+    try {
+        if (!picture || picture === "default.jpg") return null;
+
+        if (/^https?:\/\//i.test(picture)) {
+            const response = await fetch(picture);
+            if (!response.ok) return null;
+            const buffer = Buffer.from(await response.arrayBuffer());
+            return isEmbeddableImageBuffer(buffer) ? buffer : null;
+        }
+
+        const picturePath = path.join(UPLOADS_DIR, path.basename(picture));
+        if (!isPdfEmbeddableImage(picture) || !fs.existsSync(picturePath)) return null;
+        const buffer = fs.readFileSync(picturePath);
+        return isEmbeddableImageBuffer(buffer) ? buffer : null;
+    } catch {
+        return null;
+    }
+};
+
+const formatWorkDates = (work) => {
+    const years = pdfText(work?.years);
+    const start = pdfText(work?.startDate);
+    const end = work?.current ? "Present" : pdfText(work?.endDate);
+    if (start && end) return `${start} - ${end}`;
+    if (start) return start;
+    if (end && end !== "Present") return end;
+    if (work?.current) return "Present";
+    return years;
+};
+
+const convertUserDataToPDF = async (userData) => {
+    const user = userData?.userId || {};
+    const name = pdfText(user.name);
+    const username = pdfText(user.username);
+    const email = pdfText(user.email) || pdfText(userData?.contactInfo?.email);
+    const phone = pdfText(userData?.contactInfo?.phone);
+    const website = pdfText(userData?.contactInfo?.website);
+    const location =
+        pdfText(userData?.location) ||
+        [pdfText(userData?.intro?.city), pdfText(userData?.intro?.country)].filter(Boolean).join(", ");
+    const bio = pdfText(userData?.bio, { keepNewlines: true });
+    const currentPost = pdfText(userData?.currentPost);
+    const pastWork = Array.isArray(userData?.pastWork) ? userData.pastWork : [];
+    const photo = await loadResumePhoto(pictureValue(user.profilePicture));
+
+    const doc = new PDFDocument({
+        size: "LETTER",
+        margins: { top: 54, bottom: 50, left: 54, right: 54 },
+    });
+    const chunks = [];
     const pdfReady = new Promise((resolve, reject) => {
         doc.on("data", (chunk) => chunks.push(chunk));
         doc.on("end", () => resolve(Buffer.concat(chunks)));
         doc.on("error", reject);
     });
 
-    const picture = pictureValue(userData.userId?.profilePicture);
-    try {
-        if (picture && picture !== "default.jpg" && /^https?:\/\//i.test(picture)) {
-            const response = await fetch(picture);
-            if (response.ok) {
-                const buffer = Buffer.from(await response.arrayBuffer());
-                doc.image(buffer, { align: "center", width: 100 });
-            }
-        } else {
-            const picturePath = picture ? path.join(UPLOADS_DIR, path.basename(picture)) : "";
-            if (
-                picture &&
-                picture !== "default.jpg" &&
-                isPdfEmbeddableImage(picture) &&
-                fs.existsSync(picturePath)
-            ) {
-                doc.image(picturePath, { align: "center", width: 100 });
-            }
+    let pageNumber = 1;
+    const left = () => doc.page.margins.left;
+    const contentWidth = () => doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const bottomLimit = () => doc.page.height - doc.page.margins.bottom;
+
+    const drawFooter = () => {
+        const currentY = doc.y;
+        const currentX = doc.x;
+        // Footer sits in the bottom margin. Temporarily disable bottom margin so
+        // PDFKit does not auto-add a page (which would re-enter pageAdded forever).
+        const previousBottom = doc.page.margins.bottom;
+        doc.page.margins.bottom = 0;
+        doc.font("Helvetica").fontSize(8).fillColor(RESUME_MUTED);
+        doc.text(name || "Resume", left(), doc.page.height - 34, {
+            width: contentWidth() / 2,
+            lineBreak: false,
+        });
+        doc.text(`Page ${pageNumber}`, left(), doc.page.height - 34, {
+            width: contentWidth(),
+            align: "right",
+            lineBreak: false,
+        });
+        doc.page.margins.bottom = previousBottom;
+        doc.x = currentX;
+        doc.y = currentY;
+    };
+
+    const drawTopBar = () => {
+        doc.save();
+        doc.rect(0, 0, doc.page.width, 6).fill(RESUME_NAVY);
+        doc.restore();
+    };
+
+    doc.on("pageAdded", () => {
+        pageNumber += 1;
+        drawTopBar();
+        doc.font("Helvetica-Bold").fontSize(9).fillColor(RESUME_NAVY);
+        doc.text(name || "Resume", left(), 18, {
+            width: contentWidth() - 72,
+            lineBreak: false,
+        });
+        doc.font("Helvetica").fontSize(8).fillColor(RESUME_MUTED);
+        doc.text("Resume", left(), 18, {
+            width: contentWidth(),
+            align: "right",
+            lineBreak: false,
+        });
+        doc.moveTo(left(), 34).lineTo(left() + contentWidth(), 34).lineWidth(1).strokeColor(RESUME_ACCENT).stroke();
+        drawFooter();
+        doc.x = left();
+        doc.y = doc.page.margins.top;
+    });
+
+    const ensureSpace = (height) => {
+        if (doc.y + height > bottomLimit()) {
+            doc.addPage();
         }
-    } catch {
-        // Resume generation continues without a profile image.
+    };
+
+    const drawSectionTitle = (title) => {
+        // Keep the heading with at least one line of following content.
+        ensureSpace(72);
+        doc.font("Helvetica-Bold").fontSize(10).fillColor(RESUME_NAVY);
+        doc.text(title.toUpperCase(), left(), doc.y, {
+            width: contentWidth(),
+            characterSpacing: 0.8,
+        });
+        doc.moveDown(0.15);
+        doc.moveTo(left(), doc.y).lineTo(left() + contentWidth(), doc.y).lineWidth(0.7).strokeColor(RESUME_ACCENT).stroke();
+        doc.y += 10;
+    };
+
+    drawTopBar();
+    drawFooter();
+
+    const photoSize = 58;
+    const headerTop = 20;
+    const hasPhoto = Boolean(photo);
+    const headerWidth = hasPhoto ? contentWidth() - photoSize - 16 : contentWidth();
+
+    if (hasPhoto) {
+        try {
+            const photoX = doc.page.width - doc.page.margins.right - photoSize;
+            doc.save();
+            doc.circle(photoX + photoSize / 2, headerTop + photoSize / 2, photoSize / 2).clip();
+            doc.image(photo, photoX, headerTop, { fit: [photoSize, photoSize] });
+            doc.restore();
+            doc.circle(photoX + photoSize / 2, headerTop + photoSize / 2, photoSize / 2)
+                .lineWidth(0.8)
+                .strokeColor(RESUME_ACCENT)
+                .stroke();
+        } catch {
+            // Resume generation continues without a profile image.
+        }
     }
 
-    doc.fontSize(14).text(`Name: ${userData.userId.name}`);
-    doc.fontSize(14).text(`Username: ${userData.userId.username}`);
-    doc.fontSize(14).text(`Email: ${userData.userId.email}`);
-    doc.fontSize(14).text(`Bio: ${userData.bio}`);
-    doc.fontSize(14).text(`Current Position: ${userData.currentPost}`);
+    doc.fillColor(RESUME_NAVY).font("Helvetica-Bold").fontSize(22);
+    doc.text(name || "Resume", left(), headerTop, { width: headerWidth });
 
-    doc.fontSize(14).text("Past Work: ")
-    userData.pastWork.forEach((work, index) => {
-        doc.fontSize(14).text(`Company Name: ${work.company}`);
-        doc.fontSize(14).text(`Position: ${work.position}`);
-        doc.fontSize(14).text(`Years: ${work.years}`);
-    })
+    const contactParts = [];
+    if (username) contactParts.push(`@${username}`);
+    if (email) contactParts.push(email);
+    if (phone) contactParts.push(phone);
+    if (website) contactParts.push(website);
+    if (location) contactParts.push(location);
+
+    if (contactParts.length) {
+        doc.moveDown(0.2);
+        doc.font("Helvetica").fontSize(9).fillColor(RESUME_MUTED);
+        doc.text(contactParts.join("  |  "), left(), doc.y, { width: headerWidth });
+    }
+
+    const headerBottom = hasPhoto ? Math.max(doc.y, headerTop + photoSize) : doc.y;
+    doc.y = headerBottom + 12;
+    doc.moveTo(left(), doc.y).lineTo(left() + contentWidth(), doc.y).lineWidth(1.5).strokeColor(RESUME_ACCENT).stroke();
+    doc.y += 16;
+
+    if (bio) {
+        drawSectionTitle("Professional Summary");
+        doc.font("Helvetica").fontSize(10).fillColor(RESUME_TEXT).lineGap(2.5);
+        doc.text(bio, left(), doc.y, { width: contentWidth(), align: "left" });
+        doc.y += 14;
+    }
+
+    if (currentPost) {
+        drawSectionTitle("Current Position");
+        doc.font("Helvetica").fontSize(10).fillColor(RESUME_TEXT).lineGap(2);
+        doc.text(currentPost, left(), doc.y, { width: contentWidth() });
+        doc.y += 14;
+    }
+
+    const jobs = pastWork.filter((work) =>
+        work && (pdfText(work.company) || pdfText(work.position) || formatWorkDates(work) || pdfText(work.description))
+    );
+
+    if (jobs.length) {
+        drawSectionTitle("Professional Experience");
+        jobs.forEach((work, index) => {
+            const company = pdfText(work.company);
+            const position = pdfText(work.position);
+            const dates = formatWorkDates(work);
+            const jobLocation = pdfText(work.location);
+            const employmentType = pdfText(work.employmentType);
+            const description = pdfText(work.description, { keepNewlines: true });
+            const meta = [jobLocation, employmentType].filter(Boolean).join("  |  ");
+
+            // Keep company/title (and the start of a description) together.
+            ensureSpace(68);
+            const rowY = doc.y;
+            doc.font("Helvetica-Bold").fontSize(11).fillColor(RESUME_NAVY);
+            doc.text(company || position || "Experience", left(), rowY, {
+                width: dates ? contentWidth() - 120 : contentWidth(),
+            });
+            if (dates) {
+                doc.font("Helvetica").fontSize(9).fillColor(RESUME_MUTED);
+                doc.text(dates, left(), rowY, { width: contentWidth(), align: "right" });
+            }
+            doc.y = Math.max(doc.y, rowY + 13);
+
+            if (position && company) {
+                doc.font("Helvetica-Oblique").fontSize(10).fillColor(RESUME_ACCENT);
+                doc.text(position, left(), doc.y, { width: contentWidth() });
+            }
+            if (meta) {
+                doc.font("Helvetica").fontSize(9).fillColor(RESUME_MUTED);
+                doc.text(meta, left(), doc.y, { width: contentWidth() });
+            }
+            if (description) {
+                doc.moveDown(0.12);
+                doc.font("Helvetica").fontSize(10).fillColor(RESUME_TEXT).lineGap(2.5);
+                doc.text(description, left(), doc.y, { width: contentWidth() });
+            }
+
+            if (index < jobs.length - 1) {
+                doc.y += 8;
+                // Avoid leaving a separator alone at the bottom of a page.
+                ensureSpace(78);
+                doc.moveTo(left(), doc.y).lineTo(left() + contentWidth(), doc.y).lineWidth(0.4).strokeColor(RESUME_RULE).stroke();
+                doc.y += 10;
+            }
+        });
+    }
 
     doc.end();
     return pdfReady;
-}
+};
 
 export const register = async (req, res) => {
 
