@@ -193,11 +193,29 @@ export const downloadResume = createAsyncThunk("profile/downloadResume", async (
   try {
     const response = await clientServer.get("/user/download_resume", {
       params: { id: userId, token: getToken() },
+      responseType: "blob",
     });
-    const filename = response.data.message;
-    window.open(`http://localhost:9090/${filename}`, "_blank");
-    return filename;
+    const contentType = String(response.headers["content-type"] || "");
+    const payload = response.data;
+    const looksLikePdf =
+      contentType.includes("application/pdf") ||
+      (payload instanceof Blob && payload.type.includes("pdf"));
+    if (!looksLikePdf || !payload) {
+      return thunkAPI.rejectWithValue({ message: "Failed to download resume" });
+    }
+    const resumeUrl = URL.createObjectURL(payload);
+    window.open(resumeUrl, "_blank");
+    return resumeUrl;
   } catch (error) {
-    return thunkAPI.rejectWithValue(error.response?.data || { message: "Failed to download resume" });
+    const data = error.response?.data;
+    if (typeof Blob !== "undefined" && data instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await data.text());
+        return thunkAPI.rejectWithValue(parsed || { message: "Failed to download resume" });
+      } catch {
+        return thunkAPI.rejectWithValue({ message: "Failed to download resume" });
+      }
+    }
+    return thunkAPI.rejectWithValue(data || { message: "Failed to download resume" });
   }
 });

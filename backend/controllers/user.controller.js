@@ -11,7 +11,7 @@ import fs from "fs";
 import path from "path";
 import Post from "../models/posts.model.js";
 import { destroyCloudinaryAsset, destroyCloudinaryImage, uploadCoverImage, uploadEducationRecordMedia, uploadProfileImage } from "../config/cloudinary.js";
-import { UPLOADS_DIR, ensureUploadsDir, isPdfEmbeddableImage } from "../utils/uploads.js";
+import { UPLOADS_DIR, isPdfEmbeddableImage } from "../utils/uploads.js";
 
 const pictureValue = (value) => {
     if (!value) return "";
@@ -21,14 +21,14 @@ const pictureValue = (value) => {
 };
 
 const convertUserDataToPDF = async (userData) => {
-    ensureUploadsDir();
-
     const doc = new PDFDocument();
+    const chunks = [];
 
-    const outputPath = crypto.randomBytes(32).toString("hex") + ".pdf";
-    const stream = fs.createWriteStream(path.join(UPLOADS_DIR, outputPath));
-
-    doc.pipe(stream);
+    const pdfReady = new Promise((resolve, reject) => {
+        doc.on("data", (chunk) => chunks.push(chunk));
+        doc.on("end", () => resolve(Buffer.concat(chunks)));
+        doc.on("error", reject);
+    });
 
     const picture = pictureValue(userData.userId?.profilePicture);
     try {
@@ -66,13 +66,8 @@ const convertUserDataToPDF = async (userData) => {
         doc.fontSize(14).text(`Years: ${work.years}`);
     })
 
-    await new Promise((resolve, reject) => {
-        stream.on("finish", resolve);
-        stream.on("error", reject);
-        doc.end();
-    });
-
-    return outputPath;
+    doc.end();
+    return pdfReady;
 }
 
 export const register = async (req, res) => {
@@ -1266,9 +1261,11 @@ export const downloadProfile = async (req, res) => {
             return res.status(404).json({ message: "Profile not found" });
         }
 
-        let outputPath = await convertUserDataToPDF(userProfile);
+        const pdfBuffer = await convertUserDataToPDF(userProfile);
 
-        return res.json({ "message": outputPath});
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", 'inline; filename="resume.pdf"');
+        return res.send(pdfBuffer);
     } catch(error){
         return res.status(500).json({ message: error.message });
     }
