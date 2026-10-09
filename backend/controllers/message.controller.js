@@ -4,11 +4,11 @@ import User from "../models/user.model.js";
 import Profile from "../models/profile.model.js";
 import ConnectionRequest from "../models/connections.model.js";
 import { findGift, isAllowedSticker } from "../utils/messageAttachments.js";
+import { destroyCloudinaryAsset, uploadMessageAttachment } from "../config/cloudinary.js";
 import {
     allowedMessageExtension,
     isMessageDocumentType,
     isMessageMediaType,
-    removeUploadedFile,
 } from "../utils/uploads.js";
 
 const PUBLIC_USER_FIELDS = "name username profilePicture";
@@ -146,43 +146,35 @@ const loadPeerCard = async (userId) => {
 };
 
 export const sendMessage = async (req, res) => {
-    const uploadedName = req.file?.filename;
-    const discardUpload = () => {
-        if (uploadedName) removeUploadedFile(uploadedName);
-    };
+    let uploadedAsset = null;
+    let saved = false;
 
     try {
         const { token, receiverId, text, giftId, stickerId, gifUrl, profileUserId, shareUsername } = req.body;
         const sender = await findUserByToken(token);
         if (!sender) {
-            discardUpload();
             return res.status(401).json({ message: "Unauthorized" });
         }
 
         if (!receiverId) {
-            discardUpload();
             return res.status(400).json({ message: "Receiver is required" });
         }
         if (String(sender._id) === String(receiverId)) {
-            discardUpload();
             return res.status(400).json({ message: "Cannot message yourself" });
         }
 
         const receiver = await User.findById(receiverId).select(PUBLIC_USER_FIELDS);
         if (!receiver) {
-            discardUpload();
             return res.status(404).json({ message: "User not found" });
         }
 
         const body = String(text || "").trim();
         if (body.length > MESSAGE_MAX) {
-            discardUpload();
             return res.status(400).json({ message: `Messages must be under ${MESSAGE_MAX} characters` });
         }
 
         const connected = await areAcceptedConnections(sender._id, receiver._id);
         if (!connected) {
-            discardUpload();
             return res.status(403).json({ message: "You can only message accepted connections" });
         }
 
@@ -193,33 +185,40 @@ export const sendMessage = async (req, res) => {
             const mime = req.file.mimetype;
             const originalExt = path.extname(req.file.originalname || "").toLowerCase();
             if (originalExt && !allowedMessageExtension(req.file.originalname)) {
-                discardUpload();
                 return res.status(400).json({ message: "Unsupported file type" });
             }
-            if (!allowedMessageExtension(req.file.filename)) {
-                discardUpload();
-                return res.status(400).json({ message: "Unsupported file type" });
+            if (!req.file.buffer?.length) {
+                return res.status(400).json({ message: "No file uploaded" });
             }
             if (isMessageMediaType(mime)) {
+                try {
+                    uploadedAsset = await uploadMessageAttachment(req.file.buffer, mime, req.file.originalname);
+                } catch (error) {
+                    return res.status(500).json({ message: error.message || "Failed to upload attachment" });
+                }
                 messageType = "media";
                 attachment = {
-                    filename: req.file.filename,
+                    filename: uploadedAsset.url,
                     originalName: safeOriginalName(req.file.originalname),
                     mimeType: mime,
                     size: req.file.size,
                     kind: mime.startsWith("video/") ? "video" : "image",
                 };
             } else if (isMessageDocumentType(mime)) {
+                try {
+                    uploadedAsset = await uploadMessageAttachment(req.file.buffer, mime, req.file.originalname);
+                } catch (error) {
+                    return res.status(500).json({ message: error.message || "Failed to upload attachment" });
+                }
                 messageType = "document";
                 attachment = {
-                    filename: req.file.filename,
+                    filename: uploadedAsset.url,
                     originalName: safeOriginalName(req.file.originalname),
                     mimeType: mime,
                     size: req.file.size,
                     kind: "document",
                 };
             } else {
-                discardUpload();
                 return res.status(400).json({ message: "Unsupported file type" });
             }
         } else if (gifUrl) {
@@ -269,6 +268,7 @@ export const sendMessage = async (req, res) => {
             ...(attachment ? { attachment } : {}),
             read: false,
         });
+        saved = true;
 
         const message = await Message.findById(created._id)
             .populate("senderId", PUBLIC_USER_FIELDS)
@@ -279,7 +279,9 @@ export const sendMessage = async (req, res) => {
             conversationId,
         });
     } catch (error) {
-        discardUpload();
+        if (!saved && uploadedAsset?.publicId) {
+            await destroyCloudinaryAsset(uploadedAsset.publicId, uploadedAsset.resourceType);
+        }
         return res.status(500).json({ message: error.message });
     }
 };

@@ -90,11 +90,11 @@ const createUploader = (allowedTypes, maxBytes, remapOctetStream = false) => {
   });
 };
 
-const createMemoryUploader = (allowedTypes, maxBytes) =>
+const createMemoryUploader = (allowedTypes, maxBytes, remapOctetStream = false) =>
   multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: maxBytes },
-    fileFilter: createFileFilter(allowedTypes),
+    fileFilter: createFileFilter(allowedTypes, remapOctetStream),
   });
 
 export const profilePictureUpload = createMemoryUploader(PROFILE_TYPES, 2 * 1024 * 1024);
@@ -102,7 +102,7 @@ export const coverPhotoUpload = createMemoryUploader(IMAGE_TYPES, 5 * 1024 * 102
 export const postMediaUpload = createMemoryUploader(POST_MEDIA_TYPES, 10 * 1024 * 1024);
 export const commentImageUpload = createMemoryUploader(IMAGE_TYPES, 5 * 1024 * 1024);
 export const educationMediaUpload = createMemoryUploader(EDUCATION_MEDIA_TYPES, 10 * 1024 * 1024);
-export const messageAttachmentUpload = createUploader(MESSAGE_ATTACHMENT_TYPES, 10 * 1024 * 1024, true);
+export const messageAttachmentUpload = createMemoryUploader(MESSAGE_ATTACHMENT_TYPES, 10 * 1024 * 1024, true);
 
 export const isMessageMediaType = (mimetype) => Boolean(MESSAGE_MEDIA_TYPES[mimetype]);
 export const isMessageDocumentType = (mimetype) => Boolean(MESSAGE_DOCUMENT_TYPES[mimetype]);

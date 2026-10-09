@@ -1,3 +1,4 @@
+import path from "path";
 import { v2 as cloudinary } from "cloudinary";
 
 const PROFILE_FOLDER = "proconnect/profile";
@@ -6,6 +7,7 @@ const POST_FOLDER = "proconnect/posts";
 const COMMENT_FOLDER = "proconnect/comments";
 const EDUCATION_FOLDER = "proconnect/education";
 const EXPERIENCE_FOLDER = "proconnect/experience";
+const MESSAGE_FOLDER = "proconnect/messages";
 
 const toResourceType = (resourceType) => {
   if (resourceType === "video") return "video";
@@ -37,7 +39,7 @@ const getCloudinary = () => {
 export const isCloudinaryPublicId = (value) =>
   typeof value === "string" && value.startsWith("proconnect/");
 
-export const uploadImageBuffer = (buffer, folder, resourceType = "image") => {
+export const uploadImageBuffer = (buffer, folder, resourceType = "image", extra = {}) => {
   if (!buffer?.length) {
     return Promise.reject(new Error("No file uploaded"));
   }
@@ -51,10 +53,20 @@ export const uploadImageBuffer = (buffer, folder, resourceType = "image") => {
         folder,
         resource_type: type,
         overwrite: false,
+        ...extra,
       },
       (error, result) => {
         if (error || !result?.secure_url || !result?.public_id) {
-          reject(error || new Error("Cloudinary upload failed"));
+          const err = error || new Error("Cloudinary upload failed");
+          const publicId = result?.public_id;
+          if (!publicId) {
+            reject(err);
+            return;
+          }
+
+          Promise.resolve(cloud.uploader.destroy(publicId, { resource_type: type }))
+            .catch(() => {})
+            .finally(() => reject(err));
           return;
         }
 
@@ -85,6 +97,25 @@ export const uploadEducationRecordMedia = (buffer, mimetype, kind = "education")
   const mime = String(mimetype || "").toLowerCase();
   const resourceType = mime.startsWith("image/") ? "image" : "raw";
   return uploadImageBuffer(buffer, folder, resourceType);
+};
+
+export const uploadMessageAttachment = (buffer, mimetype, originalName = "") => {
+  const mime = String(mimetype || "").toLowerCase();
+  let resourceType = "raw";
+  if (mime.startsWith("image/")) resourceType = "image";
+  else if (mime.startsWith("video/")) resourceType = "video";
+
+  const extra = {};
+  if (resourceType === "raw") {
+    const ext = path.extname(originalName || "").toLowerCase();
+    if (ext) {
+      extra.use_filename = true;
+      extra.unique_filename = true;
+      extra.filename_override = `attachment${ext}`;
+    }
+  }
+
+  return uploadImageBuffer(buffer, MESSAGE_FOLDER, resourceType, extra);
 };
 
 export const destroyCloudinaryAsset = async (publicId, resourceType = "image") => {
